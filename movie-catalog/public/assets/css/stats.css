@@ -1,0 +1,292 @@
+/* ==========================
+   Theme Variables
+========================== */
+:root {
+    /* Colors */
+    --primary: #1e90ff;
+    --primary-contrast: #fff;
+
+    --bg-modal: rgba(0,0,0,.55);
+    --bg-panel: #fff;
+    --bg-card: #f4f6f8;
+    --bg-group-a: #f4f8ff;
+    --bg-group-b: #ffffff;
+    --bg-hover: #e6f0ff;
+
+    --text-main: #222;
+    --text-muted: #666;
+
+    /* Sizes */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 18px;
+
+    /* Shadows */
+    --shadow-sm: 0 2px 8px rgba(0,0,0,.25);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,.3);
+
+    /* Layout */
+    --panel-width: 420px;
+    --modal-width: 1100px;
+    --gap: 10px;
+}
+
+/* ==========================
+   Floating Button / Ribbon
+========================== */
+.stats-toggle,
+.stats-ribbon {
+    position: fixed;
+    top: 0px;
+    right: 12px;
+    z-index: 1200;
+    padding: 6px 12px;
+    background: var(--primary);
+    color: var(--primary-contrast);
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+}
+
+.stats-ribbon {
+    right: 20px;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+}
+
+/* ==========================
+   Pull-down Stats Panel
+========================== */
+.stats-panel {
+    position: fixed;
+    top: 0;
+    right: 10px;
+    width: var(--panel-width);
+    max-width: 95%;
+    background: var(--bg-panel);
+    box-shadow: var(--shadow-lg);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    transform: translateY(-100%);
+    transition: transform .35s ease;
+    z-index: 1100;
+}
+
+.stats-panel.show {
+    transform: translateY(0);
+}
+
+.stats-panel-inner {
+    padding: 14px 16px 16px;
+}
+
+/* ==========================
+   Stats Cards
+========================== */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--gap);
+    margin-top: 16px;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    color: #222;
+}
+
+.stat-card i {
+    font-size: 16px;
+    color: var(--primary);
+}
+
+.stat-card span {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    animation: fadeIn .4s ease-in;
+}
+
+.stat-card small {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* ==========================
+   Modal (Duplicates)
+========================== */
+.stats-modal {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-modal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.stats-modal.hidden {
+    display: none;
+}
+
+/* Modal shell */
+.stats-modal-content {
+    position: relative;
+    width: auto;
+    min-width: 420px;
+    max-width: 90vw;
+    max-height: 85vh;
+
+    padding: 16px;
+    background: var(--bg-panel);
+    color: var(--text-main);
+
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+
+    display: flex;
+    flex-direction: column;
+}
+
+/* Sticky header so title never floats offscreen */
+.stats-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    position: sticky;
+    top: 0;
+    background: var(--bg-panel);
+    z-index: 2;
+}
+
+.stats-modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+/* Close button */
+.stats-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+/* Scrollable body only */
+.stats-modal-body {
+    overflow: auto;
+    flex: 1;
+}
+
+/* ==========================
+   Duplicate Table
+========================== */
+.stats-modal table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.stats-modal th,
+.stats-modal td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+    white-space: nowrap;
+}
+
+/* Group header rows */
+.dup-group {
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.dup-group-a {
+    background: var(--bg-group-a);
+}
+
+.dup-group-b {
+    background: var(--bg-group-b);
+}
+
+.dup-group:hover {
+    background: var(--bg-hover);
+}
+
+/* Chevron */
+.dup-toggle {
+    display: inline-block;
+    width: 14px;
+    margin-right: 6px;
+    font-size: 12px;
+}
+
+/* Child rows */
+.dup-child {
+    background: var(--bg-card);
+}
+
+.dup-child td {
+    padding-left: 36px;
+}
+
+/* Hover feedback */
+.stats-modal tbody tr:hover {
+    background: var(--bg-hover);
+}
+
+/* ==========================
+   Animations
+========================== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(2px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.row-highlight {
+    animation: flash 2s ease;
+    background: #fff3b0 !important;
+}
+
+@keyframes flash {
+    from { background: #ffe066; }
+    to { background: transparent; }
+}
+
+/* ==========================
+   Dark Theme
+========================== */
+[data-theme="dark"] {
+    --bg-panel: #111;
+    --bg-card: #1c1c1c;
+    --bg-group-a: #1b2333;
+    --bg-group-b: #141414;
+    --bg-hover: #223355;
+
+    --text-main: #fff;
+    --text-muted: #aaa;
+    --bg-modal: rgba(0,0,0,.7);
+}
+.table-fade {
+    opacity: 0;
+    transition: opacity 180ms ease;
+}
+
+.table-fade.show {
+    opacity: 1;
+}
+/* ==========================
+   Duplicate Movie Modal Pagination
+========================== */
+.pagination button.active {
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+}

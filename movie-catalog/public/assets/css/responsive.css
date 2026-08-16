@@ -1,0 +1,22 @@
+@media (max-width: 900px) {
+    table, th, td { font-size: 12px; }
+    input[type="text"] { width: 180px; }
+}
+
+@media (max-width: 768px) {
+    .modal-body { flex-direction: column; }
+    .poster-section { max-width: 300px; margin: 0 auto; }
+    .info-grid, .crew-info, .file-info { grid-template-columns: 1fr; }
+    .file-info #modalFile { flex-direction: column; gap: 4px; }
+}
+
+@media (max-width: 600px) {
+    th, td { padding: 4px 6px; font-size: 11px; }
+    .column-toggles, .controls { flex-direction: column; align-items: flex-start; }
+    .copy-btn { margin-left: 0.2rem; padding: 0.15rem 0.3rem; font-size: 0.7rem; }
+}
+
+@media (max-width: 480px) {
+    .modal-header h2 { font-size: 1.2rem; }
+    .modal-rating { font-size: 0.75rem; padding: 3px 6px; }
+}

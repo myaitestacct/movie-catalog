@@ -1,0 +1,310 @@
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+    padding-bottom: 25px;
+    max-height: calc(115vh - 150px);
+    box-sizing: border-box;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+    background: var(--table-bg);
+    max-width: 100%;
+}
+
+th, td {
+    border-bottom: 1px solid var(--border-light);
+    font-size: 13px;
+    text-align: left;
+    min-width: 60px;
+    box-sizing: border-box;
+}
+
+th {
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+th:hover { background: #57606f; }
+
+tbody tr:hover { background: var(--table-hover); }
+
+.badge {
+    background: var(--primary);
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    transition: background 0.2s ease;
+}
+
+/* highlight rows where FILE column value is 'MISSING' */
+tr.missing-file {
+    background-color: #3c2222 !important;
+    color: var(--danger);
+    font-weight: bold;
+}
+
+/* highlight rows where FILE contains '-Get.Better.Copy' */
+tr.better-copy {
+    background-color: #7b5151; /* rustic */
+}
+
+/* Column Toggles */
+.column-toggles {
+    margin-bottom: 10px;
+    font-size: 13px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.column-toggles i {
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.column-toggles i.active { color: var(--primary); }
+
+.column-toggles button {
+    padding: 4px 8px;
+    border-radius: 5px;
+
+    border: 1px solid var(--button-border);
+    background: var(--button-bg);
+    color: var(--button-text);
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        border 0.2s ease;
+}
+
+.column-toggles button:hover { background: var(--button-hover); }
+
+.column-toggles button.toggle-col.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary), white 30%);
+}
+
+.column-toggles button.toggle-col i { margin-right: 5px; }
+
+/* Column Search Inputs */
+th input.col-search,
+#search-row input {
+    width: 100%;
+    font-size: 12px;
+    padding: 3px 4px;
+    margin-top: 3px;
+    box-sizing: border-box;
+}
+
+/* Table Header & Sticky Search Row */
+thead th {
+    position: sticky;
+    top: 0;
+    background: var(--header-bg);
+    color: var(--header-color);
+    z-index: 10;
+    height: 28px;
+    line-height: 1.2;
+    padding: 2px 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+#search-row td {
+    position: sticky;
+    top: 28px;
+    background: var(--header-bg);
+    color: var(--header-color);
+    z-index: 11;
+    padding: 2px 4px;
+    height: 24px;
+}
+
+#search-row td input {
+    width: 100%;
+    font-size: 11px;
+    padding: 2px 4px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-sizing: border-box;
+    background: var(--table-bg);
+    color: var(--text-color);
+}
+
+#search-row td input:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 2px var(--primary);
+}
+
+/* Hidden Columns */
+.hidden-col {
+    opacity: 0;
+    max-width: 0;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    overflow: hidden;
+    visibility: hidden;
+    transition: opacity 0.3s ease, max-width 0.3s ease, padding 0.3s ease;
+}
+
+td:not(.hidden-col),
+th:not(.hidden-col) {
+    opacity: 1;
+    max-width: 500px;
+    padding: 8px 10px;
+    transition: opacity 0.3s ease, max-width 0.3s ease, padding 0.3s ease;
+}
+
+#search-row td.hidden-col {
+    padding: 0;
+    visibility: hidden;
+}
+
+/* Links & Copy Buttons */
+.movie-title-link {
+    color: var(--title-color);
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.movie-title-link:hover { 
+    color: var(--primary);
+    text-decoration: underline;
+}
+
+.copy-btn {
+    margin: 0.2rem 0;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.5rem;
+    cursor: pointer;
+    border-radius: 6px;
+    border: none;
+    background: rgba(119,119,255,0.2);
+    text-decoration: underline;
+    color: var(--link-color);
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.copy-btn:hover { background: rgba(255,255,255,0.15); }
+.copy-btn.copied { color: #2ecc71 !important; background: var(--success); }
+.copy-btn.copied::after {
+  content: ' ✓';
+  font-size: 11px;
+}
+
+/* File column */
+.file-name {
+  margin-right: 6px;
+  word-break: break-all;
+}
+
+.copy-btn.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--link-color);
+  padding: 2px 4px;
+  /*font-size: 13px;*/
+}
+
+.copy-btn.icon-btn:hover {
+  color: var(--primary);
+}
+
+/* Highlight search matches */
+mark {
+  font-weight: 600;
+  background: var(--highlight);
+  color: var(--highlight-text, #222);
+  padding: 0 2px;
+  border-radius: 3px;
+  box-decoration-break: clone;
+}
+
+.search-mode {
+  /*margin-left: auto;*/
+  padding: 4px 10px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid var(--button-border);
+  background: var(--button-bg);
+  color: var(--button-text);
+  cursor: pointer;
+}
+
+.search-mode.or {
+  background: #ffe066;
+  border-color: #f1c40f;
+}
+
+/* Highlight row on hover */
+tbody tr.row-hover {
+    background: rgba(255, 69, 0, 0.1);
+    transition: background 0.2s ease;
+}
+
+/* Smooth row click animation */
+.movie-modal-content {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.num-value {
+  margin-right: 6px;
+  white-space: nowrap;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.icon-btn:hover {
+  color: #ff4500;
+}
+
+
+/* Rating Badge — shared visual language with toggle buttons */
+.rating-badge {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rating-badge:hover {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary), #fff 35%);
+}
+
+/* Active movie row (modal-linked) */
+tr.active-movie-row {
+  background: rgba(255, 69, 0, 0.18) !important;
+  outline: 2px solid rgba(255, 69, 0, 0.35);
+  outline-offset: -2px;
+  transition: background 0.25s ease;
+}

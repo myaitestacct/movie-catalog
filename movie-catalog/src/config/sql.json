@@ -1,0 +1,8 @@
+{
+  "stats": "SELECT COUNT(*) AS total_movies, COUNT(DISTINCT YEAR) AS years, COUNT(DISTINCT CATEGORY) AS genres, SUM(FILESIZE)*1048576 AS total_size FROM movies;",
+  "missing_files": "SELECT COUNT(*) AS missing_files FROM movies WHERE FILEPATH = 'MISSING';",
+  "needs_better_copy_count": "SELECT COUNT(*) AS needs_better_copy FROM movies WHERE FILEPATH LIKE '%-Get.Better.Copy%';",
+  "needs_better_copy_val": "SELECT m.NUM, m.ORIGINALTITLE, m.YEAR, m.URL, COUNT(*) as needs_better_copy FROM movies m WHERE m.FILEPATH LIKE '%-Get.Better.Copy%' GROUP BY m.NUM, m.ORIGINALTITLE, m.YEAR, m.URL ORDER BY m.NUM;",    
+  "duplicate_count": "SELECT count(*) FROM movies m JOIN (SELECT ORIGINALTITLE, YEAR, URL, COUNT(*) AS dup_count FROM movies GROUP BY ORIGINALTITLE, YEAR, URL HAVING COUNT(*) > 1) dup ON m.ORIGINALTITLE = dup.ORIGINALTITLE AND m.YEAR = dup.YEAR AND m.URL = dup.URL WHERE m.NUM NOT IN ('6717', '6718') ORDER BY dup.dup_count DESC, m.ORIGINALTITLE, m.YEAR;",
+  "duplicate_rows": "SELECT m.NUM, m.ORIGINALTITLE, m.URL, m.YEAR, dup.dup_count FROM movies m JOIN (SELECT URL, COUNT(*) AS dup_count FROM movies WHERE URL LIKE '%https://www.imdb.com/title/tt%' GROUP BY URL HAVING COUNT(*) > 1) dup ON m.URL = dup.URL WHERE m.NUM NOT IN ('6717', '6718') AND m.URL LIKE '%https://www.imdb.com/title/tt%' ORDER BY dup.dup_count DESC, m.URL, m.NUM;"
+}

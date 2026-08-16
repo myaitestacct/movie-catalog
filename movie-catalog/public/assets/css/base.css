@@ -1,0 +1,26 @@
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-light);
+    color: var(--text-color);
+    margin: 0;
+    overflow: hidden;
+
+    transition:
+        background 0.25s ease,
+        color 0.25s ease;
+}
+
+h1 { margin-bottom: 10px; }
+
+.controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+input[type="text"] {
+    padding: 6px 8px;
+    font-size: 14px;
+    width: 220px;
+    box-sizing: border-box;
+}

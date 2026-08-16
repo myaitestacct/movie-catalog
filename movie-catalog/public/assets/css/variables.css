@@ -1,0 +1,82 @@
+:root {
+
+    /* THEME COLORS */
+    --primary: #1e90ff;
+    --danger: #b30000;
+    --success: #28a745;
+
+    /* LIGHT THEME */
+    --bg-light: #f4f6f8;
+    --text-color: #222;
+
+    --table-bg: #ffffff;
+    --table-hover: #f1f2f6;
+
+    --header-bg: #2f3542;
+    --header-color: #ffffff;
+
+    --border-light: #ddd;
+
+    --highlight: #ffe066;
+    
+    --link-color: #1e90ff;
+    --title-color: #1e90ff;
+
+    --pagination-bg: rgba(255,255,255,0.75);
+    --pagination-button-bg: #ffffff;
+    --pagination-text: #222;
+    
+    --button-bg: #ffffff;
+    --button-text: #222;
+    --button-border: #aaa;
+    --button-hover: #f0f0f0;
+}
+
+/* AUTO DARK MODE (if user has not overridden) */
+@media (prefers-color-scheme: dark) {
+    :root:not(.theme-light) {
+
+        --bg-light: #121212;
+        --text-color: #e6e6e6;
+
+        --table-bg: #1b1b1b;
+        --table-hover: #262626;
+
+        --header-bg: #1f1f1f;
+        --header-color: #f5f5f5;
+
+        --border-light: #333;
+
+        --highlight: #ffc107;
+    }
+}
+
+/* MANUAL DARK MODE */
+:root.theme-dark {
+
+    --bg-light: #121212;
+    --text-color: #e6e6e6;
+
+    --table-bg: #1b1b1b;
+    --table-hover: #262626;
+
+    --header-bg: #1f1f1f;
+    --header-color: #f5f5f5;
+
+    --border-light: #333;
+
+    --highlight-text: #111;
+    --highlight: #ffc107;
+    
+    --link-color: #f1f3f5;
+    --title-color: #f1f3f5;
+
+    --pagination-bg: rgba(20,20,20,0.75);
+    --pagination-button-bg: #2a2a2a;
+    --pagination-text: #e6e6e6;
+    
+    --button-bg: #2a2a2a;
+    --button-text: #e6e6e6;
+    --button-border: #444;
+    --button-hover: #3a3a3a;
+}
