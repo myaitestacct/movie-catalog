@@ -1,0 +1,15 @@
+# Local database credentials and environment overrides
+movie-catalog/src/config/database.local.json
+.env
+.env.*
+!.env.example
+
+# Node.js test tooling
+node_modules/
+npm-debug.log*
+
+# IDE and OS-local files
+movie-catalog/nbproject/private/
+.DS_Store
+Thumbs.db
+*.log

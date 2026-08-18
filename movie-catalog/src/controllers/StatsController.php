@@ -21,6 +21,7 @@ class StatsController
         // Base stats
         $stmt = $this->pdo->query($this->sql['stats']);
         $stats = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['genres'] = $this->getUniqueGenreCount();
 
         // Missing files
         $stmt = $this->pdo->query($this->sql['missing_files']);
@@ -30,11 +31,42 @@ class StatsController
         $stmt = $this->pdo->query($this->sql['needs_better_copy_count']);
         $stats['needs_better_copy_count'] = (int)$stmt->fetchColumn();
 
-        // Duplicate count
-        $stmt = $this->pdo->query($this->sql['duplicate_count']);
-        $stats['duplicate_count'] = (int)$stmt->fetchColumn();
+        // Count the exact rows exposed by the duplicates API so the card and
+        // dialog can never use different duplicate criteria.
+        $stmt = $this->pdo->query($this->sql['duplicate_rows']);
+        $stats['duplicate_count'] = count($stmt->fetchAll(PDO::FETCH_ASSOC));
 
         return $stats;
+    }
+
+    private function getUniqueGenreCount(): int
+    {
+        $stmt = $this->pdo->query($this->sql['categories']);
+        $genres = [];
+
+        while (($categoryList = $stmt->fetchColumn()) !== false) {
+            $items = preg_split(
+                '/\s*[,;|\/]\s*/u',
+                (string)$categoryList,
+                -1,
+                PREG_SPLIT_NO_EMPTY
+            );
+
+            foreach ($items ?: [] as $genre) {
+                $genre = trim($genre);
+
+                if ($genre === '') {
+                    continue;
+                }
+
+                $key = function_exists('mb_strtolower')
+                    ? mb_strtolower($genre, 'UTF-8')
+                    : strtolower($genre);
+                $genres[$key] = true;
+            }
+        }
+
+        return count($genres);
     }
 
     public function getDuplicateRows(): array

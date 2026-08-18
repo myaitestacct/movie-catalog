@@ -24,3 +24,59 @@ input[type="text"] {
     width: 220px;
     box-sizing: border-box;
 }
+
+.api-error-container {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 12000;
+    width: min(680px, calc(100vw - 24px));
+    display: grid;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.api-error {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid color-mix(in srgb, var(--danger), white 25%);
+    border-radius: 8px;
+    background: var(--table-bg);
+    color: var(--text-color);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    pointer-events: auto;
+}
+
+.api-error-icon {
+    flex: 0 0 auto;
+}
+
+.api-error-message {
+    flex: 1;
+}
+
+.api-error button {
+    border: 1px solid var(--button-border);
+    border-radius: 5px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.api-error button:hover:not(:disabled) {
+    background: var(--button-hover);
+}
+
+.api-error button:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
+.api-error-close {
+    font-size: 18px;
+    line-height: 1;
+}

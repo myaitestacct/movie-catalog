@@ -1,15 +1,46 @@
 // highlighttext.js
 
 /**
- * Collect all search terms from the search state
- * @param {Object} searchState - state.search
- * @returns {Array} Array of all non-empty search terms
+ * Split only an explicitly parenthesized trailing year from a title search.
+ * This mirrors MovieRepository::parseTitleFilter().
  */
-export function collectSearchTerms(searchState) {
+export function parseTitleSearch(value = '') {
+  const original = value.toString().trim();
+  const match = original.match(/\s*\(((?:19|20)\d{2})\)\s*$/);
+
+  if (!match) {
+    return { title: original, year: null };
+  }
+
+  return {
+    title: original.replace(/\s*\((?:19|20)\d{2}\)\s*$/, '').trim(),
+    year: match[1]
+  };
+}
+
+/**
+ * Return only the search terms that apply to a particular rendered column.
+ * A year entered as part of "Title (YEAR)" also applies to the YEAR column.
+ */
+export function collectColumnSearchTerms(searchState, column) {
   if (!searchState || typeof searchState !== 'object') return [];
-  return Object.values(searchState)
-    .filter(v => v && v.toString().trim().length > 0)
-    .map(v => v.toString().trim());
+
+  const terms = [];
+  const ownValue = searchState[column]?.toString().trim() || '';
+
+  if (column === 'FORMATTEDTITLE') {
+    const { title } = parseTitleSearch(ownValue);
+    if (title) terms.push(title);
+  } else {
+    if (ownValue) terms.push(ownValue);
+
+    if (column === 'YEAR') {
+      const { year } = parseTitleSearch(searchState.FORMATTEDTITLE || '');
+      if (year) terms.push(year);
+    }
+  }
+
+  return [...new Set(terms)];
 }
 
 /**

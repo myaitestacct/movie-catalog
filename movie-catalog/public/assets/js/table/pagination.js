@@ -5,7 +5,7 @@ export function renderPagination(
   container,
   totalPages,
   totalResults = 0,
-  currentPageSize = 0,
+  pageSize = state.limit,
   onPageChange
 ) {
   if (!container) return;
@@ -21,9 +21,9 @@ export function renderPagination(
     return;
   }
 
-  const start = (state.page - 1) * currentPageSize + 1;
-  let end = start + currentPageSize - 1;
-  if (end > totalResults) end = totalResults;
+  const effectivePageSize = Math.max(1, Number(pageSize) || state.limit);
+  const start = (state.page - 1) * effectivePageSize + 1;
+  const end = Math.min(start + effectivePageSize - 1, totalResults);
 
   const info = document.createElement('span');
   info.className = 'info';

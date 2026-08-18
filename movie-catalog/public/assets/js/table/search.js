@@ -1,6 +1,5 @@
 // search.js
 import { state, ALWAYS_VISIBLE } from '../core/state.js';
-import { qs } from '../core/dom.js';
 
 export function initSearch(columns, searchRow, onSearch) {
     columns.forEach(col => {
@@ -19,10 +18,6 @@ export function initSearch(columns, searchRow, onSearch) {
             clearTimeout(state.debounce);
             state.debounce = setTimeout(() => {
                 state.search[col] = input.value.trim();
-                //columns.forEach(c => {
-                //    const el = qs(`input[data-col="${c}"]`);
-                //    state.search[c] = el ? el.value.trim() : '';
-                //});
                 state.page = 1;
                 onSearch();
             }, 500);

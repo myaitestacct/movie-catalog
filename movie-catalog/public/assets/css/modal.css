@@ -122,6 +122,18 @@
 }
 .modal-close:hover { color: #ff6666; transform: scale(1.1); }
 
+.movie-modal button:focus-visible,
+.movie-modal a:focus-visible,
+#modalPoster:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 3px;
+}
+
+#posterZoom:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: -6px;
+}
+
 /* ==========================
    Modal Body
 ========================== */

@@ -7,6 +7,7 @@ import { initSearch } from './table/search.js';
 import { initSorting } from './table/sorting.js';
 import { renderPagination } from './table/pagination.js';
 import { initStats, refreshStats } from './stats/stats.js';
+import { clearError, showError } from './utils/feedback.js';
 
 let table, searchRow, pagination, columns, statsPanel;
 
@@ -19,27 +20,44 @@ export async function loadMovies() {
 
   await new Promise(r => setTimeout(r, 150));
 
-  const params = new URLSearchParams({
-    page: state.page,
-    sort: state.sort,
-    dir: state.dir
-  });
+  try {
+    const params = new URLSearchParams({
+      page: state.page,
+      limit: state.limit,
+      sort: state.sort,
+      dir: state.dir,
+      mode: state.searchMode
+    });
 
-  Object.entries(state.search).forEach(([k, v]) => {
-    if (v) params.append(k, v);
-  });
+    Object.entries(state.search).forEach(([k, v]) => {
+      if (v) params.append(k, v);
+    });
 
-  if (state.fuzzy) params.append('fuzzy', 'true');
+    if (state.fuzzy) params.append('fuzzy', 'true');
 
-  const data = await fetchMovies(params);
+    const data = await fetchMovies(params);
 
-  renderTable(table, data.data, columns);
-  renderPagination(pagination, data.pages, data.total, data.data.length, loadMovies);
+    clearError('movies');
+    renderTable(table, data.data, columns);
+    renderPagination(
+      pagination,
+      data.pages,
+      data.total,
+      data.limit,
+      loadMovies
+    );
 
-  requestAnimationFrame(() => table.classList.add('show'));
-
-  if (statsPanel?.classList.contains('show')) {
-    refreshStats();
+    if (statsPanel?.classList.contains('show')) {
+      refreshStats();
+    }
+  } catch (error) {
+    console.error('Movie load failed:', error);
+    showError(error.message || 'Unable to load movies', {
+      scope: 'movies',
+      retry: loadMovies
+    });
+  } finally {
+    requestAnimationFrame(() => table.classList.add('show'));
   }
 }
 
@@ -72,6 +90,7 @@ export async function loadMovies() {
       state.searchMode = state.searchMode === 'AND' ? 'OR' : 'AND';
       searchModeBtn.textContent = state.searchMode;
       searchModeBtn.classList.toggle('or', state.searchMode === 'OR');
+      state.page = 1;
       loadMovies();
     };
   }
@@ -79,12 +98,12 @@ export async function loadMovies() {
   // 2.6️⃣ Fuzzy search toggle
   const fuzzyBtn = document.getElementById('fuzzy-toggle');
   if (fuzzyBtn) {
-    state.fuzzy = false;
-    fuzzyBtn.textContent = `Fuzzy: OFF`;
+    fuzzyBtn.textContent = `Fuzzy: ${state.fuzzy ? 'ON' : 'OFF'}`;
 
     fuzzyBtn.onclick = () => {
       state.fuzzy = !state.fuzzy;
       fuzzyBtn.textContent = `Fuzzy: ${state.fuzzy ? 'ON' : 'OFF'}`;
+      state.page = 1;
       loadMovies();
     };
   }

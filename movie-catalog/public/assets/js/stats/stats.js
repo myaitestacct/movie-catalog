@@ -1,5 +1,13 @@
 import { animateNumber, animateBytes } from './stats-animations.js';
+import {
+    fetchBetterCopyRows,
+    fetchDuplicates,
+    fetchMoviePage,
+    fetchStats
+} from '../core/api.js';
 import { state } from '../core/state.js';
+import { clearError, showError } from '../utils/feedback.js';
+import { configureExternalLink } from '../utils/url.js';
 import { loadMovies } from '../app.js';
 
 let panel, loaded = false;
@@ -15,6 +23,64 @@ let getBetterCopyPage = 1;
 
 const REC_PER_PAGE = 10;
 
+function createGroupHeader(group, colspan, alternate) {
+    const header = document.createElement('tr');
+    header.className = `dup-group ${alternate ? 'dup-group-a' : 'dup-group-b'}`;
+
+    const cell = document.createElement('td');
+    cell.colSpan = colspan;
+
+    const toggle = document.createElement('span');
+    toggle.className = 'dup-toggle';
+    toggle.textContent = group.open ? '▼' : '▶';
+
+    const details = document.createTextNode(
+        ` ${String(group.title ?? '')} (${String(group.year ?? '')}) `
+    );
+
+    const count = Number(group.count) || 0;
+    const countLabel = document.createElement('small');
+    countLabel.textContent = `— ${count} ${count === 1 ? 'copy' : 'copies'}`;
+
+    cell.append(toggle, details, countLabel);
+    header.appendChild(cell);
+
+    return header;
+}
+
+function createMovieReferenceRow(row) {
+    const tr = document.createElement('tr');
+    tr.className = 'dup-child';
+
+    const numCell = document.createElement('td');
+    const jumpLink = document.createElement('a');
+    jumpLink.href = '#';
+    jumpLink.className = 'jump-to-row';
+    jumpLink.dataset.num = String(row.NUM ?? '');
+    jumpLink.textContent = String(row.NUM ?? '');
+    jumpLink.onclick = e => {
+        e.preventDefault();
+        jumpToMovie(row.NUM);
+    };
+    numCell.appendChild(jumpLink);
+
+    const yearCell = document.createElement('td');
+    yearCell.textContent = String(row.YEAR ?? '');
+
+    const imdbCell = document.createElement('td');
+    const imdbLink = document.createElement('a');
+
+    if (configureExternalLink(imdbLink, row.URL)) {
+        imdbLink.textContent = 'IMDB';
+        imdbCell.appendChild(imdbLink);
+    } else {
+        imdbCell.textContent = 'IMDB';
+    }
+
+    tr.append(numCell, yearCell, imdbCell);
+    return tr;
+}
+
 export function initStats(toggleBtn, statsPanel) {
     panel = statsPanel;
     loaded = false;
@@ -29,7 +95,6 @@ export function initStats(toggleBtn, statsPanel) {
 
         if (!open && !loaded) {
             refreshStats();
-            loaded = true;
         }
     });
 
@@ -46,8 +111,10 @@ export function initStats(toggleBtn, statsPanel) {
 
 export async function refreshStats() {
     try {
-        const res = await fetch('api/stats.php');
-        const data = await res.json();
+        const data = await fetchStats();
+
+        clearError('stats');
+        loaded = true;
 
         const el = id => document.getElementById(id);
         animateNumber(el('total-movies'), data.total_movies);
@@ -76,7 +143,12 @@ export async function refreshStats() {
             betterCopyEl.onclick = null;
         }
     } catch (err) {
+        loaded = false;
         console.error('Stats API error:', err);
+        showError(err.message || 'Unable to load statistics', {
+            scope: 'stats',
+            retry: refreshStats
+        });
     }
 }
 
@@ -91,35 +163,42 @@ function closePanel() {
 
 async function loadDuplicates() {
     try {
-        const res = await fetch('api/duplicates.php');
-        const rows = await res.json();
+        const rows = await fetchDuplicates();
 
+        clearError('duplicates');
         dupGroups = groupDuplicates(rows);
         dupPage = 1;
         showDuplicateModal();
     } catch (e) {
         console.error('Duplicate load failed', e);
+        showError(e.message || 'Unable to load duplicate movies', {
+            scope: 'duplicates',
+            retry: loadDuplicates
+        });
     }
 }
 
-/* Group rows by ORIGINALTITLE + YEAR + URL */
+/* Group rows by the same IMDb URL used by the backend duplicate query. */
 function groupDuplicates(rows) {
     const map = new Map();
 
     rows.forEach(row => {
-        const key = `${row.ORIGINALTITLE}__${row.YEAR}__${row.URL}`;
+        const key = row.URL;
         if (!map.has(key)) {
             map.set(key, {
                 key,
                 title: row.ORIGINALTITLE,
                 year: row.YEAR,
                 url: row.URL,
-                count: row.dup_count,
+                count: 0,
                 rows: [],
                 open: false
             });
         }
-        map.get(key).rows.push(row);
+
+        const group = map.get(key);
+        group.rows.push(row);
+        group.count = group.rows.length;
     });
 
     return Array.from(map.values());
@@ -183,17 +262,7 @@ function renderDuplicatePage() {
         alt = !alt;
 
         /* ---------- GROUP HEADER ---------- */
-        const header = document.createElement('tr');
-        header.className = `dup-group ${alt ? 'dup-group-a' : 'dup-group-b'}`;
-
-        header.innerHTML = `
-            <td colspan="3">
-                <span class="dup-toggle">${group.open ? '▼' : '▶'}</span>
-                ${group.title} (${group.year})
-                <small>— ${group.count} copies</small>
-            </td>
-        `;
-
+        const header = createGroupHeader(group, 3, alt);
         header.onclick = () => {
             group.open = !group.open;
             renderDuplicatePage();
@@ -204,21 +273,7 @@ function renderDuplicatePage() {
         /* ---------- CHILD ROWS ---------- */
         if (group.open) {
             group.rows.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.className = 'dup-child';
-
-                tr.innerHTML = `
-                    <td><a href="#" data-num="${row.NUM}" class="jump-to-row">${row.NUM}</a></td>
-                    <td>${row.YEAR}</td>
-                    <td><a href="${row.URL}" target="_blank">IMDB</a></td>
-                `;
-
-                tr.querySelector('a').onclick = e => {
-                    e.preventDefault();
-                    jumpToMovie(row.NUM);
-                };
-
-                tbody.appendChild(tr);
+                tbody.appendChild(createMovieReferenceRow(row));
             });
         }
     });
@@ -242,9 +297,9 @@ function renderDuplicatePage() {
 
 async function loadGetBetterCopy() {
     try {
-        // Fetch data from the backend API
-        const res = await fetch('api/better-copy.php'); // Adjust the URL as necessary
-        const rows = await res.json();
+        const rows = await fetchBetterCopyRows();
+
+        clearError('better-copy');
         // Check if there are movies to display
         if (!Array.isArray(rows) || rows.length === 0) {
             alert("No movies found with 'Get Better Copy'!");
@@ -257,6 +312,10 @@ async function loadGetBetterCopy() {
         showGetBetterCopyModal();
     } catch (e) {
         console.error('Get Better Copy load failed', e);
+        showError(e.message || 'Unable to load better-copy movies', {
+            scope: 'better-copy',
+            retry: loadGetBetterCopy
+        });
     }
 }
 
@@ -271,12 +330,15 @@ function groupGetBetterCopy(rows) {
                 title: row.ORIGINALTITLE,
                 year: row.YEAR,
                 url: row.URL,
-                count: 1, // All rows should have 1 for 'needs_better_copy'
+                count: 0,
                 rows: [],
                 open: false
             });
         }
-        map.get(key).rows.push(row);
+
+        const group = map.get(key);
+        group.rows.push(row);
+        group.count = group.rows.length;
     });
 
     return Array.from(map.values());
@@ -341,17 +403,7 @@ function renderGetBetterCopyPage() {
         alt = !alt;
 
         /* ---------- GROUP HEADER ---------- */
-        const header = document.createElement('tr');
-        header.className = `dup-group ${alt ? 'dup-group-a' : 'dup-group-b'}`;
-
-        header.innerHTML = `
-            <td colspan="4">
-                <span class="dup-toggle">${group.open ? '▼' : '▶'}</span>
-                ${group.title} (${group.year})
-                <small>— ${group.count} copies</small>
-            </td>
-        `;
-
+        const header = createGroupHeader(group, 4, alt);
         header.onclick = () => {
             group.open = !group.open;
             renderGetBetterCopyPage();
@@ -362,22 +414,7 @@ function renderGetBetterCopyPage() {
         /* ---------- CHILD ROWS ---------- */
         if (group.open) {
             group.rows.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.className = 'dup-child';
-
-                tr.innerHTML = `
-                    <td><a href="#" data-num="${row.NUM}" class="jump-to-row">${row.NUM}</a></td>
-                    <td>${row.YEAR}</td>
-                    <td><a href="${row.URL}" target="_blank">IMDB</a></td>
-                `;
-
-                // Link NUM to the original table row
-                tr.querySelector('td').onclick = (e) => {
-                    e.preventDefault();
-                    jumpToMovie(row.NUM); // This will scroll to the original row in the movie table
-                };
-
-                tbody.appendChild(tr);
+                tbody.appendChild(createMovieReferenceRow(row));
             });
         }
     });
@@ -400,12 +437,29 @@ function renderGetBetterCopyPage() {
 ============================= */
 async function jumpToMovie(num) {
     try {
-        // Get the page containing this movie
-        const res = await fetch(`api/movie-page.php?num=${num}&perPage=50&sort=${state.sort}&dir=${state.dir}`);
-        const data = await res.json();
+        const params = new URLSearchParams({
+            num,
+            perPage: state.limit,
+            sort: state.sort,
+            dir: state.dir,
+            mode: state.searchMode,
+            fuzzy: state.fuzzy
+        });
 
-        if (data.error) {
-            console.error('Server error:', data.error);
+        Object.entries(state.search).forEach(([column, value]) => {
+            if (value) params.append(`filters[${column}]`, value);
+        });
+
+        // Get the page containing this movie under the current table state.
+        const data = await fetchMoviePage(params);
+
+        clearError('movie-jump');
+
+        if (!data.found || !data.page) {
+            alert(
+                'This movie is not included in the current filtered results. ' +
+                'Clear or change the filters and try again.'
+            );
             return;
         }
 
@@ -425,25 +479,9 @@ async function jumpToMovie(num) {
         setTimeout(() => row.classList.remove('row-highlight'), 2000);
     } catch (err) {
         console.error('Failed to jump to movie:', err);
-    }
-}
-function highlightCurrentPage() {
-    document
-        .querySelectorAll('.pagination button')
-        .forEach(btn => {
-            btn.classList.toggle(
-                'active',
-                Number(btn.textContent) === state.page
-            );
+        showError(err.message || 'Unable to locate the movie', {
+            scope: 'movie-jump',
+            retry: () => jumpToMovie(num)
         });
-}
-
-function highlightMovieRow(num) {
-    const row = document.querySelector(`tr[data-num="${num}"]`);
-    if (!row) return;
-
-    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    row.classList.add('row-highlight');
-
-    setTimeout(() => row.classList.remove('row-highlight'), 2000);
+    }
 }

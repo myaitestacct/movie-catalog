@@ -15,6 +15,7 @@
 
     --text-main: #222;
     --text-muted: #666;
+    --border-panel: #eee;
 
     /* Sizes */
     --radius-sm: 6px;
@@ -66,6 +67,7 @@
     width: var(--panel-width);
     max-width: 95%;
     background: var(--bg-panel);
+    color: var(--text-main);
     box-shadow: var(--shadow-lg);
     border-radius: 0 0 var(--radius-md) var(--radius-md);
     transform: translateY(-100%);
@@ -98,7 +100,7 @@
     padding: 8px 10px;
     background: var(--bg-card);
     border-radius: var(--radius-sm);
-    color: #222;
+    color: var(--text-main);
 }
 
 .stat-card i {
@@ -175,6 +177,7 @@
 .stats-close {
     background: none;
     border: none;
+    color: var(--text-main);
     font-size: 22px;
     cursor: pointer;
 }
@@ -196,7 +199,7 @@
 .stats-modal th,
 .stats-modal td {
     padding: 6px 8px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--border-panel);
     text-align: left;
     white-space: nowrap;
 }
@@ -262,7 +265,7 @@
 /* ==========================
    Dark Theme
 ========================== */
-[data-theme="dark"] {
+:root.theme-dark {
     --bg-panel: #111;
     --bg-card: #1c1c1c;
     --bg-group-a: #1b2333;
@@ -271,7 +274,24 @@
 
     --text-main: #fff;
     --text-muted: #aaa;
+    --border-panel: #333;
     --bg-modal: rgba(0,0,0,.7);
+}
+
+/* Follow system dark mode until the user explicitly selects light mode. */
+@media (prefers-color-scheme: dark) {
+    :root:not(.theme-light) {
+        --bg-panel: #111;
+        --bg-card: #1c1c1c;
+        --bg-group-a: #1b2333;
+        --bg-group-b: #141414;
+        --bg-hover: #223355;
+
+        --text-main: #fff;
+        --text-muted: #aaa;
+        --border-panel: #333;
+        --bg-modal: rgba(0,0,0,.7);
+    }
 }
 .table-fade {
     opacity: 0;

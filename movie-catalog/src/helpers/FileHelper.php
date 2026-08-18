@@ -4,8 +4,15 @@ class FileHelper
 {
     public static function splitPath(string $filepath): array
     {
-        $pos = strrpos($filepath, '\\');
-        if ($pos === false) {
+        $backslashPos = strrpos($filepath, '\\');
+        $slashPos = strrpos($filepath, '/');
+
+        $pos = max(
+            $backslashPos === false ? -1 : $backslashPos,
+            $slashPos === false ? -1 : $slashPos
+        );
+
+        if ($pos === -1) {
             return ['path' => '', 'file' => $filepath];
         }
 
