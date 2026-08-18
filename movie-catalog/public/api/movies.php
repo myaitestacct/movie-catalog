@@ -1,69 +1,169 @@
-<?php
-declare(strict_types=1);
+<div class="column-toggles">
+    <button type="button" id="theme-toggle">🌙</button>
 
-$root = dirname(__DIR__, 2);
-require_once $root . '/src/helpers/ApiResponse.php';
-ApiResponse::configure();
+    <button
+        type="button"
+        id="search-mode"
+        class="search-mode"
+    >
+        AND
+    </button>
 
-$pdo = require $root . '/src/db/connection.php';
+    <button
+        type="button"
+        id="fuzzy-toggle"
+    >
+        Fuzzy: ON
+    </button>
 
-// Load config.json properly
-$configPath = $root . '/src/config/config.json';
-$config = json_decode(file_get_contents($configPath), true);
+    <button
+        type="button"
+        class="toggle-col"
+        data-col="LANGUAGES"
+    >
+        <i class="fa-solid fa-language"></i>
+        Language
+    </button>
 
-require_once $root . '/src/repositories/MovieRepository.php';
-require_once $root . '/src/helpers/Pagination.php';
+    <button
+        type="button"
+        class="toggle-col"
+        data-col="LENGTH"
+    >
+        <i class="fa-solid fa-clock"></i>
+        Length
+    </button>
 
-try {
+    <button
+        type="button"
+        class="toggle-col"
+        data-col="CERTIFICATION"
+    >
+        <i class="fa-solid fa-ribbon"></i>
+        Cert
+    </button>
 
-    $page = max(1, (int)($_GET['page'] ?? 1));
+    <button
+        type="button"
+        class="toggle-col"
+        data-col="CATEGORY"
+    >
+        <i class="fa-solid fa-tags"></i>
+        Genre
+    </button>
 
-    // ✅ Proper limit handling
-    $limit = isset($_GET['limit'])
-        ? (int)$_GET['limit']
-        : (int)$config['pagination']['default_limit'];
+    <button
+        type="button"
+        class="toggle-col"
+        data-col="RESOLUTION"
+    >
+        <i class="fa-solid fa-expand"></i>
+        Resolution
+    </button>
 
-    $maxLimit = (int)$config['pagination']['max_limit'];
+    <button
+        type="button"
+        class="toggle-col"
+        data-col="AUDIOFORMAT"
+    >
+        <i class="fa-solid fa-volume-high"></i>
+        Audio
+    </button>
 
-    $sort = $_GET['sort'] ?? 'NUM';
-    $dir  = strtoupper($_GET['dir'] ?? 'ASC');
-    $mode = strtoupper($_GET['mode'] ?? 'AND');
-    $mode = $mode === 'OR' ? 'OR' : 'AND';
-    $fuzzy = filter_var($_GET['fuzzy'] ?? false, FILTER_VALIDATE_BOOLEAN);
+    <button
+        type="button"
+        class="toggle-col"
+        data-col="FILEPATH"
+    >
+        <i class="fa-solid fa-file-video"></i>
+        File
+    </button>
 
-    // Collect filters
-    $searchableCols = [
-        'NUM','FORMATTEDTITLE','YEAR','LENGTH','CERTIFICATION',
-        'RATING','FILESIZE','LANGUAGES','CATEGORY',
-        'RESOLUTION','AUDIOFORMAT','FILEPATH','PATH'
-    ];
+    <button
+        type="button"
+        class="toggle-col"
+        data-col="PATH"
+    >
+        <i class="fa-solid fa-folder-open"></i>
+        Path
+    </button>
+</div>
 
-    $filters = [];
+<div class="table-wrapper">
+    <table id="movies">
+        <thead>
+            <tr>
+                <th data-col="NUM">No</th>
+                <th data-col="FORMATTEDTITLE">Title</th>
+                <th data-col="YEAR">Year</th>
+                <th data-col="RATING">Rating</th>
+                <th data-col="FILESIZE">Size</th>
 
-    foreach ($searchableCols as $col) {
-        if (!empty($_GET[$col])) {
-            $filters[$col] = $_GET[$col];
-        }
-    }
+                <th
+                    data-col="CERTIFICATION"
+                    style="display:none;"
+                >
+                    Cert
+                </th>
 
-    $pagination = new Pagination($page, $limit, $maxLimit);
-    $repo = new MovieRepository($pdo);
+                <th
+                    data-col="LENGTH"
+                    style="display:none;"
+                >
+                    Length
+                </th>
 
-    $totalRows = $repo->countMovies($filters, $mode, $fuzzy);
-    $movies = $repo->getMovies($filters, $sort, $dir, $pagination, $mode, $fuzzy);
+                <th
+                    data-col="LANGUAGES"
+                    style="display:none;"
+                >
+                    Language
+                </th>
 
-    echo json_encode([
-        'data'  => $movies,
-        'page'  => $page,
-        'limit' => $pagination->limit,
-        'pages' => ceil($totalRows / $pagination->limit),
-        'total' => $totalRows
-    ]);
+                <th
+                    data-col="CATEGORY"
+                    style="display:none;"
+                >
+                    Genre
+                </th>
 
-} catch (Throwable $e) {
-    ApiResponse::serverError(
-        'Movies API failed',
-        $e,
-        'Unable to load movies'
-    );
-}
+                <th
+                    data-col="RESOLUTION"
+                    style="display:none;"
+                >
+                    Resolution
+                </th>
+
+                <th
+                    data-col="AUDIOFORMAT"
+                    style="display:none;"
+                >
+                    Audio
+                </th>
+
+                <th
+                    data-col="FILEPATH"
+                    style="display:none;"
+                >
+                    File
+                </th>
+
+                <th
+                    data-col="PATH"
+                    style="display:none;"
+                >
+                    Path
+                </th>
+            </tr>
+
+            <tr id="search-row"></tr>
+        </thead>
+
+        <tbody></tbody>
+    </table>
+</div>
+
+<div
+    class="pagination"
+    id="pagination"
+></div>
