@@ -7,7 +7,7 @@ export const state = {
   columnVisibility: {},
   search: {},
   searchMode: 'AND',
-  fuzzy: false,
+  fuzzy: true,
   debounce: null
 };
 
