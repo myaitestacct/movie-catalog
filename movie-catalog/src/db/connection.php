@@ -1,51 +1,97 @@
 <?php
+
 header('Content-Type: application/json');
-$configPath = __DIR__ . '/../config/config.json';
 
-if (!file_exists($configPath)) {
-    //header('Content-Type: application/json');
-    echo json_encode(['error' => 'Config file not found']);
-    exit;
+$defaultConfigPath = __DIR__ . '/../config/database.local.json';
+$configPathFromEnv = getenv('MOVIE_DB_CONFIG');
+$configPath = $configPathFromEnv !== false && trim($configPathFromEnv) !== ''
+    ? $configPathFromEnv
+    : $defaultConfigPath;
+
+$localConfig = [];
+
+if (is_file($configPath)) {
+    $decodedConfig = json_decode(file_get_contents($configPath), true);
+
+    if (!is_array($decodedConfig)) {
+        error_log('Movie Catalog database configuration is invalid JSON.');
+        http_response_code(500);
+        echo json_encode(['error' => 'Database configuration is invalid']);
+        exit;
+    }
+
+    $localConfig = isset($decodedConfig['database']) && is_array($decodedConfig['database'])
+        ? $decodedConfig['database']
+        : $decodedConfig;
 }
 
-$config = json_decode(file_get_contents($configPath), true);
+$readEnv = static function (string $name, mixed $fallback = null): mixed {
+    $value = getenv($name);
+    return $value === false ? $fallback : $value;
+};
 
-if (!$config || !isset($config['database'])) {
-    //header('Content-Type: application/json');
-    echo json_encode(['error' => 'Invalid config file']);
+$db = [
+    'host' => $readEnv('MOVIE_DB_HOST', $localConfig['host'] ?? 'localhost'),
+    'port' => $readEnv('MOVIE_DB_PORT', $localConfig['port'] ?? 3306),
+    'dbname' => $readEnv('MOVIE_DB_NAME', $localConfig['dbname'] ?? null),
+    'user' => $readEnv('MOVIE_DB_USER', $localConfig['user'] ?? null),
+    'password' => $readEnv(
+        'MOVIE_DB_PASSWORD',
+        array_key_exists('password', $localConfig)
+            ? $localConfig['password']
+            : null
+    ),
+    'charset' => $readEnv(
+        'MOVIE_DB_CHARSET',
+        $localConfig['charset'] ?? 'utf8mb4'
+    )
+];
+
+$missingRequiredConfig =
+    trim((string)$db['dbname']) === '' ||
+    trim((string)$db['user']) === '' ||
+    $db['password'] === null;
+
+$port = filter_var(
+    $db['port'],
+    FILTER_VALIDATE_INT,
+    ['options' => ['min_range' => 1, 'max_range' => 65535]]
+);
+
+$charset = (string)$db['charset'];
+$validCharset = preg_match('/^[a-zA-Z0-9_]+$/', $charset) === 1;
+
+if ($missingRequiredConfig || $port === false || !$validCharset) {
+    error_log('Movie Catalog database configuration is missing or invalid.');
+    http_response_code(500);
+    echo json_encode(['error' => 'Database configuration is missing or invalid']);
     exit;
 }
-
-$db = $config['database'];
 
 $dsn = sprintf(
-    'mysql:host=%s;dbname=%s;charset=%s',
+    'mysql:host=%s;port=%d;dbname=%s;charset=%s',
     $db['host'],
+    $port,
     $db['dbname'],
-    $db['charset']
+    $charset
 );
 
 try {
     $pdo = new PDO(
         $dsn,
-        $db['user'],
-        $db['password'],
+        (string)$db['user'],
+        (string)$db['password'],
         [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES   => false
+            PDO::ATTR_EMULATE_PREPARES => false
         ]
     );
-    //$pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
-    error_log("Database connection successful");
 } catch (PDOException $e) {
-    header('Content-Type: application/json');
-    echo json_encode(['error' => 'DB connection failed']);
+    error_log('Movie Catalog database connection failed: ' . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['error' => 'Database connection failed']);
     exit;
 }
 
-/**
- * 🔴 THIS IS THE IMPORTANT PART
- * Without this, require() returns `1`
- */
 return $pdo;

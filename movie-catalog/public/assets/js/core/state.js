@@ -7,15 +7,10 @@ export const state = {
   columnVisibility: {},
   search: {},
   searchMode: 'AND',
-  debounce: null,
-  serverMode: true
+  fuzzy: false,
+  debounce: null
 };
 
 export const ALWAYS_VISIBLE = [
   'NUM','FORMATTEDTITLE','YEAR','RATING','FILESIZE'
-];
-
-export const OPTIONAL_COLUMNS = [
-  'LANGUAGES','LENGTH','CERTIFICATION','CATEGORY',
-  'RESOLUTION','AUDIOFORMAT','FILE','PATH'
 ];

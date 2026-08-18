@@ -1,0 +1,14 @@
+{
+  "name": "movie-catalog-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "npm run test:js && npm run test:php",
+    "test:js": "node --test tests/js/*.test.mjs",
+    "test:php": "php tests/php/run.php"
+  },
+  "engines": {
+    "node": ">=20",
+    "php": ">=8.3"
+  }
+}

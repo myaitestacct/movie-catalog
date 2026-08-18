@@ -1,83 +1,283 @@
 // modal.js
-import { splitPath, setMultilineText, setPoster, fillFields } from './modal.utils.js';
+import {
+    splitPath,
+    setMultilineText,
+    setPoster,
+    fillFields
+} from './modal.utils.js';
 import { copyToClipboard } from '../utils/clipboard.js';
+import { configureExternalLink } from '../utils/url.js';
 import { createModalDOM } from './modal.dom.js';
 
-let movies = [], currentIndex = -1;
+const FOCUSABLE_SELECTOR = [
+    'a[href]',
+    'button:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])'
+].join(',');
+
+let movies = [];
+let currentIndex = -1;
 
 export const Modal = (() => {
-    let modal, content, poster, posterZoom, posterZoomImg;
-    let prevBtn, nextBtn, closeBtn, activeRow = null;
+    let modal;
+    let content;
+    let poster;
+    let posterZoom;
+    let posterZoomImg;
+    let prevBtn;
+    let nextBtn;
+    let closeBtn;
+    let activeRow = null;
+    let lastFocusedElement = null;
+    let backgroundState = [];
 
     function initDOM() {
         if (modal) return;
 
         const dom = createModalDOM();
-        ({ modal, content, poster, posterZoom, posterZoomImg, prevBtn, nextBtn, closeBtn } = dom);
+        ({
+            modal,
+            content,
+            poster,
+            posterZoom,
+            posterZoomImg,
+            prevBtn,
+            nextBtn,
+            closeBtn
+        } = dom);
 
         prevBtn.onclick = () => Modal.prev();
         nextBtn.onclick = () => Modal.next();
-        closeBtn.onclick = () => modal.classList.remove('open');
+        closeBtn.onclick = closeModal;
 
-        modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
-
-        document.addEventListener('keydown', e => {
-            if (!modal.classList.contains('open')) return;
-            if (e.key === 'Escape') modal.classList.remove('open');
-            if (e.key === 'ArrowRight') Modal.next();
-            if (e.key === 'ArrowLeft') Modal.prev();
+        modal.addEventListener('click', event => {
+            if (event.target === modal) {
+                closeModal();
+            }
         });
 
-        // Poster click to maximize
-        poster.onclick = () => {
-            posterZoomImg.src = poster.src;
-            posterZoom.classList.add('open');
+        document.addEventListener('keydown', handleKeydown);
+
+        poster.onclick = openPosterZoom;
+        poster.onkeydown = event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openPosterZoom();
+            }
         };
 
-        // Click anywhere on zoomed poster to close
-        posterZoom.onclick = () => posterZoom.classList.remove('open');
+        posterZoom.onclick = () => closePosterZoom();
+    }
+
+    function getFocusableElements(root) {
+        return [...root.querySelectorAll(FOCUSABLE_SELECTOR)]
+            .filter(element =>
+                !element.disabled &&
+                element.getAttribute('aria-hidden') !== 'true'
+            );
+    }
+
+    function trapFocus(event) {
+        const focusable = getFocusableElements(modal);
+
+        if (focusable.length === 0) {
+            event.preventDefault();
+            content.focus();
+            return;
+        }
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement;
+
+        if (event.shiftKey && (active === first || !modal.contains(active))) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && (active === last || !modal.contains(active))) {
+            event.preventDefault();
+            first.focus();
+        }
+    }
+
+    function handleKeydown(event) {
+        if (posterZoom?.classList.contains('open')) {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closePosterZoom();
+            } else if (event.key === 'Tab') {
+                event.preventDefault();
+                posterZoom.focus();
+            }
+            return;
+        }
+
+        if (!modal?.classList.contains('open')) return;
+
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeModal();
+        } else if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            Modal.next();
+        } else if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            Modal.prev();
+        } else if (event.key === 'Tab') {
+            trapFocus(event);
+        }
+    }
+
+    function setBackgroundInert(inert) {
+        if (inert) {
+            backgroundState = [...document.body.children]
+                .filter(element => element !== modal && element !== posterZoom)
+                .map(element => ({
+                    element,
+                    inert: Boolean(element.inert),
+                    ariaHidden: element.getAttribute('aria-hidden')
+                }));
+
+            backgroundState.forEach(({ element }) => {
+                element.inert = true;
+                element.setAttribute('aria-hidden', 'true');
+            });
+            return;
+        }
+
+        backgroundState.forEach(({ element, inert: wasInert, ariaHidden }) => {
+            element.inert = wasInert;
+
+            if (ariaHidden === null) {
+                element.removeAttribute('aria-hidden');
+            } else {
+                element.setAttribute('aria-hidden', ariaHidden);
+            }
+        });
+        backgroundState = [];
+    }
+
+    function openModal() {
+        if (modal.classList.contains('open')) return;
+
+        lastFocusedElement = document.activeElement;
+        setBackgroundInert(true);
+        modal.setAttribute('aria-hidden', 'false');
+        modal.classList.add('open');
+
+        requestAnimationFrame(() => closeBtn.focus());
+    }
+
+    function closeModal() {
+        if (!modal?.classList.contains('open')) return;
+
+        closePosterZoom(false);
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+        setBackgroundInert(false);
+        clearActiveRow();
+
+        const focusTarget = lastFocusedElement;
+        lastFocusedElement = null;
+
+        requestAnimationFrame(() => {
+            if (focusTarget?.isConnected && typeof focusTarget.focus === 'function') {
+                focusTarget.focus();
+            }
+        });
+    }
+
+    function openPosterZoom() {
+        if (!poster?.src) return;
+
+        posterZoomImg.src = poster.src;
+        posterZoomImg.alt = poster.alt || 'Enlarged movie poster';
+        modal.inert = true;
+        modal.setAttribute('aria-hidden', 'true');
+        posterZoom.setAttribute('aria-hidden', 'false');
+        posterZoom.classList.add('open');
+        posterZoom.focus();
+    }
+
+    function closePosterZoom(restorePosterFocus = true) {
+        if (!posterZoom?.classList.contains('open')) return;
+
+        posterZoom.classList.remove('open');
+        posterZoom.setAttribute('aria-hidden', 'true');
+        modal.inert = false;
+
+        if (modal.classList.contains('open')) {
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        if (restorePosterFocus) {
+            poster.focus();
+        }
+    }
+
+    function clearActiveRow() {
+        if (activeRow) {
+            activeRow.classList.remove('active-movie-row');
+            activeRow = null;
+        }
     }
 
     function highlightRow(movie) {
-        if (activeRow) activeRow.classList.remove('active-movie-row');
+        clearActiveRow();
         activeRow = document.querySelector(`tr[data-num="${movie.NUM}"]`);
-        if (activeRow) activeRow.classList.add('active-movie-row');
+
+        if (activeRow) {
+            activeRow.classList.add('active-movie-row');
+        }
     }
 
     function renderMovieView(movie) {
-        // Poster
-        setPoster(poster, movie.PICTURENAME, '/movies/antexport', '/movies/antexport/movies_0000-coming_soon.jpg');
+        setPoster(
+            poster,
+            movie.PICTURENAME,
+            '/movies/antexport',
+            '/movies/antexport/movies_0000-coming_soon.jpg'
+        );
 
-        // Header
+        const displayTitle = (
+            movie.FORMATTEDTITLE || movie.ORIGINALTITLE || ''
+        ).trim();
         const titleEl = modal.querySelector('#modalTitle');
-        titleEl.textContent = (movie.FORMATTEDTITLE || movie.ORIGINALTITLE || '').trim();
+        titleEl.textContent = displayTitle;
+        poster.alt = displayTitle ? `${displayTitle} poster` : 'Movie poster';
 
         const ratingEl = modal.querySelector('#modalRating');
         ratingEl.textContent = movie.RATING || '';
-        ratingEl.href = movie.URL || '#';
+        const hasRatingLink = configureExternalLink(ratingEl, movie.URL);
+        ratingEl.setAttribute(
+            'aria-label',
+            hasRatingLink && displayTitle
+                ? `Open external rating for ${displayTitle}`
+                : 'External rating link unavailable'
+        );
 
-        // Description
-        setMultilineText(modal.querySelector('#modalDescription'), movie.DESCRIPTION || '');
+        setMultilineText(
+            modal.querySelector('#modalDescription'),
+            movie.DESCRIPTION || ''
+        );
 
-        // Map basic fields
-        const map = {
+        fillFields(modal, {
             modalYear: movie.YEAR,
             modalLength: movie.LENGTH,
-            modalCert: movie.CERTIFICATION,
+            modalCertification: movie.CERTIFICATION,
             modalLanguage: movie.LANGUAGES,
             modalCategory: movie.CATEGORY,
             modalCountry: movie.COUNTRY,
             modalDirector: movie.DIRECTOR,
             modalActors: movie.ACTORS,
-            modalNum: movie.NUM,
             modalFilesize: movie.FILESIZE,
             modalResolution: movie.RESOLUTION,
             modalAudio: movie.AUDIOFORMAT,
             modalSubtitles: movie.SUBTITLES
-        };
-        fillFields(modal, map);
+        });
 
-        // ===== File info with copy button =====
         const { path, file } = splitPath(movie.FILEPATH);
         modal.querySelector('#modalPath').textContent = path;
 
@@ -88,51 +288,46 @@ export const Modal = (() => {
         if (fileSpan) fileSpan.textContent = file || '';
 
         if (fileBtn) {
-            fileBtn.onclick = e => {
-                e.stopPropagation();
+            fileBtn.onclick = event => {
+                event.stopPropagation();
                 copyToClipboard(file || '', fileBtn);
             };
         }
 
-        // Get the #modalNum div
-        const numDiv = document.querySelector('#modalNum');
+        const numContainer = modal.querySelector('#modalNum');
+        const numSpan = numContainer?.querySelector('.num-value');
+        const numBtn = numContainer?.querySelector('.copy-btn');
 
-        // Wrap the number in a span if it isn't already
-        let numSpan = numDiv.querySelector('span.num-value');
-        if (!numSpan) {
-            numSpan = document.createElement('span');
-            numSpan.className = 'num-value';
-            numSpan.textContent = numDiv.textContent; // preserve existing number
-            numDiv.textContent = '';
-            numDiv.appendChild(numSpan);
+        if (numSpan) {
+            numSpan.textContent = movie.NUM ?? '';
         }
 
-        // Create the copy button
-        const numBtn = document.createElement('button');
-        numBtn.className = 'copy-btn icon-btn';
-        numBtn.title = 'Copy Num';
-        numBtn.textContent = '📋'; // native clipboard icon
-        numDiv.appendChild(numBtn);
-
-        // Attach click handler
-        numBtn.onclick = e => {
-            e.stopPropagation();
-            const value = numSpan.textContent;
-            copyToClipboard(value + '__', numBtn);
-        };
+        if (numBtn) {
+            numBtn.onclick = event => {
+                event.stopPropagation();
+                copyToClipboard(`${movie.NUM ?? ''}__`, numBtn);
+            };
+        }
 
         highlightRow(movie);
     }
 
     function renderMovie(movie) {
         if (!modal) initDOM();
+
         renderMovieView(movie);
-        modal.classList.add('open');
+        openModal();
     }
 
     return {
-        setMovies(list) { movies = list || []; },
-        show(movie, index = -1) { currentIndex = index; if (movie) renderMovie(movie); },
+        setMovies(list) {
+            movies = list || [];
+        },
+        show(movie, index = -1) {
+            currentIndex = index;
+            if (movie) renderMovie(movie);
+        },
+        close: closeModal,
         next() {
             if (!movies.length) return;
             currentIndex = (currentIndex + 1) % movies.length;

@@ -1,7 +1,12 @@
 // table.js
 import { state, ALWAYS_VISIBLE } from '../core/state.js';
 import { copyToClipboard } from '../utils/clipboard.js';
-import { highlightMatch, collectSearchTerms, shouldHighlight } from '../utils/highlighttext.js';
+import { configureExternalLink } from '../utils/url.js';
+import {
+  collectColumnSearchTerms,
+  highlightMatch,
+  shouldHighlight
+} from '../utils/highlighttext.js';
 import { Modal } from '../modal/modal.js';
 
 /**
@@ -14,8 +19,12 @@ export function renderTable(table, rows, columns) {
   const tbody = table.querySelector('tbody');
   tbody.innerHTML = '';
 
-  const searchTerms = collectSearchTerms(state.search);
-  const mode = state.searchMode || 'AND';
+  const termsByColumn = Object.fromEntries(
+    columns.map(column => [
+      column,
+      collectColumnSearchTerms(state.search, column)
+    ])
+  );
   const fuzzy = !!state.fuzzy;
 
   rows.forEach(movie => {
@@ -35,6 +44,7 @@ export function renderTable(table, rows, columns) {
       const visible = state.columnVisibility[col] ?? ALWAYS_VISIBLE.includes(col);
       td.style.display = visible ? '' : 'none';
 
+      const searchTerms = termsByColumn[col] || [];
       let value = movie[col] ?? '';
       const textValue = String(value);
 
@@ -45,7 +55,7 @@ export function renderTable(table, rows, columns) {
         const span = document.createElement('span');
         span.className = 'num-value';
 
-        if (shouldHighlight(textValue, searchTerms, mode, fuzzy)) {
+        if (shouldHighlight(textValue, searchTerms, 'OR', fuzzy)) {
           span.innerHTML = highlightMatch(textValue, searchTerms, fuzzy);
         } else {
           span.textContent = textValue;
@@ -73,7 +83,7 @@ export function renderTable(table, rows, columns) {
           a.href = '#';
           a.className = 'movie-title-link'; // <-- add this!
 
-          if (shouldHighlight(value, searchTerms, mode, fuzzy)) {
+          if (shouldHighlight(value, searchTerms, 'OR', fuzzy)) {
             a.innerHTML = highlightMatch(value, searchTerms, fuzzy);
           } else {
             a.textContent = value;
@@ -104,13 +114,13 @@ export function renderTable(table, rows, columns) {
         td.textContent = '';
       } else {
         const a = document.createElement('a');
-        a.href = movie.URL || '#';
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
+        const hasExternalRating = configureExternalLink(a, movie.URL);
         a.className = 'rating-badge';
-        a.title = 'Open external rating';
+        a.title = hasExternalRating
+          ? 'Open external rating'
+          : 'External rating link unavailable';
 
-        if (shouldHighlight(textValue, searchTerms, mode, fuzzy)) {
+        if (shouldHighlight(textValue, searchTerms, 'OR', fuzzy)) {
           a.innerHTML = highlightMatch(textValue, searchTerms, fuzzy);
         } else {
           a.textContent = textValue;
@@ -131,7 +141,7 @@ export function renderTable(table, rows, columns) {
         span.className = 'file-name';
         const fileName = movie.FILE ?? '';
 
-        if (shouldHighlight(fileName, searchTerms, mode, fuzzy)) {
+        if (shouldHighlight(fileName, searchTerms, 'OR', fuzzy)) {
           span.innerHTML = highlightMatch(fileName, searchTerms, fuzzy);
         } else {
           span.textContent = fileName;
@@ -155,7 +165,7 @@ export function renderTable(table, rows, columns) {
          Default columns
       ========================== */
       else {
-        if (shouldHighlight(value, searchTerms, mode, fuzzy)) {
+        if (shouldHighlight(value, searchTerms, 'OR', fuzzy)) {
           td.innerHTML = highlightMatch(value, searchTerms, fuzzy);
         } else {
           td.textContent = value;

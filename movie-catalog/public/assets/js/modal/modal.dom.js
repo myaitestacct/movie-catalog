@@ -6,26 +6,33 @@ export function createModalDOM() {
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
     modal.setAttribute('aria-labelledby', 'modalTitle');
+    modal.setAttribute('aria-hidden', 'true');
 
     const content = createEl('div', 'movie-modal-content');
+    content.tabIndex = -1;
 
     /* ===== Header ===== */
     const header = createEl('div', 'modal-header');
 
     const prevBtn = createEl('button', 'modal-nav', '◀');
+    prevBtn.type = 'button';
     prevBtn.title = 'Previous';
+    prevBtn.setAttribute('aria-label', 'Previous movie');
 
     const nextBtn = createEl('button', 'modal-nav', '▶');
+    nextBtn.type = 'button';
     nextBtn.title = 'Next';
+    nextBtn.setAttribute('aria-label', 'Next movie');
 
     const title = createEl('h2');
     title.id = 'modalTitle';
 
     const rating = createEl('a', 'modal-rating');
     rating.id = 'modalRating';
-    rating.target = '_blank';
 
     const closeBtn = createEl('button', 'modal-close', '×');
+    closeBtn.type = 'button';
+    closeBtn.setAttribute('aria-label', 'Close movie details');
 
     header.append(prevBtn, nextBtn, title, rating, closeBtn);
     content.append(header, createEl('hr'));
@@ -36,6 +43,10 @@ export function createModalDOM() {
     const posterSection = createEl('div', 'poster-section');
     const poster = createEl('img');
     poster.id = 'modalPoster';
+    poster.alt = 'Movie poster';
+    poster.tabIndex = 0;
+    poster.setAttribute('role', 'button');
+    poster.setAttribute('aria-label', 'Enlarge movie poster');
     posterSection.appendChild(poster);
     body.appendChild(posterSection);
 
@@ -76,6 +87,7 @@ export function createModalDOM() {
     numValue.id = 'modalNum';
     const numSpan = createEl('span', 'num-value', ''); // empty, will fill later
     const numBtn = createEl('button', 'copy-btn icon-btn', '📋');
+    numBtn.type = 'button';
     numBtn.title = 'Copy Num';
     numValue.append(numSpan, numBtn);
     techGrid.append(numLabel, numValue);
@@ -83,28 +95,6 @@ export function createModalDOM() {
     ['Filesize','Resolution','Audio','Subtitles','Path'].forEach(label =>
         appendKV(techGrid, label+':', 'modal'+label)
     );
-
-    // ===== Add copy button next to Num =====
-    const numContainer = techGrid.querySelector('#modalNum'); // the .v div for Num
-    if (numContainer) {
-        // wrap the number in a span if not already
-        let span = numContainer.querySelector('.num-value');
-        if (!span) {
-            span = document.createElement('span');
-            span.className = 'num-value';
-            span.textContent = numContainer.textContent;
-            numContainer.textContent = '';
-            numContainer.appendChild(span);
-        }
-
-        // add native copy button
-        const btn = document.createElement('button');
-        btn.className = 'copy-btn icon-btn';
-        btn.title = 'Copy Num';
-        btn.textContent = '📋';
-        btn.style.marginLeft = '5px';
-        numContainer.appendChild(btn);
-    }
 
     techContent.appendChild(techGrid);
 
@@ -116,6 +106,7 @@ export function createModalDOM() {
 
     const fileSpan = createEl('span', 'file-name');
     const fileBtn = createEl('button', 'copy-btn icon-btn');
+    fileBtn.type = 'button';
     fileBtn.textContent = '📋';
     fileBtn.title = 'Copy File Name';
 
@@ -134,7 +125,13 @@ export function createModalDOM() {
     /* ===== Poster Zoom ===== */
     const posterZoom = createEl('div');
     posterZoom.id = 'posterZoom';
+    posterZoom.tabIndex = -1;
+    posterZoom.setAttribute('role', 'dialog');
+    posterZoom.setAttribute('aria-modal', 'true');
+    posterZoom.setAttribute('aria-label', 'Enlarged movie poster');
+    posterZoom.setAttribute('aria-hidden', 'true');
     const posterZoomImg = createEl('img');
+    posterZoomImg.alt = 'Enlarged movie poster';
     posterZoom.appendChild(posterZoomImg);
     document.body.appendChild(posterZoom);
 

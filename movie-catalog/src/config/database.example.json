@@ -1,0 +1,10 @@
+{
+  "database": {
+    "host": "localhost",
+    "port": 3306,
+    "dbname": "movies",
+    "user": "movie_catalog",
+    "password": "change-me",
+    "charset": "utf8mb4"
+  }
+}

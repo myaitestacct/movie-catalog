@@ -1,7 +1,9 @@
 <?php
-header('Content-Type: application/json');
+declare(strict_types=1);
 
 $root = dirname(__DIR__, 2);
+require_once $root . '/src/helpers/ApiResponse.php';
+ApiResponse::configure();
 
 $pdo = require $root . '/src/db/connection.php';
 
@@ -25,12 +27,15 @@ try {
 
     $sort = $_GET['sort'] ?? 'NUM';
     $dir  = strtoupper($_GET['dir'] ?? 'ASC');
+    $mode = strtoupper($_GET['mode'] ?? 'AND');
+    $mode = $mode === 'OR' ? 'OR' : 'AND';
+    $fuzzy = filter_var($_GET['fuzzy'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
     // Collect filters
     $searchableCols = [
         'NUM','FORMATTEDTITLE','YEAR','LENGTH','CERTIFICATION',
         'RATING','FILESIZE','LANGUAGES','CATEGORY',
-        'RESOLUTION','AUDIOFORMAT','FILEPATH'
+        'RESOLUTION','AUDIOFORMAT','FILEPATH','PATH'
     ];
 
     $filters = [];
@@ -44,22 +49,21 @@ try {
     $pagination = new Pagination($page, $limit, $maxLimit);
     $repo = new MovieRepository($pdo);
 
-    $totalRows = $repo->countMovies($filters);
-    $movies = $repo->getMovies($filters, $sort, $dir, $pagination);
+    $totalRows = $repo->countMovies($filters, $mode, $fuzzy);
+    $movies = $repo->getMovies($filters, $sort, $dir, $pagination, $mode, $fuzzy);
 
     echo json_encode([
         'data'  => $movies,
         'page'  => $page,
+        'limit' => $pagination->limit,
         'pages' => ceil($totalRows / $pagination->limit),
         'total' => $totalRows
     ]);
 
 } catch (Throwable $e) {
-
-    http_response_code(500);
-
-    echo json_encode([
-        'error' => true,
-        'message' => $e->getMessage()
-    ]);
+    ApiResponse::serverError(
+        'Movies API failed',
+        $e,
+        'Unable to load movies'
+    );
 }

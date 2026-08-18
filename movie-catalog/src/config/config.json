@@ -1,18 +1,4 @@
 {
-  "database": {
-    "host": "localhost",
-    "dbname": "movies",
-    "user": "root",
-    "password": "",
-    "charset": "utf8mb4"
-  },
-  "features": {
-    "enable_stats": true,
-    "enable_search": true,
-    "enable_sorting": true,
-    "enable_fulltext": true,
-    "enable_fuzzy": true
-  },
   "pagination": {
     "default_limit": 50,
     "max_limit": 200
