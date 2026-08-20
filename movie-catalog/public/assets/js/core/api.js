@@ -99,6 +99,48 @@ export async function fetchMovies(params) {
   return data;
 }
 
+function isNumericValue(value) {
+  return value !== null &&
+    value !== '' &&
+    Number.isFinite(Number(value));
+}
+
+export function isCompleteReleaseYearAnalytics(analytics) {
+  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) {
+    return false;
+  }
+
+  const validYearEntry = entry =>
+    entry &&
+    typeof entry === 'object' &&
+    !Array.isArray(entry) &&
+    isNumericValue(entry.year) &&
+    Number(entry.year) > 0 &&
+    isNumericValue(entry.count) &&
+    Number(entry.count) >= 0;
+  const validDecadeEntry = entry =>
+    entry &&
+    typeof entry === 'object' &&
+    !Array.isArray(entry) &&
+    isNumericValue(entry.start_year) &&
+    typeof entry.label === 'string' &&
+    entry.label.trim() !== '' &&
+    isNumericValue(entry.count) &&
+    Number(entry.count) >= 0;
+
+  return isNumericValue(analytics.dated_movies) &&
+    isNumericValue(analytics.undated_movies) &&
+    (analytics.peak_year === null || validYearEntry(analytics.peak_year)) &&
+    (
+      analytics.busiest_decade === null ||
+      validDecadeEntry(analytics.busiest_decade)
+    ) &&
+    Array.isArray(analytics.years) &&
+    analytics.years.every(validYearEntry) &&
+    Array.isArray(analytics.decades) &&
+    analytics.decades.every(validDecadeEntry);
+}
+
 const STATS_NUMERIC_FIELDS = [
   'total_movies',
   'years',
@@ -123,12 +165,8 @@ export function isCompleteStatsPayload(data) {
     return false;
   }
 
-  return STATS_NUMERIC_FIELDS.every(field => {
-    const value = data[field];
-    return value !== null &&
-      value !== '' &&
-      Number.isFinite(Number(value));
-  });
+  return STATS_NUMERIC_FIELDS.every(field => isNumericValue(data[field])) &&
+    isCompleteReleaseYearAnalytics(data.release_year_analytics);
 }
 
 export async function fetchStats() {
