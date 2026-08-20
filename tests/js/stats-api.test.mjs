@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   isCompleteGenreAnalytics,
+  isCompleteLanguageCountryAnalytics,
   isCompleteRatingRuntimeAnalytics,
   isCompleteReleaseYearAnalytics,
   isCompleteStatsPayload,
@@ -73,6 +74,28 @@ const completePayload = {
       { key: 'standard', label: '90–119 min', count: 110 },
       { key: 'long', label: '120–149 min', count: 60 }
     ]
+  },
+  language_country_analytics: {
+    languages: {
+      tagged_movies: 240,
+      untagged_movies: 10,
+      assignments: 300,
+      top_item: { label: 'English', count: 200 },
+      items: [
+        { label: 'English', count: 200 },
+        { label: 'French', count: 40 }
+      ]
+    },
+    countries: {
+      tagged_movies: 230,
+      untagged_movies: 20,
+      assignments: 280,
+      top_item: { label: 'USA', count: 150 },
+      items: [
+        { label: 'USA', count: 150 },
+        { label: 'UK', count: 50 }
+      ]
+    }
   }
 };
 
@@ -91,7 +114,8 @@ test('statistics validation requires every core dashboard metric', () => {
   const optionalAnalytics = new Set([
     'release_year_analytics',
     'genre_analytics',
-    'rating_runtime_analytics'
+    'rating_runtime_analytics',
+    'language_country_analytics'
   ]);
 
   for (const field of Object.keys(completePayload)) {
@@ -113,6 +137,7 @@ test('statistics validation permits independently deployed analytics sections', 
   delete corePayload.release_year_analytics;
   delete corePayload.genre_analytics;
   delete corePayload.rating_runtime_analytics;
+  delete corePayload.language_country_analytics;
 
   assert.equal(isCompleteStatsPayload(corePayload), true);
 });
@@ -172,6 +197,29 @@ test('rating/runtime validation rejects malformed band data', () => {
     isCompleteRatingRuntimeAnalytics({
       ...completePayload.rating_runtime_analytics,
       runtime_missing_movies: 'unknown'
+    }),
+    false
+  );
+});
+
+test('language/country validation rejects malformed facet data', () => {
+  assert.equal(
+    isCompleteLanguageCountryAnalytics({
+      ...completePayload.language_country_analytics,
+      languages: {
+        ...completePayload.language_country_analytics.languages,
+        items: [{ label: '', count: 1 }]
+      }
+    }),
+    false
+  );
+  assert.equal(
+    isCompleteLanguageCountryAnalytics({
+      ...completePayload.language_country_analytics,
+      countries: {
+        ...completePayload.language_country_analytics.countries,
+        assignments: 'many'
+      }
     }),
     false
   );
