@@ -40,6 +40,35 @@ let activeLibraryIssueType = null;
 
 const REC_PER_PAGE = 10;
 
+function getLibraryIssueCard(config) {
+    const card = document.getElementById(config.cardId);
+    if (card) return card;
+
+    return document.getElementById(config.metricId)?.closest('.stat-card') ?? null;
+}
+
+function bindLibraryIssueCard(issueType, config) {
+    const card = getLibraryIssueCard(config);
+    if (!card || card.dataset.libraryIssueBound === 'true') return;
+
+    card.id = config.cardId;
+    card.classList.add('stat-card-action');
+    card.dataset.libraryIssueBound = 'true';
+    card.setAttribute('aria-label', `Show ${config.title.toLowerCase()}`);
+    card.addEventListener('click', () => loadLibraryIssues(issueType));
+
+    if (card.tagName !== 'BUTTON') {
+        card.setAttribute('role', 'button');
+        card.tabIndex = 0;
+        card.addEventListener('keydown', event => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+
+            event.preventDefault();
+            card.click();
+        });
+    }
+}
+
 function createGroupHeader(group, colspan, alternate, itemLabel = 'copy') {
     const header = document.createElement('tr');
     header.className = `dup-group ${alternate ? 'dup-group-a' : 'dup-group-b'}`;
@@ -123,10 +152,7 @@ export function initStats(toggleBtn, statsPanel) {
     );
 
     Object.entries(LIBRARY_ISSUE_CONFIG).forEach(([issueType, config]) => {
-        panel.querySelector(`#${config.cardId}`)?.addEventListener(
-            'click',
-            () => loadLibraryIssues(issueType)
-        );
+        bindLibraryIssueCard(issueType, config);
     });
 
     toggleBtn.addEventListener('click', e => {
@@ -227,10 +253,14 @@ export async function refreshStats() {
 
         Object.values(LIBRARY_ISSUE_CONFIG).forEach(config => {
             const issueCount = Number(data[config.countField]) || 0;
-            const issueCard = el(config.cardId);
-            issueCard.title = issueCount > 0
+            const issueCard = getLibraryIssueCard(config);
+            if (!issueCard) return;
+
+            const actionText = issueCount > 0
                 ? `Show ${issueCount} ${issueCount === 1 ? 'movie' : 'movies'} in ${config.title}`
                 : `Check ${config.title}`;
+            issueCard.title = actionText;
+            issueCard.setAttribute('aria-label', actionText);
         });
 
         const duplicateCard = el('duplicate-card');
