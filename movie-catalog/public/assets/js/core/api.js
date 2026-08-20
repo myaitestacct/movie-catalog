@@ -66,24 +66,42 @@ export async function fetchMovies(params) {
   return data;
 }
 
+const STATS_NUMERIC_FIELDS = [
+  'total_movies',
+  'years',
+  'genres',
+  'languages',
+  'countries',
+  'total_size',
+  'average_rating',
+  'average_runtime',
+  'oldest_year',
+  'newest_year',
+  'health_score',
+  'missing_files',
+  'missing_posters',
+  'incomplete_metadata',
+  'needs_better_copy_count',
+  'duplicate_count'
+];
+
+export function isCompleteStatsPayload(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return false;
+  }
+
+  return STATS_NUMERIC_FIELDS.every(field => {
+    const value = data[field];
+    return value !== null &&
+      value !== '' &&
+      Number.isFinite(Number(value));
+  });
+}
+
 export async function fetchStats() {
   const data = await fetchJson(apiUrl('stats.php'));
-  const requiredValues = [
-    data?.total_movies,
-    data?.years,
-    data?.genres,
-    data?.total_size,
-    data?.missing_files,
-    data?.needs_better_copy_count,
-    data?.duplicate_count
-  ];
 
-  if (
-    !data ||
-    typeof data !== 'object' ||
-    Array.isArray(data) ||
-    requiredValues.some(value => !Number.isFinite(Number(value)))
-  ) {
+  if (!isCompleteStatsPayload(data)) {
     throw new ApiError('The statistics response is incomplete');
   }
 
