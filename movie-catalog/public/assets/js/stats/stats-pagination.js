@@ -100,7 +100,7 @@ export function renderStatsPagination(
     jumpText.textContent = 'Jump to';
 
     const jumpSelect = document.createElement('select');
-    jumpSelect.setAttribute('aria-label', 'Jump to better-copy page');
+    jumpSelect.setAttribute('aria-label', `Jump to page — ${ariaLabel}`);
 
     for (let page = 1; page <= pages; page++) {
         const option = document.createElement('option');
