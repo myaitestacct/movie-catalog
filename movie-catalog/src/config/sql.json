@@ -3,9 +3,10 @@
   "categories": "SELECT CATEGORY FROM movies WHERE CATEGORY IS NOT NULL AND TRIM(CATEGORY) <> '';",
   "languages": "SELECT LANGUAGES FROM movies WHERE LANGUAGES IS NOT NULL AND TRIM(LANGUAGES) <> '';",
   "countries": "SELECT COUNTRY FROM movies WHERE COUNTRY IS NOT NULL AND TRIM(COUNTRY) <> '';",
-  "health": "SELECT COALESCE(SUM(PICTURENAME IS NULL OR TRIM(PICTURENAME) = ''), 0) AS missing_posters, COALESCE(SUM(FORMATTEDTITLE IS NULL OR TRIM(FORMATTEDTITLE) = '' OR YEAR IS NULL OR YEAR = 0 OR RATING IS NULL OR RATING = 0 OR URL IS NULL OR TRIM(URL) = '' OR DESCRIPTION IS NULL OR TRIM(DESCRIPTION) = ''), 0) AS incomplete_metadata FROM movies;",
+  "health": "SELECT COALESCE(SUM(FILEPATH = 'MISSING'), 0) AS missing_files, COALESCE(SUM(FILEPATH LIKE '%-Get.Better.Copy%'), 0) AS needs_better_copy_count, COALESCE(SUM(PICTURENAME IS NULL OR TRIM(PICTURENAME) = ''), 0) AS missing_posters, COALESCE(SUM(FORMATTEDTITLE IS NULL OR TRIM(FORMATTEDTITLE) = '' OR YEAR IS NULL OR YEAR = 0 OR RATING IS NULL OR RATING = 0 OR URL IS NULL OR TRIM(URL) = '' OR DESCRIPTION IS NULL OR TRIM(DESCRIPTION) = ''), 0) AS incomplete_metadata FROM movies;",
   "missing_files": "SELECT COUNT(*) AS missing_files FROM movies WHERE FILEPATH = 'MISSING';",
   "needs_better_copy_count": "SELECT COUNT(*) AS needs_better_copy FROM movies WHERE FILEPATH LIKE '%-Get.Better.Copy%';",
   "needs_better_copy_val": "SELECT m.NUM, m.ORIGINALTITLE, m.YEAR, m.URL FROM movies m WHERE m.FILEPATH LIKE '%-Get.Better.Copy%' ORDER BY m.NUM;",
+  "duplicate_count": "SELECT COUNT(*) FROM movies m JOIN (SELECT URL FROM movies WHERE NUM NOT IN ('6717', '6718') AND URL LIKE '%https://www.imdb.com/title/tt%' GROUP BY URL HAVING COUNT(*) > 1) dup ON m.URL = dup.URL WHERE m.NUM NOT IN ('6717', '6718') AND m.URL LIKE '%https://www.imdb.com/title/tt%';",
   "duplicate_rows": "SELECT m.NUM, m.ORIGINALTITLE, m.URL, m.YEAR, dup.dup_count FROM movies m JOIN (SELECT URL, COUNT(*) AS dup_count FROM movies WHERE NUM NOT IN ('6717', '6718') AND URL LIKE '%https://www.imdb.com/title/tt%' GROUP BY URL HAVING COUNT(*) > 1) dup ON m.URL = dup.URL WHERE m.NUM NOT IN ('6717', '6718') AND m.URL LIKE '%https://www.imdb.com/title/tt%' ORDER BY dup.dup_count DESC, m.URL, m.NUM;"
 }
