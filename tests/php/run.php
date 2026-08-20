@@ -113,6 +113,43 @@ $statsReflection = new ReflectionClass(StatsController::class);
 $statsController = $statsReflection->newInstanceWithoutConstructor();
 $calculateHealthScore = $statsReflection->getMethod('calculateHealthScore');
 $calculateHealthScore->setAccessible(true);
+$buildReleaseYearAnalytics = $statsReflection->getMethod(
+    'buildReleaseYearAnalytics'
+);
+$buildReleaseYearAnalytics->setAccessible(true);
+
+assertSameValue(
+    [
+        'dated_movies' => 6,
+        'undated_movies' => 4,
+        'peak_year' => ['year' => 1980, 'count' => 3],
+        'busiest_decade' => [
+            'start_year' => 1980,
+            'label' => '1980s',
+            'count' => 4
+        ],
+        'years' => [
+            ['year' => 1979, 'count' => 2],
+            ['year' => 1980, 'count' => 3],
+            ['year' => 1985, 'count' => 1]
+        ],
+        'decades' => [
+            ['start_year' => 1970, 'label' => '1970s', 'count' => 2],
+            ['start_year' => 1980, 'label' => '1980s', 'count' => 4]
+        ]
+    ],
+    $buildReleaseYearAnalytics->invoke(
+        $statsController,
+        [
+            ['release_year' => '1979', 'movie_count' => '2'],
+            ['release_year' => '1980', 'movie_count' => '3'],
+            ['release_year' => '1985', 'movie_count' => '1'],
+            ['release_year' => '0', 'movie_count' => '4']
+        ],
+        10
+    ),
+    'Release-year analytics calculate timeline and decade summaries'
+);
 
 assertSameValue(
     100,
