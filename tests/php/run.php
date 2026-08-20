@@ -117,6 +117,32 @@ $buildReleaseYearAnalytics = $statsReflection->getMethod(
     'buildReleaseYearAnalytics'
 );
 $buildReleaseYearAnalytics->setAccessible(true);
+$buildGenreAnalytics = $statsReflection->getMethod('buildGenreAnalytics');
+$buildGenreAnalytics->setAccessible(true);
+
+assertSameValue(
+    [
+        'tagged_movies' => 3,
+        'untagged_movies' => 2,
+        'genre_assignments' => 5,
+        'top_genre' => ['label' => 'Action', 'count' => 3],
+        'genres' => [
+            ['label' => 'Action', 'count' => 3],
+            ['label' => 'Adventure', 'count' => 1],
+            ['label' => 'Sci-Fi', 'count' => 1]
+        ]
+    ],
+    $buildGenreAnalytics->invoke(
+        $statsController,
+        [
+            'Action, Adventure',
+            'Action / Sci-Fi',
+            'action, Action'
+        ],
+        5
+    ),
+    'Genre analytics count each genre once per movie'
+);
 
 assertSameValue(
     [
