@@ -41,6 +41,9 @@ class StatsController
         $stats['release_year_analytics'] = $this->getReleaseYearAnalytics(
             $stats['total_movies']
         );
+        $stats['rating_runtime_analytics'] = $this->getRatingRuntimeAnalytics(
+            $stats['total_movies']
+        );
 
         $stmt = $this->pdo->query($this->sql['health']);
         $health = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
@@ -144,6 +147,100 @@ class StatsController
             'years' => $years,
             'decades' => $decades
         ];
+    }
+
+    private function getRatingRuntimeAnalytics(int $totalMovies): array
+    {
+        $query = $this->sql['rating_runtime_values'] ??
+            'SELECT `RATING`, `LENGTH` FROM movies;';
+
+        try {
+            $stmt = $this->pdo->query($query);
+            return $this->buildRatingRuntimeAnalytics(
+                $stmt->fetchAll(PDO::FETCH_ASSOC),
+                $totalMovies
+            );
+        } catch (Throwable $error) {
+            error_log('Rating/runtime analytics failed: ' . (string)$error);
+            return $this->buildRatingRuntimeAnalytics([], $totalMovies);
+        }
+    }
+
+    private function buildRatingRuntimeAnalytics(
+        array $rows,
+        int $totalMovies
+    ): array {
+        $ratingBands = [
+            ['key' => 'under-5', 'label' => 'Under 5', 'count' => 0],
+            ['key' => '5-range', 'label' => '5–5.9', 'count' => 0],
+            ['key' => '6-range', 'label' => '6–6.9', 'count' => 0],
+            ['key' => '7-range', 'label' => '7–7.9', 'count' => 0],
+            ['key' => '8-plus', 'label' => '8+', 'count' => 0]
+        ];
+        $runtimeBands = [
+            ['key' => 'short', 'label' => 'Under 90 min', 'count' => 0],
+            ['key' => 'standard', 'label' => '90–119 min', 'count' => 0],
+            ['key' => 'long', 'label' => '120–149 min', 'count' => 0],
+            ['key' => 'epic', 'label' => '150+ min', 'count' => 0]
+        ];
+        $ratedMovies = 0;
+        $runtimeKnownMovies = 0;
+
+        foreach ($rows as $row) {
+            $rating = (float)($row['RATING'] ?? 0);
+            if ($rating > 0) {
+                $ratedMovies++;
+                $ratingIndex = $rating < 5
+                    ? 0
+                    : ($rating < 6
+                        ? 1
+                        : ($rating < 7
+                            ? 2
+                            : ($rating < 8 ? 3 : 4)));
+                $ratingBands[$ratingIndex]['count']++;
+            }
+
+            $runtime = (int)($row['LENGTH'] ?? 0);
+            if ($runtime > 0) {
+                $runtimeKnownMovies++;
+                $runtimeIndex = $runtime < 90
+                    ? 0
+                    : ($runtime < 120
+                        ? 1
+                        : ($runtime < 150 ? 2 : 3));
+                $runtimeBands[$runtimeIndex]['count']++;
+            }
+        }
+
+        return [
+            'rated_movies' => $ratedMovies,
+            'unrated_movies' => max(0, $totalMovies - $ratedMovies),
+            'runtime_known_movies' => $runtimeKnownMovies,
+            'runtime_missing_movies' => max(
+                0,
+                $totalMovies - $runtimeKnownMovies
+            ),
+            'top_rating_band' => $this->findLargestBand($ratingBands),
+            'common_runtime_band' => $this->findLargestBand($runtimeBands),
+            'rating_bands' => $ratingBands,
+            'runtime_bands' => $runtimeBands
+        ];
+    }
+
+    private function findLargestBand(array $bands): ?array
+    {
+        $largest = null;
+
+        foreach ($bands as $band) {
+            if (
+                $band['count'] > 0 &&
+                ($largest === null || $band['count'] > $largest['count'])
+            ) {
+                $largest = $band;
+            }
+        }
+
+        return $largest;
     }
 
     private function getGenreAnalytics(int $totalMovies): array
