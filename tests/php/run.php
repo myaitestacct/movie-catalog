@@ -123,6 +123,34 @@ $buildRatingRuntimeAnalytics = $statsReflection->getMethod(
     'buildRatingRuntimeAnalytics'
 );
 $buildRatingRuntimeAnalytics->setAccessible(true);
+$buildDelimitedValueAnalytics = $statsReflection->getMethod(
+    'buildDelimitedValueAnalytics'
+);
+$buildDelimitedValueAnalytics->setAccessible(true);
+
+assertSameValue(
+    [
+        'tagged_movies' => 3,
+        'untagged_movies' => 2,
+        'assignments' => 5,
+        'top_item' => ['label' => 'English', 'count' => 3],
+        'items' => [
+            ['label' => 'English', 'count' => 3],
+            ['label' => 'French', 'count' => 1],
+            ['label' => 'Spanish', 'count' => 1]
+        ]
+    ],
+    $buildDelimitedValueAnalytics->invoke(
+        $statsController,
+        [
+            'English, French',
+            'English / Spanish',
+            'english, English'
+        ],
+        5
+    ),
+    'Language/country analytics normalize and count delimited values'
+);
 
 assertSameValue(
     [
