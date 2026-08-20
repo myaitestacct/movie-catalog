@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   isCompleteGenreAnalytics,
+  isCompleteRatingRuntimeAnalytics,
   isCompleteReleaseYearAnalytics,
   isCompleteStatsPayload,
   parseJsonResponseBody
@@ -52,6 +53,26 @@ const completePayload = {
       { label: 'Drama', count: 120 },
       { label: 'Comedy', count: 80 }
     ]
+  },
+  rating_runtime_analytics: {
+    rated_movies: 230,
+    unrated_movies: 20,
+    runtime_known_movies: 240,
+    runtime_missing_movies: 10,
+    top_rating_band: { key: '7-range', label: '7–7.9', count: 75 },
+    common_runtime_band: {
+      key: 'standard',
+      label: '90–119 min',
+      count: 110
+    },
+    rating_bands: [
+      { key: 'under-5', label: 'Under 5', count: 10 },
+      { key: '7-range', label: '7–7.9', count: 75 }
+    ],
+    runtime_bands: [
+      { key: 'standard', label: '90–119 min', count: 110 },
+      { key: 'long', label: '120–149 min', count: 60 }
+    ]
   }
 };
 
@@ -69,7 +90,8 @@ test('statistics validation accepts the complete dashboard payload', () => {
 test('statistics validation requires every core dashboard metric', () => {
   const optionalAnalytics = new Set([
     'release_year_analytics',
-    'genre_analytics'
+    'genre_analytics',
+    'rating_runtime_analytics'
   ]);
 
   for (const field of Object.keys(completePayload)) {
@@ -90,6 +112,7 @@ test('statistics validation permits independently deployed analytics sections', 
   const corePayload = { ...completePayload };
   delete corePayload.release_year_analytics;
   delete corePayload.genre_analytics;
+  delete corePayload.rating_runtime_analytics;
 
   assert.equal(isCompleteStatsPayload(corePayload), true);
 });
@@ -132,6 +155,23 @@ test('genre validation rejects malformed distribution data', () => {
     isCompleteGenreAnalytics({
       ...completePayload.genre_analytics,
       genre_assignments: 'many'
+    }),
+    false
+  );
+});
+
+test('rating/runtime validation rejects malformed band data', () => {
+  assert.equal(
+    isCompleteRatingRuntimeAnalytics({
+      ...completePayload.rating_runtime_analytics,
+      rating_bands: [{ key: '', label: 'Broken', count: 5 }]
+    }),
+    false
+  );
+  assert.equal(
+    isCompleteRatingRuntimeAnalytics({
+      ...completePayload.rating_runtime_analytics,
+      runtime_missing_movies: 'unknown'
     }),
     false
   );
