@@ -101,6 +101,7 @@
 }
 
 .stats-dashboard-header {
+    position: relative;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -258,12 +259,14 @@
 }
 
 .stats-dashboard-header .stats-close {
+    position: absolute;
+    top: 34px;
+    right: 0;
     width: 34px;
     height: 34px;
-    flex: 0 0 34px;
     display: inline-grid;
     place-items: center;
-    margin: -5px -5px 0 0;
+    margin: 0;
     border-radius: 50%;
     line-height: 1;
 }
@@ -525,11 +528,73 @@
     opacity: 1;
 }
 /* ==========================
-   Duplicate Movie Modal Pagination
+   Stats Modal Pagination
 ========================== */
-.pagination button.active {
+.stats-modal .pagination {
+    position: static;
+    bottom: auto;
+    left: auto;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 8px;
+    transform: none;
+    white-space: normal;
+}
+
+.stats-modal .pagination:hover {
+    transform: none;
+}
+
+.stats-pagination-info {
+    flex: 1 0 100%;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: center;
+}
+
+.stats-pagination-controls {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.stats-pagination-jump {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.stats-modal .pagination button,
+.stats-modal .pagination select {
+    min-height: 30px;
+}
+
+.stats-modal .pagination button.active {
     background: var(--primary);
     color: white;
     font-weight: 600;
+    opacity: 1;
     box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 520px) {
+    .stats-pagination-controls {
+        flex-basis: 100%;
+    }
+
+    .stats-pagination-jump {
+        flex-basis: 100%;
+        justify-content: center;
+    }
 }
