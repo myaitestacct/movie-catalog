@@ -1,36 +1,69 @@
-// stats-animations.js
 import { formatBytes } from '../utils/format.js';
 
-export function animateNumber(el, target, duration = 700) {
-    if (!el) return;
+const animationTokens = new WeakMap();
 
-    const start = 0;
-    const end = Number(target) || 0; // Ensure it's a valid number
-    const range = end - start;
-    const startTime = performance.now();
+function runAnimation(element, target, duration, formatter) {
+    if (!element) return;
 
-    function step(now) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        el.textContent = Math.floor(start + range * progress).toLocaleString();
-        if (progress < 1) requestAnimationFrame(step);
+    const end = Number(target) || 0;
+    const reduceMotion = typeof matchMedia === 'function' &&
+        matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (reduceMotion || duration <= 0) {
+        animationTokens.delete(element);
+        element.textContent = formatter(end);
+        return;
     }
 
-    // Start the animation
+    const startedAt = performance.now();
+    const token = Symbol('stats-animation');
+    animationTokens.set(element, token);
+
+    function step(now) {
+        if (animationTokens.get(element) !== token) return;
+
+        const elapsed = now - startedAt;
+        const progress = Math.min(elapsed / duration, 1);
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
+        element.textContent = formatter(end * easedProgress);
+
+        if (progress < 1) {
+            requestAnimationFrame(step);
+        }
+    }
+
     requestAnimationFrame(step);
 }
 
-export function animateBytes(el, bytes, duration = 900) {
-    if (!el) return;
+export function animateMetric(
+    element,
+    target,
+    {
+        duration = 700,
+        decimals = 0,
+        suffix = ''
+    } = {}
+) {
+    runAnimation(
+        element,
+        target,
+        duration,
+        value => `${value.toLocaleString(undefined, {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        })}${suffix}`
+    );
+}
 
-    const startTime = performance.now();
-    function step(now) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const value = Math.floor(bytes * progress);
-        el.textContent = formatBytes(value);
-        if (progress < 1) requestAnimationFrame(step);
-    }
+export function animateNumber(element, target, duration = 700) {
+    animateMetric(element, target, { duration });
+}
 
-    requestAnimationFrame(step);
+export function animateBytes(element, bytes, duration = 900) {
+    runAnimation(
+        element,
+        bytes,
+        duration,
+        value => formatBytes(Math.floor(value))
+    );
 }
