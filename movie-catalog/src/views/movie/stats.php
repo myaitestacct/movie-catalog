@@ -151,6 +151,46 @@
             </div>
         </section>
 
+        <section class="stats-section stats-genre-section" aria-labelledby="genre-analytics-heading">
+            <div class="stats-section-header">
+                <h3 id="genre-analytics-heading">Genre Analytics</h3>
+                <p>See which genres shape the collection.</p>
+            </div>
+
+            <div class="stats-genre-insights" aria-live="polite">
+                <article class="stats-genre-insight">
+                    <span id="top-genre">–</span>
+                    <small>Top Genre</small>
+                    <p id="top-genre-detail">No genre data</p>
+                </article>
+
+                <article class="stats-genre-insight">
+                    <span id="genre-coverage">–</span>
+                    <small>Tagged Coverage</small>
+                    <p id="genre-coverage-detail">No genre data</p>
+                </article>
+
+                <article class="stats-genre-insight">
+                    <span id="average-genres-per-movie">–</span>
+                    <small>Genres per Tagged Movie</small>
+                    <p id="genre-assignment-detail">No genre assignments</p>
+                </article>
+            </div>
+
+            <article class="stats-genre-chart" aria-labelledby="genre-distribution-heading">
+                <header>
+                    <div>
+                        <h4 id="genre-distribution-heading">Genre Distribution</h4>
+                        <p>Share of tagged movies assigned to each leading genre.</p>
+                    </div>
+                    <small id="genre-distribution-summary">Loading genres…</small>
+                </header>
+                <div id="genre-distribution" class="stats-genre-list">
+                    <p class="stats-chart-empty">Loading genre data…</p>
+                </div>
+            </article>
+        </section>
+
         <section class="stats-section" aria-labelledby="health-heading">
             <div class="stats-section-header">
                 <h3 id="health-heading">Library Health</h3>
