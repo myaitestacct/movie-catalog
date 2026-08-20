@@ -191,6 +191,61 @@
             </article>
         </section>
 
+        <section class="stats-section stats-rating-runtime-section" aria-labelledby="rating-runtime-heading">
+            <div class="stats-section-header">
+                <h3 id="rating-runtime-heading">Rating &amp; Runtime Analytics</h3>
+                <p>Understand quality bands and movie-length patterns.</p>
+            </div>
+
+            <div class="stats-rating-runtime-insights" aria-live="polite">
+                <article class="stats-rating-runtime-insight">
+                    <span id="top-rating-band">–</span>
+                    <small>Most Common Rating Band</small>
+                    <p id="top-rating-band-detail">No rating data</p>
+                </article>
+
+                <article class="stats-rating-runtime-insight">
+                    <span id="common-runtime-band">–</span>
+                    <small>Most Common Runtime</small>
+                    <p id="common-runtime-band-detail">No runtime data</p>
+                </article>
+
+                <article class="stats-rating-runtime-insight">
+                    <span id="rated-movie-coverage">–</span>
+                    <small>Rated Coverage</small>
+                    <p id="rated-movie-coverage-detail">No rating data</p>
+                </article>
+
+                <article class="stats-rating-runtime-insight">
+                    <span id="runtime-coverage">–</span>
+                    <small>Runtime Coverage</small>
+                    <p id="runtime-coverage-detail">No runtime data</p>
+                </article>
+            </div>
+
+            <div class="stats-rating-runtime-grid">
+                <article class="stats-band-chart" aria-labelledby="rating-band-heading">
+                    <header>
+                        <h4 id="rating-band-heading">Rating Bands</h4>
+                        <p>Distribution across rated movies.</p>
+                    </header>
+                    <div id="rating-band-distribution" class="stats-band-list">
+                        <p class="stats-chart-empty">Loading rating data…</p>
+                    </div>
+                </article>
+
+                <article class="stats-band-chart" aria-labelledby="runtime-band-heading">
+                    <header>
+                        <h4 id="runtime-band-heading">Runtime Ranges</h4>
+                        <p>Distribution across movies with runtime data.</p>
+                    </header>
+                    <div id="runtime-band-distribution" class="stats-band-list">
+                        <p class="stats-chart-empty">Loading runtime data…</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
         <section class="stats-section" aria-labelledby="health-heading">
             <div class="stats-section-header">
                 <h3 id="health-heading">Library Health</h3>
