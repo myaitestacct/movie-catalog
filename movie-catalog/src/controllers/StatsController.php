@@ -59,11 +59,29 @@ class StatsController
 
     private function getReleaseYearAnalytics(int $totalMovies): array
     {
-        $stmt = $this->pdo->query($this->sql['release_years']);
-        return $this->buildReleaseYearAnalytics(
-            $stmt->fetchAll(PDO::FETCH_ASSOC),
-            $totalMovies
-        );
+        $query = $this->sql['release_years'] ??
+            'SELECT `YEAR` AS release_year, COUNT(*) AS movie_count ' .
+            'FROM movies WHERE `YEAR` IS NOT NULL AND `YEAR` > 0 ' .
+            'GROUP BY `YEAR` ORDER BY `YEAR`;';
+
+        try {
+            $stmt = $this->pdo->query($query);
+            return $this->buildReleaseYearAnalytics(
+                $stmt->fetchAll(PDO::FETCH_ASSOC),
+                $totalMovies
+            );
+        } catch (Throwable $error) {
+            error_log('Release-year analytics failed: ' . (string)$error);
+
+            return [
+                'dated_movies' => 0,
+                'undated_movies' => max(0, $totalMovies),
+                'peak_year' => null,
+                'busiest_decade' => null,
+                'years' => [],
+                'decades' => []
+            ];
+        }
     }
 
     private function buildReleaseYearAnalytics(
