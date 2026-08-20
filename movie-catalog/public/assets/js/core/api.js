@@ -150,6 +150,17 @@ export async function fetchBetterCopyRows() {
   return data;
 }
 
+export async function fetchLibraryIssueRows(issueType) {
+  const params = new URLSearchParams({ type: issueType });
+  const data = await fetchJson(apiUrl('library-issues.php', params));
+
+  if (!Array.isArray(data)) {
+    throw new ApiError('The library issue response is incomplete');
+  }
+
+  return data;
+}
+
 export async function fetchMoviePage(params) {
   const data = await fetchJson(apiUrl('movie-page.php', params));
 
