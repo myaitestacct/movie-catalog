@@ -107,6 +107,10 @@ test('better-copy pagination renders compact navigation and jump controls', () =
   assert.deepEqual(requestedPages, [51]);
 
   const jumpSelect = container.children[2].children[1];
+  assert.equal(
+    jumpSelect.attributes.get('aria-label'),
+    'Jump to page — Needs better copy pagination'
+  );
   assert.equal(jumpSelect.children.length, 100);
   jumpSelect.listeners.get('change')({ target: { value: '87' } });
   assert.deepEqual(requestedPages, [51, 87]);
