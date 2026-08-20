@@ -3,6 +3,7 @@ import {
     animateMetric,
     animateNumber
 } from './stats-animations.js';
+import { renderStatsPagination } from './stats-pagination.js';
 import {
     fetchBetterCopyRows,
     fetchDuplicates,
@@ -500,17 +501,26 @@ function renderGetBetterCopyPage() {
         }
     });
 
-    const pages = Math.ceil(getBetterCopyGroups.length / REC_PER_PAGE);
-    for (let i = 1; i <= pages; i++) {
-        const btn = document.createElement('button');
-        btn.textContent = i;
-        btn.className = i === getBetterCopyPage ? 'active' : '';
-        btn.onclick = () => {
-            getBetterCopyPage = i;
+    const pages = Math.max(
+        1,
+        Math.ceil(getBetterCopyGroups.length / REC_PER_PAGE)
+    );
+    const totalMovies = getBetterCopyGroups.reduce(
+        (total, group) => total + group.rows.length,
+        0
+    );
+
+    renderStatsPagination(pager, {
+        currentPage: getBetterCopyPage,
+        totalPages: pages,
+        totalItems: totalMovies,
+        itemLabel: 'movie',
+        ariaLabel: 'Needs better copy pagination',
+        onPageChange: page => {
+            getBetterCopyPage = page;
             renderGetBetterCopyPage();
-        };
-        pager.appendChild(btn);
-    }
+        }
+    });
 }
 
 /* =============================
