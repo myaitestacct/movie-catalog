@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  isCompleteGenreAnalytics,
   isCompleteReleaseYearAnalytics,
   isCompleteStatsPayload,
   parseJsonResponseBody
@@ -41,6 +42,16 @@ const completePayload = {
       { start_year: 1990, label: '1990s', count: 60 },
       { start_year: 2000, label: '2000s', count: 45 }
     ]
+  },
+  genre_analytics: {
+    tagged_movies: 225,
+    untagged_movies: 25,
+    genre_assignments: 410,
+    top_genre: { label: 'Drama', count: 120 },
+    genres: [
+      { label: 'Drama', count: 120 },
+      { label: 'Comedy', count: 80 }
+    ]
   }
 };
 
@@ -55,8 +66,15 @@ test('statistics validation accepts the complete dashboard payload', () => {
   assert.equal(isCompleteStatsPayload(completePayload), true);
 });
 
-test('statistics validation requires every dashboard metric', () => {
+test('statistics validation requires every core dashboard metric', () => {
+  const optionalAnalytics = new Set([
+    'release_year_analytics',
+    'genre_analytics'
+  ]);
+
   for (const field of Object.keys(completePayload)) {
+    if (optionalAnalytics.has(field)) continue;
+
     const incompletePayload = { ...completePayload };
     delete incompletePayload[field];
 
@@ -66,6 +84,14 @@ test('statistics validation requires every dashboard metric', () => {
       `${field} should be required`
     );
   }
+});
+
+test('statistics validation permits independently deployed analytics sections', () => {
+  const corePayload = { ...completePayload };
+  delete corePayload.release_year_analytics;
+  delete corePayload.genre_analytics;
+
+  assert.equal(isCompleteStatsPayload(corePayload), true);
 });
 
 test('statistics validation accepts numeric database strings', () => {
@@ -89,6 +115,23 @@ test('release-year validation rejects malformed chart data', () => {
     isCompleteReleaseYearAnalytics({
       ...completePayload.release_year_analytics,
       busiest_decade: { label: '1990s', count: 60 }
+    }),
+    false
+  );
+});
+
+test('genre validation rejects malformed distribution data', () => {
+  assert.equal(
+    isCompleteGenreAnalytics({
+      ...completePayload.genre_analytics,
+      genres: [{ label: '', count: 10 }]
+    }),
+    false
+  );
+  assert.equal(
+    isCompleteGenreAnalytics({
+      ...completePayload.genre_analytics,
+      genre_assignments: 'many'
     }),
     false
   );
