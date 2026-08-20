@@ -31,21 +31,18 @@ class StatsController
         $stats['languages'] = $this->getUniqueDelimitedValueCount('languages');
         $stats['countries'] = $this->getUniqueDelimitedValueCount('countries');
 
-        $stmt = $this->pdo->query($this->sql['missing_files']);
-        $stats['missing_files'] = (int)$stmt->fetchColumn();
-
-        $stmt = $this->pdo->query($this->sql['needs_better_copy_count']);
-        $stats['needs_better_copy_count'] = (int)$stmt->fetchColumn();
-
-        // Count the exact rows exposed by the duplicates API so the card and
-        // dialog can never use different duplicate criteria.
-        $stmt = $this->pdo->query($this->sql['duplicate_rows']);
-        $stats['duplicate_count'] = count($stmt->fetchAll(PDO::FETCH_ASSOC));
-
         $stmt = $this->pdo->query($this->sql['health']);
         $health = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        $stats['missing_files'] = (int)($health['missing_files'] ?? 0);
+        $stats['needs_better_copy_count'] =
+            (int)($health['needs_better_copy_count'] ?? 0);
         $stats['missing_posters'] = (int)($health['missing_posters'] ?? 0);
         $stats['incomplete_metadata'] = (int)($health['incomplete_metadata'] ?? 0);
+
+        // Use the same filters as the duplicate detail query without loading
+        // every duplicate row into memory for this summary response.
+        $stmt = $this->pdo->query($this->sql['duplicate_count']);
+        $stats['duplicate_count'] = (int)$stmt->fetchColumn();
         $stats['health_score'] = $this->calculateHealthScore($stats);
 
         return $stats;
