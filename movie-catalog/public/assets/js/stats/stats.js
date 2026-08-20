@@ -5,6 +5,7 @@ import {
 } from './stats-animations.js';
 import { renderStatsPagination } from './stats-pagination.js';
 import { renderReleaseYearAnalytics } from './stats-release-years.js';
+import { renderGenreAnalytics } from './stats-genres.js';
 import {
     countGroupedRows,
     groupMovieRows,
@@ -234,6 +235,10 @@ export async function refreshStats() {
             : 'No dated movies';
         renderReleaseYearAnalytics(
             data.release_year_analytics,
+            data.total_movies
+        );
+        renderGenreAnalytics(
+            data.genre_analytics,
             data.total_movies
         );
 
