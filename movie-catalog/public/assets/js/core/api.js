@@ -197,6 +197,34 @@ export function isCompleteRatingRuntimeAnalytics(analytics) {
     analytics.runtime_bands.every(validBand);
 }
 
+export function isCompleteLanguageCountryAnalytics(analytics) {
+  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) {
+    return false;
+  }
+
+  const validItem = item =>
+    item &&
+    typeof item === 'object' &&
+    !Array.isArray(item) &&
+    typeof item.label === 'string' &&
+    item.label.trim() !== '' &&
+    isNumericValue(item.count) &&
+    Number(item.count) >= 0;
+  const validFacet = facet =>
+    facet &&
+    typeof facet === 'object' &&
+    !Array.isArray(facet) &&
+    isNumericValue(facet.tagged_movies) &&
+    isNumericValue(facet.untagged_movies) &&
+    isNumericValue(facet.assignments) &&
+    (facet.top_item === null || validItem(facet.top_item)) &&
+    Array.isArray(facet.items) &&
+    facet.items.every(validItem);
+
+  return validFacet(analytics.languages) &&
+    validFacet(analytics.countries);
+}
+
 const STATS_NUMERIC_FIELDS = [
   'total_movies',
   'years',
@@ -227,11 +255,15 @@ export function isCompleteStatsPayload(data) {
     isCompleteGenreAnalytics(data.genre_analytics);
   const ratingRuntimeIsValid = data.rating_runtime_analytics === undefined ||
     isCompleteRatingRuntimeAnalytics(data.rating_runtime_analytics);
+  const languageCountryIsValid =
+    data.language_country_analytics === undefined ||
+    isCompleteLanguageCountryAnalytics(data.language_country_analytics);
 
   return STATS_NUMERIC_FIELDS.every(field => isNumericValue(data[field])) &&
     releaseYearsAreValid &&
     genresAreValid &&
-    ratingRuntimeIsValid;
+    ratingRuntimeIsValid &&
+    languageCountryIsValid;
 }
 
 export async function fetchStats() {
