@@ -2,6 +2,12 @@
 
 class StatsController
 {
+    private const LIBRARY_ISSUE_QUERIES = [
+        'missing-files' => 'missing_files_rows',
+        'missing-posters' => 'missing_posters_rows',
+        'incomplete-metadata' => 'incomplete_metadata_rows'
+    ];
+
     private PDO $pdo;
     private array $sql;
 
@@ -96,6 +102,18 @@ class StatsController
         $issueRatio = min(1, $issueCount / $possibleIssues);
 
         return (int)round((1 - $issueRatio) * 100);
+    }
+
+    public function getLibraryIssueRows(string $issueType): array
+    {
+        $queryKey = self::LIBRARY_ISSUE_QUERIES[$issueType] ?? null;
+
+        if ($queryKey === null) {
+            throw new InvalidArgumentException('Unsupported library issue type');
+        }
+
+        $stmt = $this->pdo->query($this->sql[$queryKey]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getDuplicateRows(): array
