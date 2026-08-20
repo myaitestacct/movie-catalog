@@ -36,6 +36,9 @@ class StatsController
         $stats['genres'] = $this->getUniqueDelimitedValueCount('categories');
         $stats['languages'] = $this->getUniqueDelimitedValueCount('languages');
         $stats['countries'] = $this->getUniqueDelimitedValueCount('countries');
+        $stats['release_year_analytics'] = $this->getReleaseYearAnalytics(
+            $stats['total_movies']
+        );
 
         $stmt = $this->pdo->query($this->sql['health']);
         $health = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
@@ -52,6 +55,75 @@ class StatsController
         $stats['health_score'] = $this->calculateHealthScore($stats);
 
         return $stats;
+    }
+
+    private function getReleaseYearAnalytics(int $totalMovies): array
+    {
+        $stmt = $this->pdo->query($this->sql['release_years']);
+        return $this->buildReleaseYearAnalytics(
+            $stmt->fetchAll(PDO::FETCH_ASSOC),
+            $totalMovies
+        );
+    }
+
+    private function buildReleaseYearAnalytics(
+        array $rows,
+        int $totalMovies
+    ): array {
+        $years = [];
+        $decadeCounts = [];
+        $datedMovies = 0;
+        $peakYear = null;
+
+        foreach ($rows as $row) {
+            $year = (int)($row['release_year'] ?? 0);
+            $count = (int)($row['movie_count'] ?? 0);
+
+            if ($year <= 0 || $count <= 0) {
+                continue;
+            }
+
+            $yearEntry = [
+                'year' => $year,
+                'count' => $count
+            ];
+            $years[] = $yearEntry;
+            $datedMovies += $count;
+
+            if ($peakYear === null || $count > $peakYear['count']) {
+                $peakYear = $yearEntry;
+            }
+
+            $decadeStart = intdiv($year, 10) * 10;
+            $decadeCounts[$decadeStart] =
+                ($decadeCounts[$decadeStart] ?? 0) + $count;
+        }
+
+        ksort($decadeCounts, SORT_NUMERIC);
+        $decades = [];
+        $busiestDecade = null;
+
+        foreach ($decadeCounts as $startYear => $count) {
+            $entry = [
+                'start_year' => (int)$startYear,
+                'label' => $startYear . 's',
+                'count' => $count
+            ];
+            $decades[] = $entry;
+
+            if ($busiestDecade === null || $count > $busiestDecade['count']) {
+                $busiestDecade = $entry;
+            }
+        }
+
+        return [
+            'dated_movies' => $datedMovies,
+            'undated_movies' => max(0, $totalMovies - $datedMovies),
+            'peak_year' => $peakYear,
+            'busiest_decade' => $busiestDecade,
+            'years' => $years,
+            'decades' => $decades
+        ];
     }
 
     private function getUniqueDelimitedValueCount(string $queryKey): int
