@@ -36,8 +36,16 @@ class StatsController
         $genreAnalytics = $this->getGenreAnalytics($stats['total_movies']);
         $stats['genres'] = count($genreAnalytics['genres']);
         $stats['genre_analytics'] = $genreAnalytics;
-        $stats['languages'] = $this->getUniqueDelimitedValueCount('languages');
-        $stats['countries'] = $this->getUniqueDelimitedValueCount('countries');
+        $languageCountryAnalytics = $this->getLanguageCountryAnalytics(
+            $stats['total_movies']
+        );
+        $stats['languages'] = count(
+            $languageCountryAnalytics['languages']['items']
+        );
+        $stats['countries'] = count(
+            $languageCountryAnalytics['countries']['items']
+        );
+        $stats['language_country_analytics'] = $languageCountryAnalytics;
         $stats['release_year_analytics'] = $this->getReleaseYearAnalytics(
             $stats['total_movies']
         );
@@ -243,6 +251,78 @@ class StatsController
         return $largest;
     }
 
+    private function getLanguageCountryAnalytics(int $totalMovies): array
+    {
+        return [
+            'languages' => $this->getDelimitedValueAnalytics(
+                'languages',
+                $totalMovies
+            ),
+            'countries' => $this->getDelimitedValueAnalytics(
+                'countries',
+                $totalMovies
+            )
+        ];
+    }
+
+    private function getDelimitedValueAnalytics(
+        string $queryKey,
+        int $totalMovies
+    ): array {
+        $stmt = $this->pdo->query($this->sql[$queryKey]);
+        return $this->buildDelimitedValueAnalytics(
+            $stmt->fetchAll(PDO::FETCH_COLUMN),
+            $totalMovies
+        );
+    }
+
+    private function buildDelimitedValueAnalytics(
+        array $valueLists,
+        int $totalMovies
+    ): array {
+        $counts = [];
+        $taggedMovies = 0;
+        $assignments = 0;
+
+        foreach ($valueLists as $valueList) {
+            $movieValues = $this->splitDelimitedValues((string)$valueList);
+
+            if ($movieValues === []) {
+                continue;
+            }
+
+            $taggedMovies++;
+            $assignments += count($movieValues);
+
+            foreach ($movieValues as $key => $label) {
+                if (!isset($counts[$key])) {
+                    $counts[$key] = [
+                        'label' => $label,
+                        'count' => 0
+                    ];
+                }
+
+                $counts[$key]['count']++;
+            }
+        }
+
+        $items = array_values($counts);
+        usort($items, static function (array $left, array $right): int {
+            $countComparison = $right['count'] <=> $left['count'];
+            return $countComparison !== 0
+                ? $countComparison
+                : strcasecmp($left['label'], $right['label']);
+        });
+
+        return [
+            'tagged_movies' => $taggedMovies,
+            'untagged_movies' => max(0, $totalMovies - $taggedMovies),
+            'assignments' => $assignments,
+            'top_item' => $items[0] ?? null,
+            'items' => $items
+        ];
+    }
+
     private function getGenreAnalytics(int $totalMovies): array
     {
         $stmt = $this->pdo->query($this->sql['categories']);
@@ -323,20 +403,6 @@ class StatsController
         }
 
         return $values;
-    }
-
-    private function getUniqueDelimitedValueCount(string $queryKey): int
-    {
-        $stmt = $this->pdo->query($this->sql[$queryKey]);
-        $values = [];
-
-        while (($valueList = $stmt->fetchColumn()) !== false) {
-            foreach ($this->splitDelimitedValues((string)$valueList) as $key => $label) {
-                $values[$key] = $label;
-            }
-        }
-
-        return count($values);
     }
 
     private function calculateHealthScore(array $stats): int
