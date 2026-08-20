@@ -119,6 +119,56 @@ $buildReleaseYearAnalytics = $statsReflection->getMethod(
 $buildReleaseYearAnalytics->setAccessible(true);
 $buildGenreAnalytics = $statsReflection->getMethod('buildGenreAnalytics');
 $buildGenreAnalytics->setAccessible(true);
+$buildRatingRuntimeAnalytics = $statsReflection->getMethod(
+    'buildRatingRuntimeAnalytics'
+);
+$buildRatingRuntimeAnalytics->setAccessible(true);
+
+assertSameValue(
+    [
+        'rated_movies' => 6,
+        'unrated_movies' => 2,
+        'runtime_known_movies' => 6,
+        'runtime_missing_movies' => 2,
+        'top_rating_band' => [
+            'key' => '8-plus',
+            'label' => '8+',
+            'count' => 2
+        ],
+        'common_runtime_band' => [
+            'key' => 'standard',
+            'label' => '90–119 min',
+            'count' => 2
+        ],
+        'rating_bands' => [
+            ['key' => 'under-5', 'label' => 'Under 5', 'count' => 1],
+            ['key' => '5-range', 'label' => '5–5.9', 'count' => 1],
+            ['key' => '6-range', 'label' => '6–6.9', 'count' => 1],
+            ['key' => '7-range', 'label' => '7–7.9', 'count' => 1],
+            ['key' => '8-plus', 'label' => '8+', 'count' => 2]
+        ],
+        'runtime_bands' => [
+            ['key' => 'short', 'label' => 'Under 90 min', 'count' => 1],
+            ['key' => 'standard', 'label' => '90–119 min', 'count' => 2],
+            ['key' => 'long', 'label' => '120–149 min', 'count' => 2],
+            ['key' => 'epic', 'label' => '150+ min', 'count' => 1]
+        ]
+    ],
+    $buildRatingRuntimeAnalytics->invoke(
+        $statsController,
+        [
+            ['RATING' => '4.5', 'LENGTH' => '80'],
+            ['RATING' => '5.5', 'LENGTH' => '90'],
+            ['RATING' => '6.5', 'LENGTH' => '119'],
+            ['RATING' => '7.5', 'LENGTH' => '120'],
+            ['RATING' => '8.5', 'LENGTH' => '149'],
+            ['RATING' => '9', 'LENGTH' => '150'],
+            ['RATING' => '0', 'LENGTH' => '0']
+        ],
+        8
+    ),
+    'Rating/runtime analytics assign boundary values to the correct bands'
+);
 
 assertSameValue(
     [
