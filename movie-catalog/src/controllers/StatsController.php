@@ -33,7 +33,9 @@ class StatsController
         $stats['oldest_year'] = (int)($stats['oldest_year'] ?? 0);
         $stats['newest_year'] = (int)($stats['newest_year'] ?? 0);
 
-        $stats['genres'] = $this->getUniqueDelimitedValueCount('categories');
+        $genreAnalytics = $this->getGenreAnalytics($stats['total_movies']);
+        $stats['genres'] = count($genreAnalytics['genres']);
+        $stats['genre_analytics'] = $genreAnalytics;
         $stats['languages'] = $this->getUniqueDelimitedValueCount('languages');
         $stats['countries'] = $this->getUniqueDelimitedValueCount('countries');
         $stats['release_year_analytics'] = $this->getReleaseYearAnalytics(
@@ -144,30 +146,96 @@ class StatsController
         ];
     }
 
+    private function getGenreAnalytics(int $totalMovies): array
+    {
+        $stmt = $this->pdo->query($this->sql['categories']);
+        return $this->buildGenreAnalytics(
+            $stmt->fetchAll(PDO::FETCH_COLUMN),
+            $totalMovies
+        );
+    }
+
+    private function buildGenreAnalytics(
+        array $valueLists,
+        int $totalMovies
+    ): array {
+        $genreCounts = [];
+        $taggedMovies = 0;
+        $genreAssignments = 0;
+
+        foreach ($valueLists as $valueList) {
+            $movieGenres = $this->splitDelimitedValues((string)$valueList);
+
+            if ($movieGenres === []) {
+                continue;
+            }
+
+            $taggedMovies++;
+            $genreAssignments += count($movieGenres);
+
+            foreach ($movieGenres as $key => $label) {
+                if (!isset($genreCounts[$key])) {
+                    $genreCounts[$key] = [
+                        'label' => $label,
+                        'count' => 0
+                    ];
+                }
+
+                $genreCounts[$key]['count']++;
+            }
+        }
+
+        $genres = array_values($genreCounts);
+        usort($genres, static function (array $left, array $right): int {
+            $countComparison = $right['count'] <=> $left['count'];
+            return $countComparison !== 0
+                ? $countComparison
+                : strcasecmp($left['label'], $right['label']);
+        });
+
+        return [
+            'tagged_movies' => $taggedMovies,
+            'untagged_movies' => max(0, $totalMovies - $taggedMovies),
+            'genre_assignments' => $genreAssignments,
+            'top_genre' => $genres[0] ?? null,
+            'genres' => $genres
+        ];
+    }
+
+    private function splitDelimitedValues(string $valueList): array
+    {
+        $items = preg_split(
+            '/\s*[,;|\/]\s*/u',
+            $valueList,
+            -1,
+            PREG_SPLIT_NO_EMPTY
+        );
+        $values = [];
+
+        foreach ($items ?: [] as $item) {
+            $label = trim($item);
+
+            if ($label === '') {
+                continue;
+            }
+
+            $key = function_exists('mb_strtolower')
+                ? mb_strtolower($label, 'UTF-8')
+                : strtolower($label);
+            $values[$key] = $values[$key] ?? $label;
+        }
+
+        return $values;
+    }
+
     private function getUniqueDelimitedValueCount(string $queryKey): int
     {
         $stmt = $this->pdo->query($this->sql[$queryKey]);
         $values = [];
 
         while (($valueList = $stmt->fetchColumn()) !== false) {
-            $items = preg_split(
-                '/\s*[,;|\/]\s*/u',
-                (string)$valueList,
-                -1,
-                PREG_SPLIT_NO_EMPTY
-            );
-
-            foreach ($items ?: [] as $item) {
-                $item = trim($item);
-
-                if ($item === '') {
-                    continue;
-                }
-
-                $key = function_exists('mb_strtolower')
-                    ? mb_strtolower($item, 'UTF-8')
-                    : strtolower($item);
-                $values[$key] = true;
+            foreach ($this->splitDelimitedValues((string)$valueList) as $key => $label) {
+                $values[$key] = $label;
             }
         }
 
