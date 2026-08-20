@@ -6,6 +6,7 @@ import {
 import { renderStatsPagination } from './stats-pagination.js';
 import { renderReleaseYearAnalytics } from './stats-release-years.js';
 import { renderGenreAnalytics } from './stats-genres.js';
+import { renderRatingRuntimeAnalytics } from './stats-rating-runtime.js';
 import {
     countGroupedRows,
     groupMovieRows,
@@ -239,6 +240,10 @@ export async function refreshStats() {
         );
         renderGenreAnalytics(
             data.genre_analytics,
+            data.total_movies
+        );
+        renderRatingRuntimeAnalytics(
+            data.rating_runtime_analytics,
             data.total_movies
         );
 
