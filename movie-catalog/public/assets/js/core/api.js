@@ -20,14 +20,36 @@ async function fetchJson(url) {
     throw new ApiError('Unable to reach the server', 0, error);
   }
 
+  let responseBody;
+
+  try {
+    responseBody = await response.text();
+  } catch (error) {
+    throw new ApiError(
+      `The server response could not be read (HTTP ${response.status})`,
+      response.status,
+      error
+    );
+  }
+
   let payload;
 
   try {
-    payload = await response.json();
+    payload = JSON.parse(responseBody);
   } catch {
+    const responsePreview = responseBody.trim().slice(0, 500);
+    const diagnostic = {
+      url,
+      status: response.status,
+      contentType: response.headers.get('content-type') || '',
+      responsePreview
+    };
+
+    console.error('Invalid JSON API response:', diagnostic);
     throw new ApiError(
-      'The server returned an invalid response',
-      response.status
+      `The server returned an invalid response (HTTP ${response.status})`,
+      response.status,
+      diagnostic
     );
   }
 
