@@ -163,6 +163,40 @@ export function isCompleteGenreAnalytics(analytics) {
     analytics.genres.every(validGenreEntry);
 }
 
+export function isCompleteRatingRuntimeAnalytics(analytics) {
+  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) {
+    return false;
+  }
+
+  const validBand = band =>
+    band &&
+    typeof band === 'object' &&
+    !Array.isArray(band) &&
+    typeof band.key === 'string' &&
+    band.key.trim() !== '' &&
+    typeof band.label === 'string' &&
+    band.label.trim() !== '' &&
+    isNumericValue(band.count) &&
+    Number(band.count) >= 0;
+
+  return isNumericValue(analytics.rated_movies) &&
+    isNumericValue(analytics.unrated_movies) &&
+    isNumericValue(analytics.runtime_known_movies) &&
+    isNumericValue(analytics.runtime_missing_movies) &&
+    (
+      analytics.top_rating_band === null ||
+      validBand(analytics.top_rating_band)
+    ) &&
+    (
+      analytics.common_runtime_band === null ||
+      validBand(analytics.common_runtime_band)
+    ) &&
+    Array.isArray(analytics.rating_bands) &&
+    analytics.rating_bands.every(validBand) &&
+    Array.isArray(analytics.runtime_bands) &&
+    analytics.runtime_bands.every(validBand);
+}
+
 const STATS_NUMERIC_FIELDS = [
   'total_movies',
   'years',
@@ -191,10 +225,13 @@ export function isCompleteStatsPayload(data) {
     isCompleteReleaseYearAnalytics(data.release_year_analytics);
   const genresAreValid = data.genre_analytics === undefined ||
     isCompleteGenreAnalytics(data.genre_analytics);
+  const ratingRuntimeIsValid = data.rating_runtime_analytics === undefined ||
+    isCompleteRatingRuntimeAnalytics(data.rating_runtime_analytics);
 
   return STATS_NUMERIC_FIELDS.every(field => isNumericValue(data[field])) &&
     releaseYearsAreValid &&
-    genresAreValid;
+    genresAreValid &&
+    ratingRuntimeIsValid;
 }
 
 export async function fetchStats() {
