@@ -101,6 +101,14 @@ export function initStats(toggleBtn, statsPanel) {
         String(!panel.classList.contains('show'))
     );
 
+    // Keep the detail list available independently of the summary request.
+    // This preserves the original behavior even if the aggregate count is 0
+    // or the dashboard request has not finished yet.
+    panel.querySelector('#better-copy-card')?.addEventListener(
+        'click',
+        loadGetBetterCopy
+    );
+
     toggleBtn.addEventListener('click', e => {
         e.stopPropagation();
         const open = panel.classList.contains('show');
@@ -202,10 +210,9 @@ export async function refreshStats() {
         duplicateCard.onclick = data.duplicate_count > 0 ? loadDuplicates : null;
 
         const betterCopyCard = el('better-copy-card');
-        betterCopyCard.disabled = data.needs_better_copy_count === 0;
-        betterCopyCard.onclick = data.needs_better_copy_count > 0
-            ? loadGetBetterCopy
-            : null;
+        betterCopyCard.title = data.needs_better_copy_count > 0
+            ? `Show ${data.needs_better_copy_count} movies marked as needing a better copy`
+            : 'Check for movies marked as needing a better copy';
     } catch (err) {
         loaded = false;
         console.error('Stats API error:', err);
