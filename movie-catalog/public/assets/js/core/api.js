@@ -7,6 +7,10 @@ export class ApiError extends Error {
   }
 }
 
+export function parseJsonResponseBody(responseBody) {
+  return JSON.parse(String(responseBody).trim());
+}
+
 async function fetchJson(url) {
   let response;
 
@@ -35,17 +39,24 @@ async function fetchJson(url) {
   let payload;
 
   try {
-    payload = JSON.parse(responseBody);
+    payload = parseJsonResponseBody(responseBody);
   } catch {
     const responsePreview = responseBody.trim().slice(0, 500);
+    const contentType = response.headers.get('content-type') || '';
     const diagnostic = {
       url,
       status: response.status,
-      contentType: response.headers.get('content-type') || '',
+      contentType,
       responsePreview
     };
 
-    console.error('Invalid JSON API response:', diagnostic);
+    console.error(
+      'Invalid JSON API response\n' +
+      `URL: ${url}\n` +
+      `Status: ${response.status}\n` +
+      `Content-Type: ${contentType || '[not provided]'}\n` +
+      `Response preview: ${responsePreview || '[empty response]'}`
+    );
     throw new ApiError(
       `The server returned an invalid response (HTTP ${response.status})`,
       response.status,
