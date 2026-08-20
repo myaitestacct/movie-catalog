@@ -5,8 +5,14 @@ import {
 } from './stats-animations.js';
 import { renderStatsPagination } from './stats-pagination.js';
 import {
+    countGroupedRows,
+    groupMovieRows,
+    LIBRARY_ISSUE_CONFIG
+} from './stats-issues.js';
+import {
     fetchBetterCopyRows,
     fetchDuplicates,
+    fetchLibraryIssueRows,
     fetchMoviePage,
     fetchStats
 } from '../core/api.js';
@@ -27,9 +33,14 @@ let dupPage = 1;
 let getBetterCopyGroups = [];
 let getBetterCopyPage = 1;
 
+let libraryIssueModal;
+let libraryIssueGroups = [];
+let libraryIssuePage = 1;
+let activeLibraryIssueType = null;
+
 const REC_PER_PAGE = 10;
 
-function createGroupHeader(group, colspan, alternate) {
+function createGroupHeader(group, colspan, alternate, itemLabel = 'copy') {
     const header = document.createElement('tr');
     header.className = `dup-group ${alternate ? 'dup-group-a' : 'dup-group-b'}`;
 
@@ -46,7 +57,8 @@ function createGroupHeader(group, colspan, alternate) {
 
     const count = Number(group.count) || 0;
     const countLabel = document.createElement('small');
-    countLabel.textContent = `— ${count} ${count === 1 ? 'copy' : 'copies'}`;
+    countLabel.textContent =
+        `— ${count} ${itemLabel}${count === 1 ? '' : 's'}`;
 
     cell.append(toggle, details, countLabel);
     header.appendChild(cell);
@@ -109,6 +121,13 @@ export function initStats(toggleBtn, statsPanel) {
         'click',
         loadGetBetterCopy
     );
+
+    Object.entries(LIBRARY_ISSUE_CONFIG).forEach(([issueType, config]) => {
+        panel.querySelector(`#${config.cardId}`)?.addEventListener(
+            'click',
+            () => loadLibraryIssues(issueType)
+        );
+    });
 
     toggleBtn.addEventListener('click', e => {
         e.stopPropagation();
@@ -205,6 +224,14 @@ export async function refreshStats() {
             'aria-label',
             `Health score ${data.health_score} out of 100. ${healthIssues.join(', ')}.`
         );
+
+        Object.values(LIBRARY_ISSUE_CONFIG).forEach(config => {
+            const issueCount = Number(data[config.countField]) || 0;
+            const issueCard = el(config.cardId);
+            issueCard.title = issueCount > 0
+                ? `Show ${issueCount} ${issueCount === 1 ? 'movie' : 'movies'} in ${config.title}`
+                : `Check ${config.title}`;
+        });
 
         const duplicateCard = el('duplicate-card');
         duplicateCard.disabled = data.duplicate_count === 0;
@@ -374,6 +401,141 @@ function renderDuplicatePage() {
 }
 
 /* =============================
+   LIBRARY ISSUES
+============================= */
+
+async function loadLibraryIssues(issueType) {
+    const config = LIBRARY_ISSUE_CONFIG[issueType];
+    if (!config) return;
+
+    try {
+        const rows = await fetchLibraryIssueRows(issueType);
+
+        clearError(`library-issue-${issueType}`);
+        if (rows.length === 0) {
+            alert(config.emptyMessage);
+            return;
+        }
+
+        activeLibraryIssueType = issueType;
+        libraryIssueGroups = groupMovieRows(rows);
+        libraryIssuePage = 1;
+        showLibraryIssueModal();
+    } catch (error) {
+        console.error(`Failed to load ${issueType}`, error);
+        showError(error.message || `Unable to load ${config.title.toLowerCase()}`, {
+            scope: `library-issue-${issueType}`,
+            retry: () => loadLibraryIssues(issueType)
+        });
+    }
+}
+
+function showLibraryIssueModal() {
+    const config = LIBRARY_ISSUE_CONFIG[activeLibraryIssueType];
+    if (!config) return;
+
+    if (!libraryIssueModal) {
+        libraryIssueModal = document.createElement('div');
+        libraryIssueModal.className = 'stats-modal hidden';
+        libraryIssueModal.setAttribute('role', 'dialog');
+        libraryIssueModal.setAttribute('aria-modal', 'true');
+        libraryIssueModal.setAttribute('aria-labelledby', 'library-issue-title');
+        libraryIssueModal.innerHTML = `
+            <div class="stats-modal-content">
+                <div class="stats-modal-header">
+                    <h2 id="library-issue-title"></h2>
+                    <button type="button" class="stats-close" aria-label="Close library issue dialog">&times;</button>
+                </div>
+
+                <div class="stats-modal-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" id="library-issue-pagination"></div>
+            </div>
+        `;
+        document.body.appendChild(libraryIssueModal);
+
+        libraryIssueModal.querySelector('.stats-close').onclick =
+            () => libraryIssueModal.classList.add('hidden');
+
+        libraryIssueModal.onclick = event => {
+            if (event.target === libraryIssueModal) {
+                libraryIssueModal.classList.add('hidden');
+            }
+        };
+    }
+
+    libraryIssueModal.querySelector('#library-issue-title').textContent =
+        config.title;
+    libraryIssueModal.querySelector('.stats-close').setAttribute(
+        'aria-label',
+        `Close ${config.title.toLowerCase()} dialog`
+    );
+
+    renderLibraryIssuePage();
+    libraryIssueModal.classList.remove('hidden');
+}
+
+function renderLibraryIssuePage() {
+    const config = LIBRARY_ISSUE_CONFIG[activeLibraryIssueType];
+    if (!config || !libraryIssueModal) return;
+
+    const tbody = libraryIssueModal.querySelector('tbody');
+    const pager = libraryIssueModal.querySelector(
+        '#library-issue-pagination'
+    );
+    tbody.innerHTML = '';
+
+    const start = (libraryIssuePage - 1) * REC_PER_PAGE;
+    const pageGroups = libraryIssueGroups.slice(
+        start,
+        start + REC_PER_PAGE
+    );
+    let alternate = false;
+
+    pageGroups.forEach(group => {
+        alternate = !alternate;
+        const header = createGroupHeader(group, 3, alternate, 'movie');
+        header.onclick = () => {
+            group.open = !group.open;
+            renderLibraryIssuePage();
+        };
+        tbody.appendChild(header);
+
+        if (group.open) {
+            group.rows.forEach(row => {
+                tbody.appendChild(createMovieReferenceRow(row));
+            });
+        }
+    });
+
+    const totalPages = Math.max(
+        1,
+        Math.ceil(libraryIssueGroups.length / REC_PER_PAGE)
+    );
+
+    renderStatsPagination(pager, {
+        currentPage: libraryIssuePage,
+        totalPages,
+        totalItems: countGroupedRows(libraryIssueGroups),
+        itemLabel: 'movie',
+        ariaLabel: config.paginationLabel,
+        onPageChange: page => {
+            libraryIssuePage = page;
+            renderLibraryIssuePage();
+        }
+    });
+}
+
+/* =============================
    Better Copy
 ============================= */
 
@@ -389,7 +551,7 @@ async function loadGetBetterCopy() {
         }
 
         // Group the movies by the necessary fields
-        getBetterCopyGroups = groupGetBetterCopy(rows);
+        getBetterCopyGroups = groupMovieRows(rows);
         getBetterCopyPage = 1;
         showGetBetterCopyModal();
     } catch (e) {
@@ -399,31 +561,6 @@ async function loadGetBetterCopy() {
             retry: loadGetBetterCopy
         });
     }
-}
-
-function groupGetBetterCopy(rows) {
-    const map = new Map();
-
-    rows.forEach(row => {
-        const key = `${row.ORIGINALTITLE}__${row.YEAR}__${row.URL}`;
-        if (!map.has(key)) {
-            map.set(key, {
-                key,
-                title: row.ORIGINALTITLE,
-                year: row.YEAR,
-                url: row.URL,
-                count: 0,
-                rows: [],
-                open: false
-            });
-        }
-
-        const group = map.get(key);
-        group.rows.push(row);
-        group.count = group.rows.length;
-    });
-
-    return Array.from(map.values());
 }
 
 let getBetterCopyModal;
@@ -485,7 +622,7 @@ function renderGetBetterCopyPage() {
         alt = !alt;
 
         /* ---------- GROUP HEADER ---------- */
-        const header = createGroupHeader(group, 4, alt);
+        const header = createGroupHeader(group, 3, alt);
         header.onclick = () => {
             group.open = !group.open;
             renderGetBetterCopyPage();
@@ -505,10 +642,7 @@ function renderGetBetterCopyPage() {
         1,
         Math.ceil(getBetterCopyGroups.length / REC_PER_PAGE)
     );
-    const totalMovies = getBetterCopyGroups.reduce(
-        (total, group) => total + group.rows.length,
-        0
-    );
+    const totalMovies = countGroupedRows(getBetterCopyGroups);
 
     renderStatsPagination(pager, {
         currentPage: getBetterCopyPage,
