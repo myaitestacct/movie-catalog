@@ -7,6 +7,7 @@ import { renderStatsPagination } from './stats-pagination.js';
 import * as releaseYearAnalytics from './stats-release-years.js';
 import * as genreAnalytics from './stats-genres.js';
 import * as ratingRuntimeAnalytics from './stats-rating-runtime.js';
+import * as languageCountryAnalytics from './stats-language-country.js';
 import {
     countGroupedRows,
     groupMovieRows,
@@ -234,7 +235,6 @@ export async function refreshStats() {
         yearRange.textContent = oldestYear > 0 && newestYear > 0
             ? `${oldestYear}–${newestYear}`
             : 'No dated movies';
-
         releaseYearAnalytics.renderReleaseYearAnalytics?.(
             data.release_year_analytics,
             data.total_movies
@@ -245,6 +245,10 @@ export async function refreshStats() {
         );
         ratingRuntimeAnalytics.renderRatingRuntimeAnalytics?.(
             data.rating_runtime_analytics,
+            data.total_movies
+        );
+        languageCountryAnalytics.renderLanguageCountryAnalytics?.(
+            data.language_country_analytics,
             data.total_movies
         );
 
