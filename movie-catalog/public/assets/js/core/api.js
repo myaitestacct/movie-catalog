@@ -141,6 +141,28 @@ export function isCompleteReleaseYearAnalytics(analytics) {
     analytics.decades.every(validDecadeEntry);
 }
 
+export function isCompleteGenreAnalytics(analytics) {
+  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) {
+    return false;
+  }
+
+  const validGenreEntry = entry =>
+    entry &&
+    typeof entry === 'object' &&
+    !Array.isArray(entry) &&
+    typeof entry.label === 'string' &&
+    entry.label.trim() !== '' &&
+    isNumericValue(entry.count) &&
+    Number(entry.count) >= 0;
+
+  return isNumericValue(analytics.tagged_movies) &&
+    isNumericValue(analytics.untagged_movies) &&
+    isNumericValue(analytics.genre_assignments) &&
+    (analytics.top_genre === null || validGenreEntry(analytics.top_genre)) &&
+    Array.isArray(analytics.genres) &&
+    analytics.genres.every(validGenreEntry);
+}
+
 const STATS_NUMERIC_FIELDS = [
   'total_movies',
   'years',
@@ -165,8 +187,14 @@ export function isCompleteStatsPayload(data) {
     return false;
   }
 
-  return STATS_NUMERIC_FIELDS.every(field => isNumericValue(data[field])) &&
+  const releaseYearsAreValid = data.release_year_analytics === undefined ||
     isCompleteReleaseYearAnalytics(data.release_year_analytics);
+  const genresAreValid = data.genre_analytics === undefined ||
+    isCompleteGenreAnalytics(data.genre_analytics);
+
+  return STATS_NUMERIC_FIELDS.every(field => isNumericValue(data[field])) &&
+    releaseYearsAreValid &&
+    genresAreValid;
 }
 
 export async function fetchStats() {
