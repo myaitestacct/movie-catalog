@@ -100,6 +100,57 @@
             </div>
         </section>
 
+        <section class="stats-section stats-release-section" aria-labelledby="release-years-heading">
+            <div class="stats-section-header">
+                <h3 id="release-years-heading">Release-Year Analytics</h3>
+                <p>Explore collection coverage by year and decade.</p>
+            </div>
+
+            <div class="stats-release-insights" aria-live="polite">
+                <article class="stats-release-insight">
+                    <span id="peak-release-year">–</span>
+                    <small>Most Represented Year</small>
+                    <p id="peak-release-year-detail">No dated movies</p>
+                </article>
+
+                <article class="stats-release-insight">
+                    <span id="busiest-release-decade">–</span>
+                    <small>Largest Decade</small>
+                    <p id="busiest-release-decade-detail">No dated movies</p>
+                </article>
+
+                <article class="stats-release-insight">
+                    <span id="release-year-coverage">–</span>
+                    <small>Dated Coverage</small>
+                    <p id="release-year-coverage-detail">No release-year data</p>
+                </article>
+            </div>
+
+            <div class="stats-release-grid">
+                <article class="stats-release-chart" aria-labelledby="decade-distribution-heading">
+                    <header>
+                        <h4 id="decade-distribution-heading">Decade Distribution</h4>
+                        <p>Movies grouped by release decade.</p>
+                    </header>
+                    <div id="decade-distribution" class="stats-decade-list">
+                        <p class="stats-chart-empty">Loading decade data…</p>
+                    </div>
+                </article>
+
+                <article class="stats-release-chart" aria-labelledby="release-timeline-heading">
+                    <header>
+                        <h4 id="release-timeline-heading">Collection Timeline</h4>
+                        <p>Movie counts for each release year.</p>
+                    </header>
+                    <div class="stats-timeline-scroll">
+                        <div id="release-year-timeline" class="stats-timeline">
+                            <p class="stats-chart-empty">Loading timeline…</p>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
         <section class="stats-section" aria-labelledby="health-heading">
             <div class="stats-section-header">
                 <h3 id="health-heading">Library Health</h3>
@@ -115,29 +166,44 @@
                     </div>
                 </article>
 
-                <article class="stat-card">
+                <button
+                    type="button"
+                    id="missing-files-card"
+                    class="stat-card stat-card-action"
+                    title="Show movies with missing files"
+                >
                     <i class="fa-solid fa-exclamation-triangle" aria-hidden="true"></i>
-                    <div>
+                    <span class="stat-card-copy">
                         <span id="missing-files">–</span>
                         <small>Missing Files</small>
-                    </div>
-                </article>
+                    </span>
+                </button>
 
-                <article class="stat-card">
+                <button
+                    type="button"
+                    id="missing-posters-card"
+                    class="stat-card stat-card-action"
+                    title="Show movies with missing posters"
+                >
                     <i class="fa-solid fa-image" aria-hidden="true"></i>
-                    <div>
+                    <span class="stat-card-copy">
                         <span id="missing-posters">–</span>
                         <small>Missing Posters</small>
-                    </div>
-                </article>
+                    </span>
+                </button>
 
-                <article class="stat-card">
+                <button
+                    type="button"
+                    id="incomplete-metadata-card"
+                    class="stat-card stat-card-action"
+                    title="Show movies with incomplete metadata"
+                >
                     <i class="fa-solid fa-list-check" aria-hidden="true"></i>
-                    <div>
+                    <span class="stat-card-copy">
                         <span id="incomplete-metadata">–</span>
                         <small>Incomplete Metadata</small>
-                    </div>
-                </article>
+                    </span>
+                </button>
 
                 <button
                     type="button"
