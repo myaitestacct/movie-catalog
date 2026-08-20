@@ -246,6 +246,67 @@
             </div>
         </section>
 
+        <section class="stats-section stats-origin-section" aria-labelledby="origin-analytics-heading">
+            <div class="stats-section-header">
+                <h3 id="origin-analytics-heading">Language &amp; Country Analytics</h3>
+                <p>Explore the languages and countries represented in the library.</p>
+            </div>
+
+            <div class="stats-origin-insights" aria-live="polite">
+                <article class="stats-origin-insight">
+                    <span id="top-language">–</span>
+                    <small>Top Language</small>
+                    <p id="top-language-detail">No language data</p>
+                </article>
+
+                <article class="stats-origin-insight">
+                    <span id="top-country">–</span>
+                    <small>Top Country</small>
+                    <p id="top-country-detail">No country data</p>
+                </article>
+
+                <article class="stats-origin-insight">
+                    <span id="language-coverage">–</span>
+                    <small>Language Coverage</small>
+                    <p id="language-coverage-detail">No language data</p>
+                </article>
+
+                <article class="stats-origin-insight">
+                    <span id="country-coverage">–</span>
+                    <small>Country Coverage</small>
+                    <p id="country-coverage-detail">No country data</p>
+                </article>
+            </div>
+
+            <div class="stats-origin-grid">
+                <article class="stats-origin-chart" aria-labelledby="language-distribution-heading">
+                    <header>
+                        <div>
+                            <h4 id="language-distribution-heading">Language Distribution</h4>
+                            <p>Share of tagged movies for each leading language.</p>
+                        </div>
+                        <small id="language-distribution-summary">Loading languages…</small>
+                    </header>
+                    <div id="language-distribution" class="stats-origin-list">
+                        <p class="stats-chart-empty">Loading language data…</p>
+                    </div>
+                </article>
+
+                <article class="stats-origin-chart" aria-labelledby="country-distribution-heading">
+                    <header>
+                        <div>
+                            <h4 id="country-distribution-heading">Country Distribution</h4>
+                            <p>Share of tagged movies for each leading country.</p>
+                        </div>
+                        <small id="country-distribution-summary">Loading countries…</small>
+                    </header>
+                    <div id="country-distribution" class="stats-origin-list">
+                        <p class="stats-chart-empty">Loading country data…</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
         <section class="stats-section" aria-labelledby="health-heading">
             <div class="stats-section-header">
                 <h3 id="health-heading">Library Health</h3>
