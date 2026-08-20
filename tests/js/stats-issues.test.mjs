@@ -17,6 +17,10 @@ test('library issue configuration exposes all clickable health lists', () => {
     'missing-files-card'
   );
   assert.equal(
+    LIBRARY_ISSUE_CONFIG['missing-files'].metricId,
+    'missing-files'
+  );
+  assert.equal(
     LIBRARY_ISSUE_CONFIG['missing-posters'].countField,
     'missing_posters'
   );
