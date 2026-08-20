@@ -4,6 +4,7 @@ import {
     animateNumber
 } from './stats-animations.js';
 import { renderStatsPagination } from './stats-pagination.js';
+import { renderReleaseYearAnalytics } from './stats-release-years.js';
 import {
     countGroupedRows,
     groupMovieRows,
@@ -231,6 +232,10 @@ export async function refreshStats() {
         yearRange.textContent = oldestYear > 0 && newestYear > 0
             ? `${oldestYear}–${newestYear}`
             : 'No dated movies';
+        renderReleaseYearAnalytics(
+            data.release_year_analytics,
+            data.total_movies
+        );
 
         const healthCard = el('health-score-card');
         healthCard.dataset.health = data.health_score >= 90
