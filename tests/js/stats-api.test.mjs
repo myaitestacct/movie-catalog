@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  isCompleteStatsPayload
+  isCompleteStatsPayload,
+  parseJsonResponseBody
 } from '../../movie-catalog/public/assets/js/core/api.js';
 
 const completePayload = {
@@ -23,6 +24,13 @@ const completePayload = {
   needs_better_copy_count: 4,
   duplicate_count: 6
 };
+
+test('JSON response parsing tolerates whitespace and byte-order marks', () => {
+  assert.deepEqual(
+    parseJsonResponseBody('\uFEFF  {"ok":true}\n'),
+    { ok: true }
+  );
+});
 
 test('statistics validation accepts the complete dashboard payload', () => {
   assert.equal(isCompleteStatsPayload(completePayload), true);
@@ -62,4 +70,4 @@ test('statistics validation rejects empty and non-numeric metrics', () => {
     isCompleteStatsPayload({ ...completePayload, health_score: 'healthy' }),
     false
   );
-});  
+});
