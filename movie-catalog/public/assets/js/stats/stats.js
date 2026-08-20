@@ -1,4 +1,8 @@
-import { animateNumber, animateBytes } from './stats-animations.js';
+import {
+    animateBytes,
+    animateMetric,
+    animateNumber
+} from './stats-animations.js';
 import {
     fetchBetterCopyRows,
     fetchDuplicates,
@@ -11,6 +15,7 @@ import { configureExternalLink } from '../utils/url.js';
 import { loadMovies } from '../app.js';
 
 let panel, loaded = false;
+let statsToggleButton;
 let duplicateModal;
 
 // duplicate state
@@ -83,8 +88,18 @@ function createMovieReferenceRow(row) {
 
 export function initStats(toggleBtn, statsPanel) {
     panel = statsPanel;
+    statsToggleButton = toggleBtn;
     loaded = false;
     if (!toggleBtn || !panel) return;
+
+    toggleBtn.setAttribute(
+        'aria-expanded',
+        String(panel.classList.contains('show'))
+    );
+    panel.setAttribute(
+        'aria-hidden',
+        String(!panel.classList.contains('show'))
+    );
 
     toggleBtn.addEventListener('click', e => {
         e.stopPropagation();
@@ -92,24 +107,42 @@ export function initStats(toggleBtn, statsPanel) {
 
         panel.classList.toggle('show', !open);
         panel.classList.toggle('hidden', open);
+        toggleBtn.setAttribute('aria-expanded', String(!open));
+        panel.setAttribute('aria-hidden', String(open));
 
         if (!open && !loaded) {
             refreshStats();
         }
     });
 
+    panel.querySelector('.stats-close')?.addEventListener('click', () => {
+        closePanel(true);
+    });
+
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') closePanel();
+        if (e.key !== 'Escape') return;
+
+        const openModal = document.querySelector('.stats-modal:not(.hidden)');
+        if (openModal) {
+            openModal.classList.add('hidden');
+            return;
+        }
+
+        if (panel.classList.contains('show')) {
+            closePanel(true);
+        }
     });
 
     document.addEventListener('click', e => {
         if (!panel.contains(e.target) && e.target !== toggleBtn) {
-            closePanel();
+            closePanel(panel.contains(document.activeElement));
         }
     });
 }
 
 export async function refreshStats() {
+    panel?.setAttribute('aria-busy', 'true');
+
     try {
         const data = await fetchStats();
 
@@ -118,30 +151,61 @@ export async function refreshStats() {
 
         const el = id => document.getElementById(id);
         animateNumber(el('total-movies'), data.total_movies);
+        animateBytes(el('total-size'), data.total_size);
+        animateMetric(el('average-rating'), data.average_rating, {
+            decimals: 1
+        });
+        animateMetric(el('average-runtime'), data.average_runtime, {
+            suffix: ' min'
+        });
         animateNumber(el('total-years'), data.years);
         animateNumber(el('total-genres'), data.genres);
-        animateBytes(el('total-size'), data.total_size);
+        animateNumber(el('total-languages'), data.languages);
+        animateNumber(el('total-countries'), data.countries);
+        animateMetric(el('health-score'), data.health_score, {
+            suffix: '/100'
+        });
         animateNumber(el('missing-files'), data.missing_files);
+        animateNumber(el('missing-posters'), data.missing_posters);
+        animateNumber(el('incomplete-metadata'), data.incomplete_metadata);
         animateNumber(el('needs-better-copy-count'), data.needs_better_copy_count);
         animateNumber(el('duplicate-count'), data.duplicate_count);
 
-        const dupEl = el('duplicate-count');
-        if (data.duplicate_count > 0) {
-            dupEl.style.cursor = 'pointer';
-            dupEl.onclick = loadDuplicates;  // Set function to open modal
-        } else {
-            dupEl.style.cursor = 'default';
-            dupEl.onclick = null;
-        }
+        const yearRange = el('year-range');
+        const oldestYear = Number(data.oldest_year);
+        const newestYear = Number(data.newest_year);
+        yearRange.textContent = oldestYear > 0 && newestYear > 0
+            ? `${oldestYear}–${newestYear}`
+            : 'No dated movies';
 
-        const betterCopyEl = el('needs-better-copy-count');
-        if (data.needs_better_copy_count > 0) {
-            betterCopyEl.style.cursor = 'pointer';
-            betterCopyEl.onclick = loadGetBetterCopy;  // Set function to open modal
-        } else {
-            betterCopyEl.style.cursor = 'default';
-            betterCopyEl.onclick = null;
-        }
+        const healthCard = el('health-score-card');
+        healthCard.dataset.health = data.health_score >= 90
+            ? 'good'
+            : data.health_score >= 75
+                ? 'warning'
+                : 'critical';
+        const healthIssues = [
+            `${data.missing_files} missing files`,
+            `${data.needs_better_copy_count} replacement copies`,
+            `${data.duplicate_count} duplicate rows`,
+            `${data.missing_posters} missing posters`,
+            `${data.incomplete_metadata} incomplete metadata records`
+        ];
+        healthCard.title = healthIssues.join(' • ');
+        healthCard.setAttribute(
+            'aria-label',
+            `Health score ${data.health_score} out of 100. ${healthIssues.join(', ')}.`
+        );
+
+        const duplicateCard = el('duplicate-card');
+        duplicateCard.disabled = data.duplicate_count === 0;
+        duplicateCard.onclick = data.duplicate_count > 0 ? loadDuplicates : null;
+
+        const betterCopyCard = el('better-copy-card');
+        betterCopyCard.disabled = data.needs_better_copy_count === 0;
+        betterCopyCard.onclick = data.needs_better_copy_count > 0
+            ? loadGetBetterCopy
+            : null;
     } catch (err) {
         loaded = false;
         console.error('Stats API error:', err);
@@ -149,12 +213,22 @@ export async function refreshStats() {
             scope: 'stats',
             retry: refreshStats
         });
+    } finally {
+        panel?.setAttribute('aria-busy', 'false');
     }
 }
 
-function closePanel() {
+function closePanel(restoreFocus = false) {
+    if (!panel) return;
+
+    if (restoreFocus) {
+        statsToggleButton?.focus();
+    }
+
     panel.classList.remove('show');
     panel.classList.add('hidden');
+    panel.setAttribute('aria-hidden', 'true');
+    statsToggleButton?.setAttribute('aria-expanded', 'false');
 }
 
 /* =============================
@@ -212,7 +286,7 @@ function showDuplicateModal() {
             <div class="stats-modal-content">
                 <div class="stats-modal-header">
                     <h2>Duplicate Movies</h2>
-                    <button class="stats-close">&times;</button>
+                    <button type="button" class="stats-close" aria-label="Close duplicate movies dialog">&times;</button>
                 </div>
 
                 <div class="stats-modal-body">
@@ -354,7 +428,7 @@ function showGetBetterCopyModal() {
             <div class="stats-modal-content">
                 <div class="stats-modal-header">
                     <h2>Get Better Copy Movies</h2>
-                    <button class="stats-close">&times;</button>
+                    <button type="button" class="stats-close" aria-label="Close better-copy movies dialog">&times;</button>
                 </div>
 
                 <div class="stats-modal-body">
