@@ -7,6 +7,7 @@ $root = dirname(__DIR__, 2);
 require_once $root . '/movie-catalog/src/helpers/FileHelper.php';
 require_once $root . '/movie-catalog/src/helpers/Pagination.php';
 require_once $root . '/movie-catalog/src/repositories/MovieRepository.php';
+require_once $root . '/movie-catalog/src/controllers/StatsController.php';
 
 $failures = 0;
 
@@ -106,6 +107,39 @@ assertSameValue(
     '%100=%=_==%',
     $buildLikePattern->invoke($repository, '100%_=', false),
     'LIKE pattern escapes wildcard and escape characters'
+);
+
+$statsReflection = new ReflectionClass(StatsController::class);
+$statsController = $statsReflection->newInstanceWithoutConstructor();
+$calculateHealthScore = $statsReflection->getMethod('calculateHealthScore');
+$calculateHealthScore->setAccessible(true);
+
+assertSameValue(
+    100,
+    $calculateHealthScore->invoke($statsController, ['total_movies' => 0]),
+    'Health score treats an empty library as healthy'
+);
+
+assertSameValue(
+    90,
+    $calculateHealthScore->invoke($statsController, [
+        'total_movies' => 10,
+        'missing_files' => 1,
+        'needs_better_copy_count' => 1,
+        'duplicate_count' => 1,
+        'missing_posters' => 1,
+        'incomplete_metadata' => 1
+    ]),
+    'Health score averages the five issue dimensions'
+);
+
+assertSameValue(
+    0,
+    $calculateHealthScore->invoke($statsController, [
+        'total_movies' => 10,
+        'duplicate_count' => 60
+    ]),
+    'Health score never drops below zero'
 );
 
 if ($failures > 0) {
