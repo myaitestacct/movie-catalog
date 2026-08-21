@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   fetchMovies,
+  isCompleteCertificationAnalytics,
   isCompleteGenreAnalytics,
   isCompleteLanguageCountryAnalytics,
   isCompleteRatingRuntimeAnalytics,
@@ -58,16 +59,22 @@ const completePayload = {
       { label: 'Comedy', count: 80 }
     ]
   },
+  certification_analytics: {
+    tagged_movies: 220,
+    untagged_movies: 30,
+    assignments: 225,
+    top_item: { label: 'R', count: 80 },
+    items: [
+      { label: 'R', count: 80 },
+      { label: 'PG-13', count: 70 }
+    ]
+  },
   rating_runtime_analytics: {
     rated_movies: 230,
     unrated_movies: 20,
     runtime_known_movies: 240,
     runtime_missing_movies: 10,
-    top_rating_band: {
-      key: '7-range',
-      label: '7–7.9',
-      count: 75
-    },
+    top_rating_band: { key: '7-range', label: '7–7.9', count: 75 },
     common_runtime_band: {
       key: 'standard',
       label: '90–119 min',
@@ -210,6 +217,7 @@ test('statistics validation requires every core dashboard metric', () => {
   const optionalAnalytics = new Set([
     'release_year_analytics',
     'genre_analytics',
+    'certification_analytics',
     'rating_runtime_analytics',
     'language_country_analytics',
     'storage_analytics',
@@ -234,6 +242,7 @@ test('statistics validation permits independently deployed analytics sections', 
   const corePayload = { ...completePayload };
   delete corePayload.release_year_analytics;
   delete corePayload.genre_analytics;
+  delete corePayload.certification_analytics;
   delete corePayload.rating_runtime_analytics;
   delete corePayload.language_country_analytics;
   delete corePayload.storage_analytics;
@@ -245,9 +254,7 @@ test('statistics validation permits independently deployed analytics sections', 
 test('statistics validation accepts numeric database strings', () => {
   const databasePayload = JSON.parse(
     JSON.stringify(completePayload),
-    (_field, value) => typeof value === 'number'
-      ? String(value)
-      : value
+    (_field, value) => typeof value === 'number' ? String(value) : value
   );
 
   assert.equal(isCompleteStatsPayload(databasePayload), true);
@@ -287,15 +294,28 @@ test('genre validation rejects malformed distribution data', () => {
   );
 });
 
+test('certification validation rejects malformed distribution data', () => {
+  assert.equal(
+    isCompleteCertificationAnalytics({
+      ...completePayload.certification_analytics,
+      top_item: { label: '', count: 10 }
+    }),
+    false
+  );
+  assert.equal(
+    isCompleteCertificationAnalytics({
+      ...completePayload.certification_analytics,
+      assignments: 'many'
+    }),
+    false
+  );
+});
+
 test('rating/runtime validation rejects malformed band data', () => {
   assert.equal(
     isCompleteRatingRuntimeAnalytics({
       ...completePayload.rating_runtime_analytics,
-      rating_bands: [{
-        key: '',
-        label: 'Broken',
-        count: 5
-      }]
+      rating_bands: [{ key: '', label: 'Broken', count: 5 }]
     }),
     false
   );
@@ -381,24 +401,15 @@ test('storage validation rejects malformed size data', () => {
 
 test('statistics validation rejects empty and non-numeric metrics', () => {
   assert.equal(
-    isCompleteStatsPayload({
-      ...completePayload,
-      average_rating: null
-    }),
+    isCompleteStatsPayload({ ...completePayload, average_rating: null }),
     false
   );
   assert.equal(
-    isCompleteStatsPayload({
-      ...completePayload,
-      oldest_year: ''
-    }),
+    isCompleteStatsPayload({ ...completePayload, oldest_year: '' }),
     false
   );
   assert.equal(
-    isCompleteStatsPayload({
-      ...completePayload,
-      health_score: 'healthy'
-    }),
+    isCompleteStatsPayload({ ...completePayload, health_score: 'healthy' }),
     false
   );
 });
