@@ -11,16 +11,19 @@ export function parseJsonResponseBody(responseBody) {
   return JSON.parse(String(responseBody).trim());
 }
 
-async function fetchJson(url) {
+async function fetchJson(url, { signal } = {}) {
   let response;
 
   try {
     response = await fetch(url, {
       headers: {
         Accept: 'application/json'
-      }
+      },
+      signal
     });
   } catch (error) {
+    if (signal?.aborted || error?.name === 'AbortError') throw error;
+
     throw new ApiError('Unable to reach the server', 0, error);
   }
 
@@ -29,6 +32,8 @@ async function fetchJson(url) {
   try {
     responseBody = await response.text();
   } catch (error) {
+    if (signal?.aborted || error?.name === 'AbortError') throw error;
+
     throw new ApiError(
       `The server response could not be read (HTTP ${response.status})`,
       response.status,
@@ -83,8 +88,8 @@ function apiUrl(endpoint, params = null) {
   return `${BASE_URL}/api/${endpoint}${query}`;
 }
 
-export async function fetchMovies(params) {
-  const data = await fetchJson(apiUrl('movies.php', params));
+export async function fetchMovies(params, options = {}) {
+  const data = await fetchJson(apiUrl('movies.php', params), options);
 
   if (
     !Array.isArray(data?.data) ||
@@ -197,6 +202,55 @@ export function isCompleteRatingRuntimeAnalytics(analytics) {
     analytics.runtime_bands.every(validBand);
 }
 
+export function isCompleteStorageAnalytics(analytics) {
+  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) {
+    return false;
+  }
+
+  const validBand = band =>
+    band &&
+    typeof band === 'object' &&
+    !Array.isArray(band) &&
+    typeof band.key === 'string' &&
+    band.key.trim() !== '' &&
+    typeof band.label === 'string' &&
+    band.label.trim() !== '' &&
+    isNumericValue(band.count) &&
+    Number(band.count) >= 0 &&
+    isNumericValue(band.total_size) &&
+    Number(band.total_size) >= 0;
+  const validLargestMovie = movie =>
+    movie &&
+    typeof movie === 'object' &&
+    !Array.isArray(movie) &&
+    (
+      movie.num === null ||
+      typeof movie.num === 'string' ||
+      typeof movie.num === 'number'
+    ) &&
+    typeof movie.title === 'string' &&
+    movie.title.trim() !== '' &&
+    isNumericValue(movie.size) &&
+    Number(movie.size) > 0;
+
+  return isNumericValue(analytics.sized_movies) &&
+    Number(analytics.sized_movies) >= 0 &&
+    isNumericValue(analytics.unsized_movies) &&
+    Number(analytics.unsized_movies) >= 0 &&
+    isNumericValue(analytics.total_size) &&
+    Number(analytics.total_size) >= 0 &&
+    isNumericValue(analytics.average_size) &&
+    Number(analytics.average_size) >= 0 &&
+    isNumericValue(analytics.median_size) &&
+    Number(analytics.median_size) >= 0 &&
+    (
+      analytics.largest_movie === null ||
+      validLargestMovie(analytics.largest_movie)
+    ) &&
+    Array.isArray(analytics.size_bands) &&
+    analytics.size_bands.every(validBand);
+}
+
 export function isCompleteLanguageCountryAnalytics(analytics) {
   if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) {
     return false;
@@ -258,16 +312,19 @@ export function isCompleteStatsPayload(data) {
   const languageCountryIsValid =
     data.language_country_analytics === undefined ||
     isCompleteLanguageCountryAnalytics(data.language_country_analytics);
+  const storageIsValid = data.storage_analytics === undefined ||
+    isCompleteStorageAnalytics(data.storage_analytics);
 
   return STATS_NUMERIC_FIELDS.every(field => isNumericValue(data[field])) &&
     releaseYearsAreValid &&
     genresAreValid &&
     ratingRuntimeIsValid &&
-    languageCountryIsValid;
+    languageCountryIsValid &&
+    storageIsValid;
 }
 
-export async function fetchStats() {
-  const data = await fetchJson(apiUrl('stats.php'));
+export async function fetchStats(options = {}) {
+  const data = await fetchJson(apiUrl('stats.php'), options);
 
   if (!isCompleteStatsPayload(data)) {
     throw new ApiError('The statistics response is incomplete');
@@ -276,8 +333,8 @@ export async function fetchStats() {
   return data;
 }
 
-export async function fetchDuplicates() {
-  const data = await fetchJson(apiUrl('duplicates.php'));
+export async function fetchDuplicates(options = {}) {
+  const data = await fetchJson(apiUrl('duplicates.php'), options);
 
   if (!Array.isArray(data)) {
     throw new ApiError('The duplicate movie response is incomplete');
@@ -286,8 +343,8 @@ export async function fetchDuplicates() {
   return data;
 }
 
-export async function fetchBetterCopyRows() {
-  const data = await fetchJson(apiUrl('better-copy.php'));
+export async function fetchBetterCopyRows(options = {}) {
+  const data = await fetchJson(apiUrl('better-copy.php'), options);
 
   if (!Array.isArray(data)) {
     throw new ApiError('The better-copy response is incomplete');
@@ -296,9 +353,9 @@ export async function fetchBetterCopyRows() {
   return data;
 }
 
-export async function fetchLibraryIssueRows(issueType) {
+export async function fetchLibraryIssueRows(issueType, options = {}) {
   const params = new URLSearchParams({ type: issueType });
-  const data = await fetchJson(apiUrl('library-issues.php', params));
+  const data = await fetchJson(apiUrl('library-issues.php', params), options);
 
   if (!Array.isArray(data)) {
     throw new ApiError('The library issue response is incomplete');
@@ -307,8 +364,8 @@ export async function fetchLibraryIssueRows(issueType) {
   return data;
 }
 
-export async function fetchMoviePage(params) {
-  const data = await fetchJson(apiUrl('movie-page.php', params));
+export async function fetchMoviePage(params, options = {}) {
+  const data = await fetchJson(apiUrl('movie-page.php', params), options);
 
   if (
     typeof data?.found !== 'boolean' ||
