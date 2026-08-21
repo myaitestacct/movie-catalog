@@ -246,6 +246,46 @@
             </div>
         </section>
 
+        <section class="stats-section stats-certification-section" aria-labelledby="certification-analytics-heading">
+            <div class="stats-section-header">
+                <h3 id="certification-analytics-heading">Certification Analytics</h3>
+                <p>Review audience classifications and certification coverage.</p>
+            </div>
+
+            <div class="stats-genre-insights" aria-live="polite">
+                <article class="stats-genre-insight">
+                    <span id="top-certification">–</span>
+                    <small>Most Common Certification</small>
+                    <p id="top-certification-detail">No certification data</p>
+                </article>
+
+                <article class="stats-genre-insight">
+                    <span id="certification-coverage">–</span>
+                    <small>Certification Coverage</small>
+                    <p id="certification-coverage-detail">No certification data</p>
+                </article>
+
+                <article class="stats-genre-insight">
+                    <span id="unique-certifications">–</span>
+                    <small>Unique Certifications</small>
+                    <p id="unique-certifications-detail">No certification assignments</p>
+                </article>
+            </div>
+
+            <article class="stats-genre-chart" aria-labelledby="certification-distribution-heading">
+                <header>
+                    <div>
+                        <h4 id="certification-distribution-heading">Certification Distribution</h4>
+                        <p>Share of certified movies for every represented classification.</p>
+                    </div>
+                    <small id="certification-distribution-summary">Loading certifications…</small>
+                </header>
+                <div id="certification-distribution" class="stats-genre-list">
+                    <p class="stats-chart-empty">Loading certification data…</p>
+                </div>
+            </article>
+        </section>
+
         <section class="stats-section stats-origin-section" aria-labelledby="origin-analytics-heading">
             <div class="stats-section-header">
                 <h3 id="origin-analytics-heading">Language &amp; Country Analytics</h3>
