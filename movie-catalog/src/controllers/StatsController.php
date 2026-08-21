@@ -53,6 +53,11 @@ class StatsController
             'CERTIFICATION',
             $stats['total_movies']
         );
+        $stats['director_analytics'] = $this->getConfiguredDelimitedFacet(
+            'directors',
+            'DIRECTOR',
+            $stats['total_movies']
+        );
         $stats['release_year_analytics'] = $this->getReleaseYearAnalytics(
             $stats['total_movies']
         );
@@ -69,7 +74,8 @@ class StatsController
         $stats['needs_better_copy_count'] =
             (int)($health['needs_better_copy_count'] ?? 0);
         $stats['missing_posters'] = (int)($health['missing_posters'] ?? 0);
-        $stats['incomplete_metadata'] = (int)($health['incomplete_metadata'] ?? 0);
+        $stats['incomplete_metadata'] =
+            (int)($health['incomplete_metadata'] ?? 0);
 
         // Use the same filters as the duplicate detail query without loading
         // every duplicate row into memory for this summary response.
