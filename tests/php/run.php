@@ -123,6 +123,10 @@ $buildRatingRuntimeAnalytics = $statsReflection->getMethod(
     'buildRatingRuntimeAnalytics'
 );
 $buildRatingRuntimeAnalytics->setAccessible(true);
+$buildStorageAnalytics = $statsReflection->getMethod(
+    'buildStorageAnalytics'
+);
+$buildStorageAnalytics->setAccessible(true);
 $buildDelimitedValueAnalytics = $statsReflection->getMethod(
     'buildDelimitedValueAnalytics'
 );
@@ -196,6 +200,68 @@ assertSameValue(
         8
     ),
     'Rating/runtime analytics assign boundary values to the correct bands'
+);
+
+assertSameValue(
+    [
+        'sized_movies' => 5,
+        'unsized_movies' => 4,
+        'total_size' => 16106127360,
+        'average_size' => 3221225472,
+        'median_size' => 2147483648,
+        'largest_movie' => [
+            'num' => '5',
+            'title' => 'Largest Movie',
+            'size' => 8053063680
+        ],
+        'size_bands' => [
+            [
+                'key' => 'compact',
+                'label' => 'Under 700 MB',
+                'count' => 1,
+                'total_size' => 536870912
+            ],
+            [
+                'key' => 'standard-definition',
+                'label' => '700 MB–1.49 GB',
+                'count' => 1,
+                'total_size' => 1073741824
+            ],
+            [
+                'key' => 'high-definition',
+                'label' => '1.5–2.99 GB',
+                'count' => 1,
+                'total_size' => 2147483648
+            ],
+            [
+                'key' => 'large',
+                'label' => '3–5.99 GB',
+                'count' => 1,
+                'total_size' => 4294967296
+            ],
+            [
+                'key' => 'very-large',
+                'label' => '6 GB+',
+                'count' => 1,
+                'total_size' => 8053063680
+            ]
+        ]
+    ],
+    $buildStorageAnalytics->invoke(
+        $statsController,
+        [
+            ['NUM' => '1', 'FORMATTEDTITLE' => 'Compact', 'FILESIZE' => '512'],
+            ['NUM' => '2', 'FORMATTEDTITLE' => 'Standard', 'FILESIZE' => '1024'],
+            ['NUM' => '3', 'FORMATTEDTITLE' => 'HD', 'FILESIZE' => '2048'],
+            ['NUM' => '4', 'FORMATTEDTITLE' => 'Large', 'FILESIZE' => '4096'],
+            ['NUM' => '5', 'FORMATTEDTITLE' => 'Largest Movie', 'FILESIZE' => '7680'],
+            ['NUM' => '6', 'FORMATTEDTITLE' => 'Zero', 'FILESIZE' => '0'],
+            ['NUM' => '7', 'FORMATTEDTITLE' => 'Unknown', 'FILESIZE' => 'unknown'],
+            ['NUM' => '8', 'FORMATTEDTITLE' => 'Missing', 'FILESIZE' => null]
+        ],
+        9
+    ),
+    'Storage analytics calculate coverage, median, largest movie, and bands'
 );
 
 assertSameValue(
