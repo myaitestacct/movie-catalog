@@ -307,6 +307,52 @@
             </div>
         </section>
 
+        <section class="stats-section stats-storage-section" aria-labelledby="storage-analytics-heading">
+            <div class="stats-section-header">
+                <h3 id="storage-analytics-heading">Storage Analytics</h3>
+                <p>Understand file-size coverage and how the library uses disk space.</p>
+            </div>
+
+            <div class="stats-rating-runtime-insights" aria-live="polite">
+                <article class="stats-rating-runtime-insight">
+                    <span id="storage-size-coverage">–</span>
+                    <small>File-Size Coverage</small>
+                    <p id="storage-size-coverage-detail">No file-size data</p>
+                </article>
+
+                <article class="stats-rating-runtime-insight">
+                    <span id="average-storage-size">–</span>
+                    <small>Average Movie Size</small>
+                    <p id="average-storage-size-detail">No file-size data</p>
+                </article>
+
+                <article class="stats-rating-runtime-insight">
+                    <span id="median-storage-size">–</span>
+                    <small>Median Movie Size</small>
+                    <p id="median-storage-size-detail">No file-size data</p>
+                </article>
+
+                <article class="stats-rating-runtime-insight">
+                    <span id="largest-storage-movie">–</span>
+                    <small>Largest Movie</small>
+                    <p id="largest-storage-movie-detail">No file-size data</p>
+                </article>
+            </div>
+
+            <article class="stats-origin-chart" aria-labelledby="storage-distribution-heading">
+                <header>
+                    <div>
+                        <h4 id="storage-distribution-heading">Movie File-Size Distribution</h4>
+                        <p>Movies grouped into practical storage-size ranges.</p>
+                    </div>
+                    <small id="storage-distribution-summary">Loading file-size data…</small>
+                </header>
+                <div id="storage-size-distribution" class="stats-band-list">
+                    <p class="stats-chart-empty">Loading file-size data…</p>
+                </div>
+            </article>
+        </section>
+
         <section class="stats-section" aria-labelledby="health-heading">
             <div class="stats-section-header">
                 <h3 id="health-heading">Library Health</h3>
