@@ -272,6 +272,10 @@ function isCompleteDelimitedFacet(facet) {
     facet.items.every(validItem);
 }
 
+export function isCompleteCertificationAnalytics(analytics) {
+  return Boolean(isCompleteDelimitedFacet(analytics));
+}
+
 export function isCompleteLanguageCountryAnalytics(analytics) {
   if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) {
     return false;
@@ -328,6 +332,9 @@ export function isCompleteStatsPayload(data) {
   const technicalFormatsAreValid =
     data.technical_format_analytics === undefined ||
     isCompleteTechnicalFormatAnalytics(data.technical_format_analytics);
+  const certificationsAreValid =
+    data.certification_analytics === undefined ||
+    isCompleteCertificationAnalytics(data.certification_analytics);
 
   return STATS_NUMERIC_FIELDS.every(field => isNumericValue(data[field])) &&
     releaseYearsAreValid &&
@@ -335,7 +342,8 @@ export function isCompleteStatsPayload(data) {
     ratingRuntimeIsValid &&
     languageCountryIsValid &&
     storageIsValid &&
-    technicalFormatsAreValid;
+    technicalFormatsAreValid &&
+    certificationsAreValid;
 }
 
 export async function fetchStats(options = {}) {
