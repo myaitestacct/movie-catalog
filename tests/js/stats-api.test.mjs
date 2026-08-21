@@ -9,6 +9,7 @@ import {
   isCompleteReleaseYearAnalytics,
   isCompleteStatsPayload,
   isCompleteStorageAnalytics,
+  isCompleteTechnicalFormatAnalytics,
   parseJsonResponseBody
 } from '../../movie-catalog/public/assets/js/core/api.js';
 
@@ -62,7 +63,11 @@ const completePayload = {
     unrated_movies: 20,
     runtime_known_movies: 240,
     runtime_missing_movies: 10,
-    top_rating_band: { key: '7-range', label: '7–7.9', count: 75 },
+    top_rating_band: {
+      key: '7-range',
+      label: '7–7.9',
+      count: 75
+    },
     common_runtime_band: {
       key: 'standard',
       label: '90–119 min',
@@ -96,6 +101,28 @@ const completePayload = {
       items: [
         { label: 'USA', count: 150 },
         { label: 'UK', count: 50 }
+      ]
+    }
+  },
+  technical_format_analytics: {
+    resolutions: {
+      tagged_movies: 240,
+      untagged_movies: 10,
+      assignments: 245,
+      top_item: { label: '1080p', count: 150 },
+      items: [
+        { label: '1080p', count: 150 },
+        { label: '4K', count: 60 }
+      ]
+    },
+    audio_formats: {
+      tagged_movies: 235,
+      untagged_movies: 15,
+      assignments: 260,
+      top_item: { label: 'DTS', count: 120 },
+      items: [
+        { label: 'DTS', count: 120 },
+        { label: 'AAC', count: 70 }
       ]
     }
   },
@@ -185,7 +212,8 @@ test('statistics validation requires every core dashboard metric', () => {
     'genre_analytics',
     'rating_runtime_analytics',
     'language_country_analytics',
-    'storage_analytics'
+    'storage_analytics',
+    'technical_format_analytics'
   ]);
 
   for (const field of Object.keys(completePayload)) {
@@ -209,6 +237,7 @@ test('statistics validation permits independently deployed analytics sections', 
   delete corePayload.rating_runtime_analytics;
   delete corePayload.language_country_analytics;
   delete corePayload.storage_analytics;
+  delete corePayload.technical_format_analytics;
 
   assert.equal(isCompleteStatsPayload(corePayload), true);
 });
@@ -216,7 +245,9 @@ test('statistics validation permits independently deployed analytics sections', 
 test('statistics validation accepts numeric database strings', () => {
   const databasePayload = JSON.parse(
     JSON.stringify(completePayload),
-    (_field, value) => typeof value === 'number' ? String(value) : value
+    (_field, value) => typeof value === 'number'
+      ? String(value)
+      : value
   );
 
   assert.equal(isCompleteStatsPayload(databasePayload), true);
@@ -260,7 +291,11 @@ test('rating/runtime validation rejects malformed band data', () => {
   assert.equal(
     isCompleteRatingRuntimeAnalytics({
       ...completePayload.rating_runtime_analytics,
-      rating_bands: [{ key: '', label: 'Broken', count: 5 }]
+      rating_bands: [{
+        key: '',
+        label: 'Broken',
+        count: 5
+      }]
     }),
     false
   );
@@ -296,6 +331,29 @@ test('language/country validation rejects malformed facet data', () => {
   );
 });
 
+test('technical-format validation rejects malformed facet data', () => {
+  assert.equal(
+    isCompleteTechnicalFormatAnalytics({
+      ...completePayload.technical_format_analytics,
+      resolutions: {
+        ...completePayload.technical_format_analytics.resolutions,
+        items: [{ label: '', count: 10 }]
+      }
+    }),
+    false
+  );
+  assert.equal(
+    isCompleteTechnicalFormatAnalytics({
+      ...completePayload.technical_format_analytics,
+      audio_formats: {
+        ...completePayload.technical_format_analytics.audio_formats,
+        tagged_movies: 'many'
+      }
+    }),
+    false
+  );
+});
+
 test('storage validation rejects malformed size data', () => {
   assert.equal(
     isCompleteStorageAnalytics({
@@ -323,15 +381,24 @@ test('storage validation rejects malformed size data', () => {
 
 test('statistics validation rejects empty and non-numeric metrics', () => {
   assert.equal(
-    isCompleteStatsPayload({ ...completePayload, average_rating: null }),
+    isCompleteStatsPayload({
+      ...completePayload,
+      average_rating: null
+    }),
     false
   );
   assert.equal(
-    isCompleteStatsPayload({ ...completePayload, oldest_year: '' }),
+    isCompleteStatsPayload({
+      ...completePayload,
+      oldest_year: ''
+    }),
     false
   );
   assert.equal(
-    isCompleteStatsPayload({ ...completePayload, health_score: 'healthy' }),
+    isCompleteStatsPayload({
+      ...completePayload,
+      health_score: 'healthy'
+    }),
     false
   );
 });
