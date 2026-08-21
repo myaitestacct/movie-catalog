@@ -286,6 +286,52 @@
             </article>
         </section>
 
+        <section class="stats-section stats-director-section" aria-labelledby="director-analytics-heading">
+            <div class="stats-section-header">
+                <h3 id="director-analytics-heading">Director Analytics</h3>
+                <p>See which filmmakers are most represented across the library.</p>
+            </div>
+
+            <div class="stats-origin-insights" aria-live="polite">
+                <article class="stats-origin-insight">
+                    <span id="top-director">–</span>
+                    <small>Most Represented Director</small>
+                    <p id="top-director-detail">No director data</p>
+                </article>
+
+                <article class="stats-origin-insight">
+                    <span id="director-coverage">–</span>
+                    <small>Director Coverage</small>
+                    <p id="director-coverage-detail">No director data</p>
+                </article>
+
+                <article class="stats-origin-insight">
+                    <span id="unique-directors">–</span>
+                    <small>Unique Directors</small>
+                    <p id="unique-directors-detail">No director credits</p>
+                </article>
+
+                <article class="stats-origin-insight">
+                    <span id="average-directors">–</span>
+                    <small>Average Directors</small>
+                    <p id="average-directors-detail">No director data</p>
+                </article>
+            </div>
+
+            <article class="stats-origin-chart" aria-labelledby="director-distribution-heading">
+                <header>
+                    <div>
+                        <h4 id="director-distribution-heading">Leading Directors</h4>
+                        <p>Share of credited movies for each leading director.</p>
+                    </div>
+                    <small id="director-distribution-summary">Loading directors…</small>
+                </header>
+                <div id="director-distribution" class="stats-origin-list">
+                    <p class="stats-chart-empty">Loading director data…</p>
+                </div>
+            </article>
+        </section>
+
         <section class="stats-section stats-origin-section" aria-labelledby="origin-analytics-heading">
             <div class="stats-section-header">
                 <h3 id="origin-analytics-heading">Language &amp; Country Analytics</h3>
