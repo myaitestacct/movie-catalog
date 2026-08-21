@@ -307,6 +307,67 @@
             </div>
         </section>
 
+        <section class="stats-section stats-technical-section" aria-labelledby="technical-format-heading">
+            <div class="stats-section-header">
+                <h3 id="technical-format-heading">Technical Format Analytics</h3>
+                <p>Explore resolution and audio-format coverage across the library.</p>
+            </div>
+
+            <div class="stats-origin-insights" aria-live="polite">
+                <article class="stats-origin-insight">
+                    <span id="top-resolution">–</span>
+                    <small>Top Resolution</small>
+                    <p id="top-resolution-detail">No resolution data</p>
+                </article>
+
+                <article class="stats-origin-insight">
+                    <span id="top-audio-format">–</span>
+                    <small>Top Audio Format</small>
+                    <p id="top-audio-format-detail">No audio-format data</p>
+                </article>
+
+                <article class="stats-origin-insight">
+                    <span id="resolution-coverage">–</span>
+                    <small>Resolution Coverage</small>
+                    <p id="resolution-coverage-detail">No resolution data</p>
+                </article>
+
+                <article class="stats-origin-insight">
+                    <span id="audio-format-coverage">–</span>
+                    <small>Audio-Format Coverage</small>
+                    <p id="audio-format-coverage-detail">No audio-format data</p>
+                </article>
+            </div>
+
+            <div class="stats-origin-grid">
+                <article class="stats-origin-chart" aria-labelledby="resolution-distribution-heading">
+                    <header>
+                        <div>
+                            <h4 id="resolution-distribution-heading">Resolution Distribution</h4>
+                            <p>Share of tagged movies for each leading resolution.</p>
+                        </div>
+                        <small id="resolution-distribution-summary">Loading resolutions…</small>
+                    </header>
+                    <div id="resolution-distribution" class="stats-origin-list">
+                        <p class="stats-chart-empty">Loading resolution data…</p>
+                    </div>
+                </article>
+
+                <article class="stats-origin-chart" aria-labelledby="audio-format-distribution-heading">
+                    <header>
+                        <div>
+                            <h4 id="audio-format-distribution-heading">Audio-Format Distribution</h4>
+                            <p>Share of tagged movies for each leading audio format.</p>
+                        </div>
+                        <small id="audio-format-distribution-summary">Loading audio formats…</small>
+                    </header>
+                    <div id="audio-format-distribution" class="stats-origin-list">
+                        <p class="stats-chart-empty">Loading audio-format data…</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
         <section class="stats-section stats-storage-section" aria-labelledby="storage-analytics-heading">
             <div class="stats-section-header">
                 <h3 id="storage-analytics-heading">Storage Analytics</h3>
