@@ -48,6 +48,11 @@ class StatsController
         $stats['language_country_analytics'] = $languageCountryAnalytics;
         $stats['technical_format_analytics'] =
             $this->getTechnicalFormatAnalytics($stats['total_movies']);
+        $stats['certification_analytics'] = $this->getConfiguredDelimitedFacet(
+            'certifications',
+            'CERTIFICATION',
+            $stats['total_movies']
+        );
         $stats['release_year_analytics'] = $this->getReleaseYearAnalytics(
             $stats['total_movies']
         );
@@ -64,8 +69,7 @@ class StatsController
         $stats['needs_better_copy_count'] =
             (int)($health['needs_better_copy_count'] ?? 0);
         $stats['missing_posters'] = (int)($health['missing_posters'] ?? 0);
-        $stats['incomplete_metadata'] =
-            (int)($health['incomplete_metadata'] ?? 0);
+        $stats['incomplete_metadata'] = (int)($health['incomplete_metadata'] ?? 0);
 
         // Use the same filters as the duplicate detail query without loading
         // every duplicate row into memory for this summary response.
@@ -326,9 +330,7 @@ class StatsController
                 ? $formattedTitle
                 : ($originalTitle !== ''
                     ? $originalTitle
-                    : ($number !== ''
-                        ? 'Movie #' . $number
-                        : 'Untitled movie'));
+                    : ($number !== '' ? 'Movie #' . $number : 'Untitled movie'));
 
             if (
                 $largestMovie === null ||
@@ -360,9 +362,7 @@ class StatsController
             $middle = intdiv($sizedMovies, 2);
             $medianSize = $sizedMovies % 2 === 1
                 ? $sizes[$middle]
-                : (int)round(
-                    ($sizes[$middle - 1] + $sizes[$middle]) / 2
-                );
+                : (int)round(($sizes[$middle - 1] + $sizes[$middle]) / 2);
         }
 
         return [
@@ -411,12 +411,12 @@ class StatsController
     private function getTechnicalFormatAnalytics(int $totalMovies): array
     {
         return [
-            'resolutions' => $this->getTechnicalFormatFacet(
+            'resolutions' => $this->getConfiguredDelimitedFacet(
                 'resolutions',
                 'RESOLUTION',
                 $totalMovies
             ),
-            'audio_formats' => $this->getTechnicalFormatFacet(
+            'audio_formats' => $this->getConfiguredDelimitedFacet(
                 'audio_formats',
                 'AUDIOFORMAT',
                 $totalMovies
@@ -424,7 +424,7 @@ class StatsController
         ];
     }
 
-    private function getTechnicalFormatFacet(
+    private function getConfiguredDelimitedFacet(
         string $queryKey,
         string $column,
         int $totalMovies
@@ -613,9 +613,7 @@ class StatsController
         $queryKey = self::LIBRARY_ISSUE_QUERIES[$issueType] ?? null;
 
         if ($queryKey === null) {
-            throw new InvalidArgumentException(
-                'Unsupported library issue type'
-            );
+            throw new InvalidArgumentException('Unsupported library issue type');
         }
 
         $stmt = $this->pdo->query($this->sql[$queryKey]);
