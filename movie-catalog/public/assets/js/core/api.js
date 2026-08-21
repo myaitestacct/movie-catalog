@@ -251,11 +251,7 @@ export function isCompleteStorageAnalytics(analytics) {
     analytics.size_bands.every(validBand);
 }
 
-export function isCompleteLanguageCountryAnalytics(analytics) {
-  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) {
-    return false;
-  }
-
+function isCompleteDelimitedFacet(facet) {
   const validItem = item =>
     item &&
     typeof item === 'object' &&
@@ -264,8 +260,8 @@ export function isCompleteLanguageCountryAnalytics(analytics) {
     item.label.trim() !== '' &&
     isNumericValue(item.count) &&
     Number(item.count) >= 0;
-  const validFacet = facet =>
-    facet &&
+
+  return facet &&
     typeof facet === 'object' &&
     !Array.isArray(facet) &&
     isNumericValue(facet.tagged_movies) &&
@@ -274,9 +270,24 @@ export function isCompleteLanguageCountryAnalytics(analytics) {
     (facet.top_item === null || validItem(facet.top_item)) &&
     Array.isArray(facet.items) &&
     facet.items.every(validItem);
+}
 
-  return validFacet(analytics.languages) &&
-    validFacet(analytics.countries);
+export function isCompleteLanguageCountryAnalytics(analytics) {
+  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) {
+    return false;
+  }
+
+  return isCompleteDelimitedFacet(analytics.languages) &&
+    isCompleteDelimitedFacet(analytics.countries);
+}
+
+export function isCompleteTechnicalFormatAnalytics(analytics) {
+  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) {
+    return false;
+  }
+
+  return isCompleteDelimitedFacet(analytics.resolutions) &&
+    isCompleteDelimitedFacet(analytics.audio_formats);
 }
 
 const STATS_NUMERIC_FIELDS = [
@@ -314,13 +325,17 @@ export function isCompleteStatsPayload(data) {
     isCompleteLanguageCountryAnalytics(data.language_country_analytics);
   const storageIsValid = data.storage_analytics === undefined ||
     isCompleteStorageAnalytics(data.storage_analytics);
+  const technicalFormatsAreValid =
+    data.technical_format_analytics === undefined ||
+    isCompleteTechnicalFormatAnalytics(data.technical_format_analytics);
 
   return STATS_NUMERIC_FIELDS.every(field => isNumericValue(data[field])) &&
     releaseYearsAreValid &&
     genresAreValid &&
     ratingRuntimeIsValid &&
     languageCountryIsValid &&
-    storageIsValid;
+    storageIsValid &&
+    technicalFormatsAreValid;
 }
 
 export async function fetchStats(options = {}) {
