@@ -8,6 +8,7 @@ import * as releaseYearAnalytics from './stats-release-years.js';
 import * as genreAnalytics from './stats-genres.js';
 import * as ratingRuntimeAnalytics from './stats-rating-runtime.js';
 import * as certificationAnalytics from './stats-certifications.js';
+import * as directorAnalytics from './stats-directors.js';
 import * as languageCountryAnalytics from './stats-language-country.js';
 import * as technicalFormatAnalytics from './stats-technical-formats.js';
 import * as storageAnalytics from './stats-storage.js';
@@ -259,6 +260,10 @@ export async function refreshStats() {
         );
         certificationAnalytics.renderCertificationAnalytics?.(
             data.certification_analytics,
+            data.total_movies
+        );
+        directorAnalytics.renderDirectorAnalytics?.(
+            data.director_analytics,
             data.total_movies
         );
         languageCountryAnalytics.renderLanguageCountryAnalytics?.(
@@ -643,13 +648,12 @@ async function loadGetBetterCopy() {
         if (!request.isCurrent()) return;
 
         clearError('better-copy');
-        // Check if there are movies to display
+
         if (!Array.isArray(rows) || rows.length === 0) {
             alert("No movies found with 'Get Better Copy'!");
             return;
         }
 
-        // Group the movies by the necessary fields
         getBetterCopyGroups = groupMovieRows(rows);
         getBetterCopyPage = 1;
         showGetBetterCopyModal();
@@ -724,7 +728,6 @@ function renderGetBetterCopyPage() {
     pageGroups.forEach(group => {
         alt = !alt;
 
-        /* ---------- GROUP HEADER ---------- */
         const header = createGroupHeader(group, 3, alt);
         header.onclick = () => {
             group.open = !group.open;
@@ -733,7 +736,6 @@ function renderGetBetterCopyPage() {
 
         tbody.appendChild(header);
 
-        /* ---------- CHILD ROWS ---------- */
         if (group.open) {
             group.rows.forEach(row => {
                 tbody.appendChild(createMovieReferenceRow(row));
@@ -763,6 +765,7 @@ function renderGetBetterCopyPage() {
 /* =============================
    Jump to table row
 ============================= */
+
 function getMovieStateSignature() {
     return JSON.stringify({
         page: state.page,
@@ -795,7 +798,6 @@ async function jumpToMovie(num) {
             if (value) params.append(`filters[${column}]`, value);
         });
 
-        // Get the page containing this movie under the current table state.
         const data = await fetchMoviePage(params, {
             signal: request.signal
         });
@@ -823,11 +825,13 @@ async function jumpToMovie(num) {
             if (!rendered || !request.isCurrent()) return;
         }
 
-        // Scroll to the row
         const row = document.querySelector(`tr[data-num="${num}"]`);
         if (!row) return;
 
-        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
         row.classList.add('row-highlight');
 
         setTimeout(() => row.classList.remove('row-highlight'), 2000);
