@@ -276,6 +276,10 @@ export function isCompleteCertificationAnalytics(analytics) {
   return Boolean(isCompleteDelimitedFacet(analytics));
 }
 
+export function isCompleteDirectorAnalytics(analytics) {
+  return Boolean(isCompleteDelimitedFacet(analytics));
+}
+
 export function isCompleteLanguageCountryAnalytics(analytics) {
   if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) {
     return false;
@@ -335,6 +339,8 @@ export function isCompleteStatsPayload(data) {
   const certificationsAreValid =
     data.certification_analytics === undefined ||
     isCompleteCertificationAnalytics(data.certification_analytics);
+  const directorsAreValid = data.director_analytics === undefined ||
+    isCompleteDirectorAnalytics(data.director_analytics);
 
   return STATS_NUMERIC_FIELDS.every(field => isNumericValue(data[field])) &&
     releaseYearsAreValid &&
@@ -343,7 +349,8 @@ export function isCompleteStatsPayload(data) {
     languageCountryIsValid &&
     storageIsValid &&
     technicalFormatsAreValid &&
-    certificationsAreValid;
+    certificationsAreValid &&
+    directorsAreValid;
 }
 
 export async function fetchStats(options = {}) {
