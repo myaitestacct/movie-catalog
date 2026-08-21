@@ -52,6 +52,9 @@ class StatsController
         $stats['rating_runtime_analytics'] = $this->getRatingRuntimeAnalytics(
             $stats['total_movies']
         );
+        $storageAnalytics = $this->getStorageAnalytics($stats['total_movies']);
+        $stats['total_size'] = $storageAnalytics['total_size'];
+        $stats['storage_analytics'] = $storageAnalytics;
 
         $stmt = $this->pdo->query($this->sql['health']);
         $health = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
@@ -232,6 +235,139 @@ class StatsController
             'common_runtime_band' => $this->findLargestBand($runtimeBands),
             'rating_bands' => $ratingBands,
             'runtime_bands' => $runtimeBands
+        ];
+    }
+
+    private function getStorageAnalytics(int $totalMovies): array
+    {
+        $query = $this->sql['storage_values'] ??
+            'SELECT `NUM`, `ORIGINALTITLE`, `FORMATTEDTITLE`, `FILESIZE` ' .
+            'FROM movies ORDER BY `NUM`;';
+
+        try {
+            $stmt = $this->pdo->query($query);
+            return $this->buildStorageAnalytics(
+                $stmt->fetchAll(PDO::FETCH_ASSOC),
+                $totalMovies
+            );
+        } catch (Throwable $error) {
+            error_log('Storage analytics failed: ' . (string)$error);
+            return $this->buildStorageAnalytics([], $totalMovies);
+        }
+    }
+
+    private function buildStorageAnalytics(
+        array $rows,
+        int $totalMovies
+    ): array {
+        $sizeBands = [
+            [
+                'key' => 'compact',
+                'label' => 'Under 700 MB',
+                'count' => 0,
+                'total_size' => 0
+            ],
+            [
+                'key' => 'standard-definition',
+                'label' => '700 MB–1.49 GB',
+                'count' => 0,
+                'total_size' => 0
+            ],
+            [
+                'key' => 'high-definition',
+                'label' => '1.5–2.99 GB',
+                'count' => 0,
+                'total_size' => 0
+            ],
+            [
+                'key' => 'large',
+                'label' => '3–5.99 GB',
+                'count' => 0,
+                'total_size' => 0
+            ],
+            [
+                'key' => 'very-large',
+                'label' => '6 GB+',
+                'count' => 0,
+                'total_size' => 0
+            ]
+        ];
+        $sizes = [];
+        $totalSize = 0;
+        $largestMovie = null;
+
+        foreach ($rows as $row) {
+            $rawSize = $row['FILESIZE'] ?? null;
+
+            if (!is_numeric($rawSize)) {
+                continue;
+            }
+
+            $sizeMegabytes = (float)$rawSize;
+            if (!is_finite($sizeMegabytes) || $sizeMegabytes <= 0) {
+                continue;
+            }
+
+            $sizeBytes = (int)round($sizeMegabytes * 1048576);
+            if ($sizeBytes <= 0) {
+                continue;
+            }
+
+            $sizes[] = $sizeBytes;
+            $totalSize += $sizeBytes;
+
+            $formattedTitle = trim((string)($row['FORMATTEDTITLE'] ?? ''));
+            $originalTitle = trim((string)($row['ORIGINALTITLE'] ?? ''));
+            $number = trim((string)($row['NUM'] ?? ''));
+            $title = $formattedTitle !== ''
+                ? $formattedTitle
+                : ($originalTitle !== ''
+                    ? $originalTitle
+                    : ($number !== '' ? 'Movie #' . $number : 'Untitled movie'));
+
+            if (
+                $largestMovie === null ||
+                $sizeBytes > $largestMovie['size']
+            ) {
+                $largestMovie = [
+                    'num' => $number !== '' ? $number : null,
+                    'title' => $title,
+                    'size' => $sizeBytes
+                ];
+            }
+
+            $bandIndex = $sizeMegabytes < 700
+                ? 0
+                : ($sizeMegabytes < 1536
+                    ? 1
+                    : ($sizeMegabytes < 3072
+                        ? 2
+                        : ($sizeMegabytes < 6144 ? 3 : 4)));
+            $sizeBands[$bandIndex]['count']++;
+            $sizeBands[$bandIndex]['total_size'] += $sizeBytes;
+        }
+
+        sort($sizes, SORT_NUMERIC);
+        $sizedMovies = count($sizes);
+        $medianSize = 0;
+
+        if ($sizedMovies > 0) {
+            $middle = intdiv($sizedMovies, 2);
+            $medianSize = $sizedMovies % 2 === 1
+                ? $sizes[$middle]
+                : (int)round(($sizes[$middle - 1] + $sizes[$middle]) / 2);
+        }
+
+        return [
+            'sized_movies' => $sizedMovies,
+            'unsized_movies' => max(0, $totalMovies - $sizedMovies),
+            'total_size' => $totalSize,
+            'average_size' => $sizedMovies > 0
+                ? (int)round($totalSize / $sizedMovies)
+                : 0,
+            'median_size' => $medianSize,
+            'largest_movie' => $largestMovie,
+            'size_bands' => $sizeBands
         ];
     }
 
