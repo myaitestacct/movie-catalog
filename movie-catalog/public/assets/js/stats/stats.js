@@ -8,6 +8,7 @@ import * as releaseYearAnalytics from './stats-release-years.js';
 import * as genreAnalytics from './stats-genres.js';
 import * as ratingRuntimeAnalytics from './stats-rating-runtime.js';
 import * as languageCountryAnalytics from './stats-language-country.js';
+import * as technicalFormatAnalytics from './stats-technical-formats.js';
 import * as storageAnalytics from './stats-storage.js';
 import {
     countGroupedRows,
@@ -243,6 +244,7 @@ export async function refreshStats() {
         yearRange.textContent = oldestYear > 0 && newestYear > 0
             ? `${oldestYear}–${newestYear}`
             : 'No dated movies';
+
         releaseYearAnalytics.renderReleaseYearAnalytics?.(
             data.release_year_analytics,
             data.total_movies
@@ -257,6 +259,10 @@ export async function refreshStats() {
         );
         languageCountryAnalytics.renderLanguageCountryAnalytics?.(
             data.language_country_analytics,
+            data.total_movies
+        );
+        technicalFormatAnalytics.renderTechnicalFormatAnalytics?.(
+            data.technical_format_analytics,
             data.total_movies
         );
         storageAnalytics.renderStorageAnalytics?.(
@@ -297,7 +303,9 @@ export async function refreshStats() {
 
         const duplicateCard = el('duplicate-card');
         duplicateCard.disabled = data.duplicate_count === 0;
-        duplicateCard.onclick = data.duplicate_count > 0 ? loadDuplicates : null;
+        duplicateCard.onclick = data.duplicate_count > 0
+            ? loadDuplicates
+            : null;
 
         const betterCopyCard = el('better-copy-card');
         betterCopyCard.title = data.needs_better_copy_count > 0
@@ -507,10 +515,14 @@ async function loadLibraryIssues(issueType) {
         if (!request.isCurrent() || isAbortError(error)) return;
 
         console.error(`Failed to load ${issueType}`, error);
-        showError(error.message || `Unable to load ${config.title.toLowerCase()}`, {
-            scope: `library-issue-${issueType}`,
-            retry: () => loadLibraryIssues(issueType)
-        });
+        showError(
+            error.message ||
+                `Unable to load ${config.title.toLowerCase()}`,
+            {
+                scope: `library-issue-${issueType}`,
+                retry: () => loadLibraryIssues(issueType)
+            }
+        );
     } finally {
         request.finish();
     }
@@ -525,7 +537,10 @@ function showLibraryIssueModal() {
         libraryIssueModal.className = 'stats-modal hidden';
         libraryIssueModal.setAttribute('role', 'dialog');
         libraryIssueModal.setAttribute('aria-modal', 'true');
-        libraryIssueModal.setAttribute('aria-labelledby', 'library-issue-title');
+        libraryIssueModal.setAttribute(
+            'aria-labelledby',
+            'library-issue-title'
+        );
         libraryIssueModal.innerHTML = `
             <div class="stats-modal-content">
                 <div class="stats-modal-header">
@@ -629,17 +644,18 @@ async function loadGetBetterCopy() {
     const request = statsDetailRequests.start();
 
     try {
-        const rows = await fetchBetterCopyRows({ signal: request.signal });
+        const rows = await fetchBetterCopyRows({
+            signal: request.signal
+        });
         if (!request.isCurrent()) return;
 
         clearError('better-copy');
-        // Check if there are movies to display
+
         if (!Array.isArray(rows) || rows.length === 0) {
             alert("No movies found with 'Get Better Copy'!");
             return;
         }
 
-        // Group the movies by the necessary fields
         getBetterCopyGroups = groupMovieRows(rows);
         getBetterCopyPage = 1;
         showGetBetterCopyModal();
@@ -701,20 +717,24 @@ function showGetBetterCopyModal() {
 
 function renderGetBetterCopyPage() {
     const tbody = getBetterCopyModal.querySelector('tbody');
-    const pager = getBetterCopyModal.querySelector('#better-copy-pagination');
+    const pager = getBetterCopyModal.querySelector(
+        '#better-copy-pagination'
+    );
 
     tbody.innerHTML = '';
     pager.innerHTML = '';
 
     const start = (getBetterCopyPage - 1) * REC_PER_PAGE;
-    const pageGroups = getBetterCopyGroups.slice(start, start + REC_PER_PAGE);
+    const pageGroups = getBetterCopyGroups.slice(
+        start,
+        start + REC_PER_PAGE
+    );
 
     let alt = false;
 
     pageGroups.forEach(group => {
         alt = !alt;
 
-        /* ---------- GROUP HEADER ---------- */
         const header = createGroupHeader(group, 3, alt);
         header.onclick = () => {
             group.open = !group.open;
@@ -723,7 +743,6 @@ function renderGetBetterCopyPage() {
 
         tbody.appendChild(header);
 
-        /* ---------- CHILD ROWS ---------- */
         if (group.open) {
             group.rows.forEach(row => {
                 tbody.appendChild(createMovieReferenceRow(row));
@@ -753,6 +772,7 @@ function renderGetBetterCopyPage() {
 /* =============================
    Jump to table row
 ============================= */
+
 function getMovieStateSignature() {
     return JSON.stringify({
         page: state.page,
@@ -785,7 +805,6 @@ async function jumpToMovie(num) {
             if (value) params.append(`filters[${column}]`, value);
         });
 
-        // Get the page containing this movie under the current table state.
         const data = await fetchMoviePage(params, {
             signal: request.signal
         });
@@ -813,14 +832,19 @@ async function jumpToMovie(num) {
             if (!rendered || !request.isCurrent()) return;
         }
 
-        // Scroll to the row
         const row = document.querySelector(`tr[data-num="${num}"]`);
         if (!row) return;
 
-        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
         row.classList.add('row-highlight');
 
-        setTimeout(() => row.classList.remove('row-highlight'), 2000);
+        setTimeout(
+            () => row.classList.remove('row-highlight'),
+            2000
+        );
     } catch (error) {
         if (!request.isCurrent() || isAbortError(error)) return;
 
