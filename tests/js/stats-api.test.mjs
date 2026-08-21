@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   fetchMovies,
   isCompleteCertificationAnalytics,
+  isCompleteDirectorAnalytics,
   isCompleteGenreAnalytics,
   isCompleteLanguageCountryAnalytics,
   isCompleteRatingRuntimeAnalytics,
@@ -67,6 +68,16 @@ const completePayload = {
     items: [
       { label: 'R', count: 80 },
       { label: 'PG-13', count: 70 }
+    ]
+  },
+  director_analytics: {
+    tagged_movies: 240,
+    untagged_movies: 10,
+    assignments: 255,
+    top_item: { label: 'Christopher Nolan', count: 12 },
+    items: [
+      { label: 'Christopher Nolan', count: 12 },
+      { label: 'Steven Spielberg', count: 10 }
     ]
   },
   rating_runtime_analytics: {
@@ -218,6 +229,7 @@ test('statistics validation requires every core dashboard metric', () => {
     'release_year_analytics',
     'genre_analytics',
     'certification_analytics',
+    'director_analytics',
     'rating_runtime_analytics',
     'language_country_analytics',
     'storage_analytics',
@@ -243,6 +255,7 @@ test('statistics validation permits independently deployed analytics sections', 
   delete corePayload.release_year_analytics;
   delete corePayload.genre_analytics;
   delete corePayload.certification_analytics;
+  delete corePayload.director_analytics;
   delete corePayload.rating_runtime_analytics;
   delete corePayload.language_country_analytics;
   delete corePayload.storage_analytics;
@@ -306,6 +319,23 @@ test('certification validation rejects malformed distribution data', () => {
     isCompleteCertificationAnalytics({
       ...completePayload.certification_analytics,
       assignments: 'many'
+    }),
+    false
+  );
+});
+
+test('director validation rejects malformed distribution data', () => {
+  assert.equal(
+    isCompleteDirectorAnalytics({
+      ...completePayload.director_analytics,
+      items: [{ label: '', count: 2 }]
+    }),
+    false
+  );
+  assert.equal(
+    isCompleteDirectorAnalytics({
+      ...completePayload.director_analytics,
+      tagged_movies: 'many'
     }),
     false
   );
