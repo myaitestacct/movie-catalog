@@ -8,6 +8,7 @@ import * as releaseYearAnalytics from './stats-release-years.js';
 import * as genreAnalytics from './stats-genres.js';
 import * as ratingRuntimeAnalytics from './stats-rating-runtime.js';
 import * as languageCountryAnalytics from './stats-language-country.js';
+import * as storageAnalytics from './stats-storage.js';
 import {
     countGroupedRows,
     groupMovieRows,
@@ -20,6 +21,7 @@ import {
     fetchMoviePage,
     fetchStats
 } from '../core/api.js';
+import { createLatestRequest, isAbortError } from '../core/request.js';
 import { state } from '../core/state.js';
 import { clearError, showError } from '../utils/feedback.js';
 import { configureExternalLink } from '../utils/url.js';
@@ -41,6 +43,10 @@ let libraryIssueModal;
 let libraryIssueGroups = [];
 let libraryIssuePage = 1;
 let activeLibraryIssueType = null;
+
+const statsRequests = createLatestRequest();
+const statsDetailRequests = createLatestRequest();
+const movieJumpRequests = createLatestRequest();
 
 const REC_PER_PAGE = 10;
 
@@ -199,10 +205,12 @@ export function initStats(toggleBtn, statsPanel) {
 }
 
 export async function refreshStats() {
+    const request = statsRequests.start();
     panel?.setAttribute('aria-busy', 'true');
 
     try {
-        const data = await fetchStats();
+        const data = await fetchStats({ signal: request.signal });
+        if (!request.isCurrent()) return false;
 
         clearError('stats');
         loaded = true;
@@ -251,6 +259,10 @@ export async function refreshStats() {
             data.language_country_analytics,
             data.total_movies
         );
+        storageAnalytics.renderStorageAnalytics?.(
+            data.storage_analytics,
+            data.total_movies
+        );
 
         const healthCard = el('health-score-card');
         healthCard.dataset.health = data.health_score >= 90
@@ -291,15 +303,23 @@ export async function refreshStats() {
         betterCopyCard.title = data.needs_better_copy_count > 0
             ? `Show ${data.needs_better_copy_count} movies marked as needing a better copy`
             : 'Check for movies marked as needing a better copy';
-    } catch (err) {
+
+        return true;
+    } catch (error) {
+        if (!request.isCurrent() || isAbortError(error)) return false;
+
         loaded = false;
-        console.error('Stats API error:', err);
-        showError(err.message || 'Unable to load statistics', {
+        console.error('Stats API error:', error);
+        showError(error.message || 'Unable to load statistics', {
             scope: 'stats',
             retry: refreshStats
         });
+        return false;
     } finally {
-        panel?.setAttribute('aria-busy', 'false');
+        if (request.isCurrent()) {
+            panel?.setAttribute('aria-busy', 'false');
+            request.finish();
+        }
     }
 }
 
@@ -321,19 +341,26 @@ function closePanel(restoreFocus = false) {
 ============================= */
 
 async function loadDuplicates() {
+    const request = statsDetailRequests.start();
+
     try {
-        const rows = await fetchDuplicates();
+        const rows = await fetchDuplicates({ signal: request.signal });
+        if (!request.isCurrent()) return;
 
         clearError('duplicates');
         dupGroups = groupDuplicates(rows);
         dupPage = 1;
         showDuplicateModal();
-    } catch (e) {
-        console.error('Duplicate load failed', e);
-        showError(e.message || 'Unable to load duplicate movies', {
+    } catch (error) {
+        if (!request.isCurrent() || isAbortError(error)) return;
+
+        console.error('Duplicate load failed', error);
+        showError(error.message || 'Unable to load duplicate movies', {
             scope: 'duplicates',
             retry: loadDuplicates
         });
+    } finally {
+        request.finish();
     }
 }
 
@@ -458,8 +485,13 @@ async function loadLibraryIssues(issueType) {
     const config = LIBRARY_ISSUE_CONFIG[issueType];
     if (!config) return;
 
+    const request = statsDetailRequests.start();
+
     try {
-        const rows = await fetchLibraryIssueRows(issueType);
+        const rows = await fetchLibraryIssueRows(issueType, {
+            signal: request.signal
+        });
+        if (!request.isCurrent()) return;
 
         clearError(`library-issue-${issueType}`);
         if (rows.length === 0) {
@@ -472,11 +504,15 @@ async function loadLibraryIssues(issueType) {
         libraryIssuePage = 1;
         showLibraryIssueModal();
     } catch (error) {
+        if (!request.isCurrent() || isAbortError(error)) return;
+
         console.error(`Failed to load ${issueType}`, error);
         showError(error.message || `Unable to load ${config.title.toLowerCase()}`, {
             scope: `library-issue-${issueType}`,
             retry: () => loadLibraryIssues(issueType)
         });
+    } finally {
+        request.finish();
     }
 }
 
@@ -590,8 +626,11 @@ function renderLibraryIssuePage() {
 ============================= */
 
 async function loadGetBetterCopy() {
+    const request = statsDetailRequests.start();
+
     try {
-        const rows = await fetchBetterCopyRows();
+        const rows = await fetchBetterCopyRows({ signal: request.signal });
+        if (!request.isCurrent()) return;
 
         clearError('better-copy');
         // Check if there are movies to display
@@ -604,12 +643,16 @@ async function loadGetBetterCopy() {
         getBetterCopyGroups = groupMovieRows(rows);
         getBetterCopyPage = 1;
         showGetBetterCopyModal();
-    } catch (e) {
-        console.error('Get Better Copy load failed', e);
-        showError(e.message || 'Unable to load better-copy movies', {
+    } catch (error) {
+        if (!request.isCurrent() || isAbortError(error)) return;
+
+        console.error('Get Better Copy load failed', error);
+        showError(error.message || 'Unable to load better-copy movies', {
             scope: 'better-copy',
             retry: loadGetBetterCopy
         });
+    } finally {
+        request.finish();
     }
 }
 
@@ -710,7 +753,24 @@ function renderGetBetterCopyPage() {
 /* =============================
    Jump to table row
 ============================= */
+function getMovieStateSignature() {
+    return JSON.stringify({
+        page: state.page,
+        limit: state.limit,
+        sort: state.sort,
+        dir: state.dir,
+        mode: state.searchMode,
+        fuzzy: state.fuzzy,
+        search: Object.entries(state.search).sort(([left], [right]) =>
+            left.localeCompare(right)
+        )
+    });
+}
+
 async function jumpToMovie(num) {
+    const request = movieJumpRequests.start();
+    const movieStateSignature = getMovieStateSignature();
+
     try {
         const params = new URLSearchParams({
             num,
@@ -726,7 +786,15 @@ async function jumpToMovie(num) {
         });
 
         // Get the page containing this movie under the current table state.
-        const data = await fetchMoviePage(params);
+        const data = await fetchMoviePage(params, {
+            signal: request.signal
+        });
+        if (
+            !request.isCurrent() ||
+            movieStateSignature !== getMovieStateSignature()
+        ) {
+            return;
+        }
 
         clearError('movie-jump');
 
@@ -741,7 +809,8 @@ async function jumpToMovie(num) {
         const targetPage = data.page;
         if (targetPage !== state.page) {
             state.page = targetPage;
-            await loadMovies(); // reload table with correct page
+            const rendered = await loadMovies();
+            if (!rendered || !request.isCurrent()) return;
         }
 
         // Scroll to the row
@@ -752,11 +821,15 @@ async function jumpToMovie(num) {
         row.classList.add('row-highlight');
 
         setTimeout(() => row.classList.remove('row-highlight'), 2000);
-    } catch (err) {
-        console.error('Failed to jump to movie:', err);
-        showError(err.message || 'Unable to locate the movie', {
+    } catch (error) {
+        if (!request.isCurrent() || isAbortError(error)) return;
+
+        console.error('Failed to jump to movie:', error);
+        showError(error.message || 'Unable to locate the movie', {
             scope: 'movie-jump',
             retry: () => jumpToMovie(num)
         });
+    } finally {
+        request.finish();
     }
 }
