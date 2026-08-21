@@ -2,11 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  fetchMovies,
   isCompleteGenreAnalytics,
   isCompleteLanguageCountryAnalytics,
   isCompleteRatingRuntimeAnalytics,
   isCompleteReleaseYearAnalytics,
   isCompleteStatsPayload,
+  isCompleteStorageAnalytics,
   parseJsonResponseBody
 } from '../../movie-catalog/public/assets/js/core/api.js';
 
@@ -96,6 +98,32 @@ const completePayload = {
         { label: 'UK', count: 50 }
       ]
     }
+  },
+  storage_analytics: {
+    sized_movies: 245,
+    unsized_movies: 5,
+    total_size: 1099511627776,
+    average_size: 4487802562,
+    median_size: 3221225472,
+    largest_movie: {
+      num: '42',
+      title: 'Largest Movie',
+      size: 21474836480
+    },
+    size_bands: [
+      {
+        key: 'compact',
+        label: 'Under 700 MB',
+        count: 20,
+        total_size: 10737418240
+      },
+      {
+        key: 'very-large',
+        label: '6 GB+',
+        count: 30,
+        total_size: 322122547200
+      }
+    ]
   }
 };
 
@@ -104,6 +132,47 @@ test('JSON response parsing tolerates whitespace and byte-order marks', () => {
     parseJsonResponseBody('\uFEFF  {"ok":true}\n'),
     { ok: true }
   );
+});
+
+test('API requests forward cancellation signals without wrapping aborts', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalBaseUrl = globalThis.BASE_URL;
+  const controller = new AbortController();
+  let receivedSignal = null;
+
+  globalThis.BASE_URL = '';
+  globalThis.fetch = (_url, { signal }) => {
+    receivedSignal = signal;
+
+    return new Promise((_resolve, reject) => {
+      signal.addEventListener('abort', () => {
+        const error = new Error('The operation was aborted');
+        error.name = 'AbortError';
+        reject(error);
+      }, { once: true });
+    });
+  };
+
+  try {
+    const movieRequest = fetchMovies(new URLSearchParams(), {
+      signal: controller.signal
+    });
+    controller.abort();
+
+    await assert.rejects(
+      movieRequest,
+      error => error?.name === 'AbortError'
+    );
+    assert.equal(receivedSignal, controller.signal);
+  } finally {
+    globalThis.fetch = originalFetch;
+
+    if (originalBaseUrl === undefined) {
+      delete globalThis.BASE_URL;
+    } else {
+      globalThis.BASE_URL = originalBaseUrl;
+    }
+  }
 });
 
 test('statistics validation accepts the complete dashboard payload', () => {
@@ -115,7 +184,8 @@ test('statistics validation requires every core dashboard metric', () => {
     'release_year_analytics',
     'genre_analytics',
     'rating_runtime_analytics',
-    'language_country_analytics'
+    'language_country_analytics',
+    'storage_analytics'
   ]);
 
   for (const field of Object.keys(completePayload)) {
@@ -138,6 +208,7 @@ test('statistics validation permits independently deployed analytics sections', 
   delete corePayload.genre_analytics;
   delete corePayload.rating_runtime_analytics;
   delete corePayload.language_country_analytics;
+  delete corePayload.storage_analytics;
 
   assert.equal(isCompleteStatsPayload(corePayload), true);
 });
@@ -220,6 +291,31 @@ test('language/country validation rejects malformed facet data', () => {
         ...completePayload.language_country_analytics.countries,
         assignments: 'many'
       }
+    }),
+    false
+  );
+});
+
+test('storage validation rejects malformed size data', () => {
+  assert.equal(
+    isCompleteStorageAnalytics({
+      ...completePayload.storage_analytics,
+      largest_movie: {
+        ...completePayload.storage_analytics.largest_movie,
+        size: 0
+      }
+    }),
+    false
+  );
+  assert.equal(
+    isCompleteStorageAnalytics({
+      ...completePayload.storage_analytics,
+      size_bands: [{
+        key: 'large',
+        label: 'Large',
+        count: 2,
+        total_size: 'unknown'
+      }]
     }),
     false
   );
