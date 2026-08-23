@@ -3,12 +3,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "npm run test:js && npm run test:php",
+    "test": "npm run test:js && npm run test:php && npm run test:browser",
     "test:js": "node --test tests/js/*.test.mjs",
-    "test:php": "php tests/php/run.php"
+    "test:php": "php tests/php/run.php",
+    "test:browser": "playwright test",
+    "test:browser:headed": "playwright test --headed"
   },
   "engines": {
     "node": ">=20",
     "php": ">=8.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
   }
 }
