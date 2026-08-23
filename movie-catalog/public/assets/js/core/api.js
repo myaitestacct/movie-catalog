@@ -22,9 +22,18 @@ async function fetchJson(url, { signal } = {}) {
       signal
     });
   } catch (error) {
-    if (signal?.aborted || error?.name === 'AbortError') throw error;
+    if (
+      signal?.aborted ||
+      error?.name === 'AbortError'
+    ) {
+      throw error;
+    }
 
-    throw new ApiError('Unable to reach the server', 0, error);
+    throw new ApiError(
+      'Unable to reach the server',
+      0,
+      error
+    );
   }
 
   let responseBody;
@@ -32,10 +41,16 @@ async function fetchJson(url, { signal } = {}) {
   try {
     responseBody = await response.text();
   } catch (error) {
-    if (signal?.aborted || error?.name === 'AbortError') throw error;
+    if (
+      signal?.aborted ||
+      error?.name === 'AbortError'
+    ) {
+      throw error;
+    }
 
     throw new ApiError(
-      `The server response could not be read (HTTP ${response.status})`,
+      `The server response could not be read ` +
+        `(HTTP ${response.status})`,
       response.status,
       error
     );
@@ -44,10 +59,15 @@ async function fetchJson(url, { signal } = {}) {
   let payload;
 
   try {
-    payload = parseJsonResponseBody(responseBody);
+    payload = parseJsonResponseBody(
+      responseBody
+    );
   } catch {
-    const responsePreview = responseBody.trim().slice(0, 500);
-    const contentType = response.headers.get('content-type') || '';
+    const responsePreview =
+      responseBody.trim().slice(0, 500);
+    const contentType =
+      response.headers.get('content-type') || '';
+
     const diagnostic = {
       url,
       status: response.status,
@@ -59,11 +79,17 @@ async function fetchJson(url, { signal } = {}) {
       'Invalid JSON API response\n' +
       `URL: ${url}\n` +
       `Status: ${response.status}\n` +
-      `Content-Type: ${contentType || '[not provided]'}\n` +
-      `Response preview: ${responsePreview || '[empty response]'}`
+      `Content-Type: ${
+        contentType || '[not provided]'
+      }\n` +
+      `Response preview: ${
+        responsePreview || '[empty response]'
+      }`
     );
+
     throw new ApiError(
-      `The server returned an invalid response (HTTP ${response.status})`,
+      `The server returned an invalid response ` +
+        `(HTTP ${response.status})`,
       response.status,
       diagnostic
     );
@@ -75,9 +101,15 @@ async function fetchJson(url, { signal } = {}) {
         ? payload.message
         : typeof payload?.error === 'string'
           ? payload.error
-          : `Request failed with status ${response.status}`;
+          : `Request failed with status ${
+            response.status
+          }`;
 
-    throw new ApiError(message, response.status, payload);
+    throw new ApiError(
+      message,
+      response.status,
+      payload
+    );
   }
 
   return payload;
@@ -85,11 +117,18 @@ async function fetchJson(url, { signal } = {}) {
 
 function apiUrl(endpoint, params = null) {
   const query = params ? `?${params}` : '';
+
   return `${BASE_URL}/api/${endpoint}${query}`;
 }
 
-export async function fetchMovies(params, options = {}) {
-  const data = await fetchJson(apiUrl('movies.php', params), options);
+export async function fetchMovies(
+  params,
+  options = {}
+) {
+  const data = await fetchJson(
+    apiUrl('movies.php', params),
+    options
+  );
 
   if (
     !Array.isArray(data?.data) ||
@@ -98,7 +137,9 @@ export async function fetchMovies(params, options = {}) {
     !Number.isFinite(Number(data?.pages)) ||
     !Number.isFinite(Number(data?.total))
   ) {
-    throw new ApiError('The movie data response is incomplete');
+    throw new ApiError(
+      'The movie data response is incomplete'
+    );
   }
 
   return data;
@@ -110,8 +151,14 @@ function isNumericValue(value) {
     Number.isFinite(Number(value));
 }
 
-export function isCompleteReleaseYearAnalytics(analytics) {
-  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) {
+export function isCompleteReleaseYearAnalytics(
+  analytics
+) {
+  if (
+    !analytics ||
+    typeof analytics !== 'object' ||
+    Array.isArray(analytics)
+  ) {
     return false;
   }
 
@@ -123,6 +170,7 @@ export function isCompleteReleaseYearAnalytics(analytics) {
     Number(entry.year) > 0 &&
     isNumericValue(entry.count) &&
     Number(entry.count) >= 0;
+
   const validDecadeEntry = entry =>
     entry &&
     typeof entry === 'object' &&
@@ -133,21 +181,44 @@ export function isCompleteReleaseYearAnalytics(analytics) {
     isNumericValue(entry.count) &&
     Number(entry.count) >= 0;
 
-  return isNumericValue(analytics.dated_movies) &&
-    isNumericValue(analytics.undated_movies) &&
-    (analytics.peak_year === null || validYearEntry(analytics.peak_year)) &&
+  return (
+    isNumericValue(
+      analytics.dated_movies
+    ) &&
+    isNumericValue(
+      analytics.undated_movies
+    ) &&
+    (
+      analytics.peak_year === null ||
+      validYearEntry(
+        analytics.peak_year
+      )
+    ) &&
     (
       analytics.busiest_decade === null ||
-      validDecadeEntry(analytics.busiest_decade)
+      validDecadeEntry(
+        analytics.busiest_decade
+      )
     ) &&
     Array.isArray(analytics.years) &&
-    analytics.years.every(validYearEntry) &&
+    analytics.years.every(
+      validYearEntry
+    ) &&
     Array.isArray(analytics.decades) &&
-    analytics.decades.every(validDecadeEntry);
+    analytics.decades.every(
+      validDecadeEntry
+    )
+  );
 }
 
-export function isCompleteGenreAnalytics(analytics) {
-  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) {
+export function isCompleteGenreAnalytics(
+  analytics
+) {
+  if (
+    !analytics ||
+    typeof analytics !== 'object' ||
+    Array.isArray(analytics)
+  ) {
     return false;
   }
 
@@ -160,16 +231,37 @@ export function isCompleteGenreAnalytics(analytics) {
     isNumericValue(entry.count) &&
     Number(entry.count) >= 0;
 
-  return isNumericValue(analytics.tagged_movies) &&
-    isNumericValue(analytics.untagged_movies) &&
-    isNumericValue(analytics.genre_assignments) &&
-    (analytics.top_genre === null || validGenreEntry(analytics.top_genre)) &&
+  return (
+    isNumericValue(
+      analytics.tagged_movies
+    ) &&
+    isNumericValue(
+      analytics.untagged_movies
+    ) &&
+    isNumericValue(
+      analytics.genre_assignments
+    ) &&
+    (
+      analytics.top_genre === null ||
+      validGenreEntry(
+        analytics.top_genre
+      )
+    ) &&
     Array.isArray(analytics.genres) &&
-    analytics.genres.every(validGenreEntry);
+    analytics.genres.every(
+      validGenreEntry
+    )
+  );
 }
 
-export function isCompleteRatingRuntimeAnalytics(analytics) {
-  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) {
+export function isCompleteRatingRuntimeAnalytics(
+  analytics
+) {
+  if (
+    !analytics ||
+    typeof analytics !== 'object' ||
+    Array.isArray(analytics)
+  ) {
     return false;
   }
 
@@ -184,26 +276,54 @@ export function isCompleteRatingRuntimeAnalytics(analytics) {
     isNumericValue(band.count) &&
     Number(band.count) >= 0;
 
-  return isNumericValue(analytics.rated_movies) &&
-    isNumericValue(analytics.unrated_movies) &&
-    isNumericValue(analytics.runtime_known_movies) &&
-    isNumericValue(analytics.runtime_missing_movies) &&
+  return (
+    isNumericValue(
+      analytics.rated_movies
+    ) &&
+    isNumericValue(
+      analytics.unrated_movies
+    ) &&
+    isNumericValue(
+      analytics.runtime_known_movies
+    ) &&
+    isNumericValue(
+      analytics.runtime_missing_movies
+    ) &&
     (
       analytics.top_rating_band === null ||
-      validBand(analytics.top_rating_band)
+      validBand(
+        analytics.top_rating_band
+      )
     ) &&
     (
       analytics.common_runtime_band === null ||
-      validBand(analytics.common_runtime_band)
+      validBand(
+        analytics.common_runtime_band
+      )
     ) &&
-    Array.isArray(analytics.rating_bands) &&
-    analytics.rating_bands.every(validBand) &&
-    Array.isArray(analytics.runtime_bands) &&
-    analytics.runtime_bands.every(validBand);
+    Array.isArray(
+      analytics.rating_bands
+    ) &&
+    analytics.rating_bands.every(
+      validBand
+    ) &&
+    Array.isArray(
+      analytics.runtime_bands
+    ) &&
+    analytics.runtime_bands.every(
+      validBand
+    )
+  );
 }
 
-export function isCompleteStorageAnalytics(analytics) {
-  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) {
+export function isCompleteStorageAnalytics(
+  analytics
+) {
+  if (
+    !analytics ||
+    typeof analytics !== 'object' ||
+    Array.isArray(analytics)
+  ) {
     return false;
   }
 
@@ -219,6 +339,7 @@ export function isCompleteStorageAnalytics(analytics) {
     Number(band.count) >= 0 &&
     isNumericValue(band.total_size) &&
     Number(band.total_size) >= 0;
+
   const validLargestMovie = movie =>
     movie &&
     typeof movie === 'object' &&
@@ -233,22 +354,50 @@ export function isCompleteStorageAnalytics(analytics) {
     isNumericValue(movie.size) &&
     Number(movie.size) > 0;
 
-  return isNumericValue(analytics.sized_movies) &&
-    Number(analytics.sized_movies) >= 0 &&
-    isNumericValue(analytics.unsized_movies) &&
-    Number(analytics.unsized_movies) >= 0 &&
-    isNumericValue(analytics.total_size) &&
-    Number(analytics.total_size) >= 0 &&
-    isNumericValue(analytics.average_size) &&
-    Number(analytics.average_size) >= 0 &&
-    isNumericValue(analytics.median_size) &&
-    Number(analytics.median_size) >= 0 &&
+  return (
+    isNumericValue(
+      analytics.sized_movies
+    ) &&
+    Number(
+      analytics.sized_movies
+    ) >= 0 &&
+    isNumericValue(
+      analytics.unsized_movies
+    ) &&
+    Number(
+      analytics.unsized_movies
+    ) >= 0 &&
+    isNumericValue(
+      analytics.total_size
+    ) &&
+    Number(
+      analytics.total_size
+    ) >= 0 &&
+    isNumericValue(
+      analytics.average_size
+    ) &&
+    Number(
+      analytics.average_size
+    ) >= 0 &&
+    isNumericValue(
+      analytics.median_size
+    ) &&
+    Number(
+      analytics.median_size
+    ) >= 0 &&
     (
       analytics.largest_movie === null ||
-      validLargestMovie(analytics.largest_movie)
+      validLargestMovie(
+        analytics.largest_movie
+      )
     ) &&
-    Array.isArray(analytics.size_bands) &&
-    analytics.size_bands.every(validBand);
+    Array.isArray(
+      analytics.size_bands
+    ) &&
+    analytics.size_bands.every(
+      validBand
+    )
+  );
 }
 
 function isCompleteDelimitedFacet(facet) {
@@ -261,41 +410,151 @@ function isCompleteDelimitedFacet(facet) {
     isNumericValue(item.count) &&
     Number(item.count) >= 0;
 
-  return facet &&
+  return (
+    facet &&
     typeof facet === 'object' &&
     !Array.isArray(facet) &&
-    isNumericValue(facet.tagged_movies) &&
-    isNumericValue(facet.untagged_movies) &&
-    isNumericValue(facet.assignments) &&
-    (facet.top_item === null || validItem(facet.top_item)) &&
+    isNumericValue(
+      facet.tagged_movies
+    ) &&
+    isNumericValue(
+      facet.untagged_movies
+    ) &&
+    isNumericValue(
+      facet.assignments
+    ) &&
+    (
+      facet.top_item === null ||
+      validItem(facet.top_item)
+    ) &&
     Array.isArray(facet.items) &&
-    facet.items.every(validItem);
+    facet.items.every(validItem)
+  );
 }
 
-export function isCompleteCertificationAnalytics(analytics) {
-  return Boolean(isCompleteDelimitedFacet(analytics));
+export function isCompleteCertificationAnalytics(
+  analytics
+) {
+  return Boolean(
+    isCompleteDelimitedFacet(analytics)
+  );
 }
 
-export function isCompleteDirectorAnalytics(analytics) {
-  return Boolean(isCompleteDelimitedFacet(analytics));
+export function isCompleteDirectorAnalytics(
+  analytics
+) {
+  return Boolean(
+    isCompleteDelimitedFacet(analytics)
+  );
 }
 
-export function isCompleteLanguageCountryAnalytics(analytics) {
-  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) {
+export function isCompleteCastAnalytics(
+  analytics
+) {
+  if (
+    !analytics ||
+    typeof analytics !== 'object' ||
+    Array.isArray(analytics)
+  ) {
     return false;
   }
 
-  return isCompleteDelimitedFacet(analytics.languages) &&
-    isCompleteDelimitedFacet(analytics.countries);
+  const validActor = actor =>
+    actor &&
+    typeof actor === 'object' &&
+    !Array.isArray(actor) &&
+    typeof actor.label === 'string' &&
+    actor.label.trim() !== '' &&
+    isNumericValue(actor.count) &&
+    Number(actor.count) >= 0;
+
+  return (
+    isNumericValue(
+      analytics.tagged_movies
+    ) &&
+    Number(
+      analytics.tagged_movies
+    ) >= 0 &&
+    isNumericValue(
+      analytics.untagged_movies
+    ) &&
+    Number(
+      analytics.untagged_movies
+    ) >= 0 &&
+    isNumericValue(
+      analytics.cast_assignments
+    ) &&
+    Number(
+      analytics.cast_assignments
+    ) >= 0 &&
+    isNumericValue(
+      analytics.unique_actors
+    ) &&
+    Number(
+      analytics.unique_actors
+    ) >= 0 &&
+    isNumericValue(
+      analytics.average_cast_size
+    ) &&
+    Number(
+      analytics.average_cast_size
+    ) >= 0 &&
+    (
+      analytics.top_actor === null ||
+      validActor(
+        analytics.top_actor
+      )
+    ) &&
+    Array.isArray(
+      analytics.top_actors
+    ) &&
+    analytics.top_actors.length <= 20 &&
+    analytics.top_actors.every(
+      validActor
+    )
+  );
 }
 
-export function isCompleteTechnicalFormatAnalytics(analytics) {
-  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) {
+export function isCompleteLanguageCountryAnalytics(
+  analytics
+) {
+  if (
+    !analytics ||
+    typeof analytics !== 'object' ||
+    Array.isArray(analytics)
+  ) {
     return false;
   }
 
-  return isCompleteDelimitedFacet(analytics.resolutions) &&
-    isCompleteDelimitedFacet(analytics.audio_formats);
+  return (
+    isCompleteDelimitedFacet(
+      analytics.languages
+    ) &&
+    isCompleteDelimitedFacet(
+      analytics.countries
+    )
+  );
+}
+
+export function isCompleteTechnicalFormatAnalytics(
+  analytics
+) {
+  if (
+    !analytics ||
+    typeof analytics !== 'object' ||
+    Array.isArray(analytics)
+  ) {
+    return false;
+  }
+
+  return (
+    isCompleteDelimitedFacet(
+      analytics.resolutions
+    ) &&
+    isCompleteDelimitedFacet(
+      analytics.audio_formats
+    )
+  );
 }
 
 const STATS_NUMERIC_FIELDS = [
@@ -317,32 +576,80 @@ const STATS_NUMERIC_FIELDS = [
   'duplicate_count'
 ];
 
-export function isCompleteStatsPayload(data) {
-  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+export function isCompleteStatsPayload(
+  data
+) {
+  if (
+    !data ||
+    typeof data !== 'object' ||
+    Array.isArray(data)
+  ) {
     return false;
   }
 
-  const releaseYearsAreValid = data.release_year_analytics === undefined ||
-    isCompleteReleaseYearAnalytics(data.release_year_analytics);
-  const genresAreValid = data.genre_analytics === undefined ||
-    isCompleteGenreAnalytics(data.genre_analytics);
-  const ratingRuntimeIsValid = data.rating_runtime_analytics === undefined ||
-    isCompleteRatingRuntimeAnalytics(data.rating_runtime_analytics);
-  const languageCountryIsValid =
-    data.language_country_analytics === undefined ||
-    isCompleteLanguageCountryAnalytics(data.language_country_analytics);
-  const storageIsValid = data.storage_analytics === undefined ||
-    isCompleteStorageAnalytics(data.storage_analytics);
-  const technicalFormatsAreValid =
-    data.technical_format_analytics === undefined ||
-    isCompleteTechnicalFormatAnalytics(data.technical_format_analytics);
-  const certificationsAreValid =
-    data.certification_analytics === undefined ||
-    isCompleteCertificationAnalytics(data.certification_analytics);
-  const directorsAreValid = data.director_analytics === undefined ||
-    isCompleteDirectorAnalytics(data.director_analytics);
+  const releaseYearsAreValid =
+    data.release_year_analytics ===
+      undefined ||
+    isCompleteReleaseYearAnalytics(
+      data.release_year_analytics
+    );
 
-  return STATS_NUMERIC_FIELDS.every(field => isNumericValue(data[field])) &&
+  const genresAreValid =
+    data.genre_analytics === undefined ||
+    isCompleteGenreAnalytics(
+      data.genre_analytics
+    );
+
+  const ratingRuntimeIsValid =
+    data.rating_runtime_analytics ===
+      undefined ||
+    isCompleteRatingRuntimeAnalytics(
+      data.rating_runtime_analytics
+    );
+
+  const languageCountryIsValid =
+    data.language_country_analytics ===
+      undefined ||
+    isCompleteLanguageCountryAnalytics(
+      data.language_country_analytics
+    );
+
+  const storageIsValid =
+    data.storage_analytics === undefined ||
+    isCompleteStorageAnalytics(
+      data.storage_analytics
+    );
+
+  const technicalFormatsAreValid =
+    data.technical_format_analytics ===
+      undefined ||
+    isCompleteTechnicalFormatAnalytics(
+      data.technical_format_analytics
+    );
+
+  const certificationsAreValid =
+    data.certification_analytics ===
+      undefined ||
+    isCompleteCertificationAnalytics(
+      data.certification_analytics
+    );
+
+  const directorsAreValid =
+    data.director_analytics === undefined ||
+    isCompleteDirectorAnalytics(
+      data.director_analytics
+    );
+
+  const castIsValid =
+    data.cast_analytics === undefined ||
+    isCompleteCastAnalytics(
+      data.cast_analytics
+    );
+
+  return (
+    STATS_NUMERIC_FIELDS.every(
+      field => isNumericValue(data[field])
+    ) &&
     releaseYearsAreValid &&
     genresAreValid &&
     ratingRuntimeIsValid &&
@@ -350,58 +657,108 @@ export function isCompleteStatsPayload(data) {
     storageIsValid &&
     technicalFormatsAreValid &&
     certificationsAreValid &&
-    directorsAreValid;
+    directorsAreValid &&
+    castIsValid
+  );
 }
 
-export async function fetchStats(options = {}) {
-  const data = await fetchJson(apiUrl('stats.php'), options);
+export async function fetchStats(
+  options = {}
+) {
+  const data = await fetchJson(
+    apiUrl('stats.php'),
+    options
+  );
 
   if (!isCompleteStatsPayload(data)) {
-    throw new ApiError('The statistics response is incomplete');
+    throw new ApiError(
+      'The statistics response is incomplete'
+    );
   }
 
   return data;
 }
 
-export async function fetchDuplicates(options = {}) {
-  const data = await fetchJson(apiUrl('duplicates.php'), options);
+export async function fetchDuplicates(
+  options = {}
+) {
+  const data = await fetchJson(
+    apiUrl('duplicates.php'),
+    options
+  );
 
   if (!Array.isArray(data)) {
-    throw new ApiError('The duplicate movie response is incomplete');
+    throw new ApiError(
+      'The duplicate movie response is incomplete'
+    );
   }
 
   return data;
 }
 
-export async function fetchBetterCopyRows(options = {}) {
-  const data = await fetchJson(apiUrl('better-copy.php'), options);
+export async function fetchBetterCopyRows(
+  options = {}
+) {
+  const data = await fetchJson(
+    apiUrl('better-copy.php'),
+    options
+  );
 
   if (!Array.isArray(data)) {
-    throw new ApiError('The better-copy response is incomplete');
+    throw new ApiError(
+      'The better-copy response is incomplete'
+    );
   }
 
   return data;
 }
 
-export async function fetchLibraryIssueRows(issueType, options = {}) {
-  const params = new URLSearchParams({ type: issueType });
-  const data = await fetchJson(apiUrl('library-issues.php', params), options);
+export async function fetchLibraryIssueRows(
+  issueType,
+  options = {}
+) {
+  const params = new URLSearchParams({
+    type: issueType
+  });
+
+  const data = await fetchJson(
+    apiUrl(
+      'library-issues.php',
+      params
+    ),
+    options
+  );
 
   if (!Array.isArray(data)) {
-    throw new ApiError('The library issue response is incomplete');
+    throw new ApiError(
+      'The library issue response is incomplete'
+    );
   }
 
   return data;
 }
 
-export async function fetchMoviePage(params, options = {}) {
-  const data = await fetchJson(apiUrl('movie-page.php', params), options);
+export async function fetchMoviePage(
+  params,
+  options = {}
+) {
+  const data = await fetchJson(
+    apiUrl('movie-page.php', params),
+    options
+  );
 
   if (
     typeof data?.found !== 'boolean' ||
-    (data.found && !Number.isFinite(Number(data.page)))
+    (
+      data.found &&
+      !Number.isFinite(
+        Number(data.page)
+      )
+    )
   ) {
-    throw new ApiError('The movie page response is incomplete');
+    throw new ApiError(
+      'The movie page response is incomplete'
+    );
   }
 
   return data;
