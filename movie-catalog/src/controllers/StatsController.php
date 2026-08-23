@@ -36,6 +36,7 @@ class StatsController
         $genreAnalytics = $this->getGenreAnalytics($stats['total_movies']);
         $stats['genres'] = count($genreAnalytics['genres']);
         $stats['genre_analytics'] = $genreAnalytics;
+
         $languageCountryAnalytics = $this->getLanguageCountryAnalytics(
             $stats['total_movies']
         );
@@ -46,34 +47,48 @@ class StatsController
             $languageCountryAnalytics['countries']['items']
         );
         $stats['language_country_analytics'] = $languageCountryAnalytics;
+
         $stats['technical_format_analytics'] =
             $this->getTechnicalFormatAnalytics($stats['total_movies']);
-        $stats['certification_analytics'] = $this->getConfiguredDelimitedFacet(
-            'certifications',
-            'CERTIFICATION',
-            $stats['total_movies']
-        );
+
+        $stats['certification_analytics'] =
+            $this->getConfiguredDelimitedFacet(
+                'certifications',
+                'CERTIFICATION',
+                $stats['total_movies']
+            );
+
         $stats['director_analytics'] = $this->getConfiguredDelimitedFacet(
             'directors',
             'DIRECTOR',
             $stats['total_movies']
         );
+
+        $stats['cast_analytics'] = $this->getCastAnalytics(
+            $stats['total_movies']
+        );
+
         $stats['release_year_analytics'] = $this->getReleaseYearAnalytics(
             $stats['total_movies']
         );
         $stats['rating_runtime_analytics'] = $this->getRatingRuntimeAnalytics(
             $stats['total_movies']
         );
-        $storageAnalytics = $this->getStorageAnalytics($stats['total_movies']);
+
+        $storageAnalytics = $this->getStorageAnalytics(
+            $stats['total_movies']
+        );
         $stats['total_size'] = $storageAnalytics['total_size'];
         $stats['storage_analytics'] = $storageAnalytics;
 
         $stmt = $this->pdo->query($this->sql['health']);
         $health = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
         $stats['missing_files'] = (int)($health['missing_files'] ?? 0);
         $stats['needs_better_copy_count'] =
             (int)($health['needs_better_copy_count'] ?? 0);
-        $stats['missing_posters'] = (int)($health['missing_posters'] ?? 0);
+        $stats['missing_posters'] =
+            (int)($health['missing_posters'] ?? 0);
         $stats['incomplete_metadata'] =
             (int)($health['incomplete_metadata'] ?? 0);
 
@@ -95,12 +110,15 @@ class StatsController
 
         try {
             $stmt = $this->pdo->query($query);
+
             return $this->buildReleaseYearAnalytics(
                 $stmt->fetchAll(PDO::FETCH_ASSOC),
                 $totalMovies
             );
         } catch (Throwable $error) {
-            error_log('Release-year analytics failed: ' . (string)$error);
+            error_log(
+                'Release-year analytics failed: ' . (string)$error
+            );
 
             return [
                 'dated_movies' => 0,
@@ -158,14 +176,20 @@ class StatsController
             ];
             $decades[] = $entry;
 
-            if ($busiestDecade === null || $count > $busiestDecade['count']) {
+            if (
+                $busiestDecade === null ||
+                $count > $busiestDecade['count']
+            ) {
                 $busiestDecade = $entry;
             }
         }
 
         return [
             'dated_movies' => $datedMovies,
-            'undated_movies' => max(0, $totalMovies - $datedMovies),
+            'undated_movies' => max(
+                0,
+                $totalMovies - $datedMovies
+            ),
             'peak_year' => $peakYear,
             'busiest_decade' => $busiestDecade,
             'years' => $years,
@@ -180,13 +204,20 @@ class StatsController
 
         try {
             $stmt = $this->pdo->query($query);
+
             return $this->buildRatingRuntimeAnalytics(
                 $stmt->fetchAll(PDO::FETCH_ASSOC),
                 $totalMovies
             );
         } catch (Throwable $error) {
-            error_log('Rating/runtime analytics failed: ' . (string)$error);
-            return $this->buildRatingRuntimeAnalytics([], $totalMovies);
+            error_log(
+                'Rating/runtime analytics failed: ' . (string)$error
+            );
+
+            return $this->buildRatingRuntimeAnalytics(
+                [],
+                $totalMovies
+            );
         }
     }
 
@@ -195,25 +226,65 @@ class StatsController
         int $totalMovies
     ): array {
         $ratingBands = [
-            ['key' => 'under-5', 'label' => 'Under 5', 'count' => 0],
-            ['key' => '5-range', 'label' => '5–5.9', 'count' => 0],
-            ['key' => '6-range', 'label' => '6–6.9', 'count' => 0],
-            ['key' => '7-range', 'label' => '7–7.9', 'count' => 0],
-            ['key' => '8-plus', 'label' => '8+', 'count' => 0]
+            [
+                'key' => 'under-5',
+                'label' => 'Under 5',
+                'count' => 0
+            ],
+            [
+                'key' => '5-range',
+                'label' => '5–5.9',
+                'count' => 0
+            ],
+            [
+                'key' => '6-range',
+                'label' => '6–6.9',
+                'count' => 0
+            ],
+            [
+                'key' => '7-range',
+                'label' => '7–7.9',
+                'count' => 0
+            ],
+            [
+                'key' => '8-plus',
+                'label' => '8+',
+                'count' => 0
+            ]
         ];
+
         $runtimeBands = [
-            ['key' => 'short', 'label' => 'Under 90 min', 'count' => 0],
-            ['key' => 'standard', 'label' => '90–119 min', 'count' => 0],
-            ['key' => 'long', 'label' => '120–149 min', 'count' => 0],
-            ['key' => 'epic', 'label' => '150+ min', 'count' => 0]
+            [
+                'key' => 'short',
+                'label' => 'Under 90 min',
+                'count' => 0
+            ],
+            [
+                'key' => 'standard',
+                'label' => '90–119 min',
+                'count' => 0
+            ],
+            [
+                'key' => 'long',
+                'label' => '120–149 min',
+                'count' => 0
+            ],
+            [
+                'key' => 'epic',
+                'label' => '150+ min',
+                'count' => 0
+            ]
         ];
+
         $ratedMovies = 0;
         $runtimeKnownMovies = 0;
 
         foreach ($rows as $row) {
             $rating = (float)($row['RATING'] ?? 0);
+
             if ($rating > 0) {
                 $ratedMovies++;
+
                 $ratingIndex = $rating < 5
                     ? 0
                     : ($rating < 6
@@ -221,31 +292,42 @@ class StatsController
                         : ($rating < 7
                             ? 2
                             : ($rating < 8 ? 3 : 4)));
+
                 $ratingBands[$ratingIndex]['count']++;
             }
 
             $runtime = (int)($row['LENGTH'] ?? 0);
+
             if ($runtime > 0) {
                 $runtimeKnownMovies++;
+
                 $runtimeIndex = $runtime < 90
                     ? 0
                     : ($runtime < 120
                         ? 1
                         : ($runtime < 150 ? 2 : 3));
+
                 $runtimeBands[$runtimeIndex]['count']++;
             }
         }
 
         return [
             'rated_movies' => $ratedMovies,
-            'unrated_movies' => max(0, $totalMovies - $ratedMovies),
+            'unrated_movies' => max(
+                0,
+                $totalMovies - $ratedMovies
+            ),
             'runtime_known_movies' => $runtimeKnownMovies,
             'runtime_missing_movies' => max(
                 0,
                 $totalMovies - $runtimeKnownMovies
             ),
-            'top_rating_band' => $this->findLargestBand($ratingBands),
-            'common_runtime_band' => $this->findLargestBand($runtimeBands),
+            'top_rating_band' => $this->findLargestBand(
+                $ratingBands
+            ),
+            'common_runtime_band' => $this->findLargestBand(
+                $runtimeBands
+            ),
             'rating_bands' => $ratingBands,
             'runtime_bands' => $runtimeBands
         ];
@@ -254,18 +336,26 @@ class StatsController
     private function getStorageAnalytics(int $totalMovies): array
     {
         $query = $this->sql['storage_values'] ??
-            'SELECT `NUM`, `ORIGINALTITLE`, `FORMATTEDTITLE`, `FILESIZE` ' .
+            'SELECT `NUM`, `ORIGINALTITLE`, ' .
+            '`FORMATTEDTITLE`, `FILESIZE` ' .
             'FROM movies ORDER BY `NUM`;';
 
         try {
             $stmt = $this->pdo->query($query);
+
             return $this->buildStorageAnalytics(
                 $stmt->fetchAll(PDO::FETCH_ASSOC),
                 $totalMovies
             );
         } catch (Throwable $error) {
-            error_log('Storage analytics failed: ' . (string)$error);
-            return $this->buildStorageAnalytics([], $totalMovies);
+            error_log(
+                'Storage analytics failed: ' . (string)$error
+            );
+
+            return $this->buildStorageAnalytics(
+                [],
+                $totalMovies
+            );
         }
     }
 
@@ -305,6 +395,7 @@ class StatsController
                 'total_size' => 0
             ]
         ];
+
         $sizes = [];
         $totalSize = 0;
         $largestMovie = null;
@@ -317,11 +408,18 @@ class StatsController
             }
 
             $sizeMegabytes = (float)$rawSize;
-            if (!is_finite($sizeMegabytes) || $sizeMegabytes <= 0) {
+
+            if (
+                !is_finite($sizeMegabytes) ||
+                $sizeMegabytes <= 0
+            ) {
                 continue;
             }
 
-            $sizeBytes = (int)round($sizeMegabytes * 1048576);
+            $sizeBytes = (int)round(
+                $sizeMegabytes * 1048576
+            );
+
             if ($sizeBytes <= 0) {
                 continue;
             }
@@ -329,21 +427,32 @@ class StatsController
             $sizes[] = $sizeBytes;
             $totalSize += $sizeBytes;
 
-            $formattedTitle = trim((string)($row['FORMATTEDTITLE'] ?? ''));
-            $originalTitle = trim((string)($row['ORIGINALTITLE'] ?? ''));
-            $number = trim((string)($row['NUM'] ?? ''));
+            $formattedTitle = trim(
+                (string)($row['FORMATTEDTITLE'] ?? '')
+            );
+            $originalTitle = trim(
+                (string)($row['ORIGINALTITLE'] ?? '')
+            );
+            $number = trim(
+                (string)($row['NUM'] ?? '')
+            );
+
             $title = $formattedTitle !== ''
                 ? $formattedTitle
                 : ($originalTitle !== ''
                     ? $originalTitle
-                    : ($number !== '' ? 'Movie #' . $number : 'Untitled movie'));
+                    : ($number !== ''
+                        ? 'Movie #' . $number
+                        : 'Untitled movie'));
 
             if (
                 $largestMovie === null ||
                 $sizeBytes > $largestMovie['size']
             ) {
                 $largestMovie = [
-                    'num' => $number !== '' ? $number : null,
+                    'num' => $number !== ''
+                        ? $number
+                        : null,
                     'title' => $title,
                     'size' => $sizeBytes
                 ];
@@ -355,28 +464,44 @@ class StatsController
                     ? 1
                     : ($sizeMegabytes < 3072
                         ? 2
-                        : ($sizeMegabytes < 6144 ? 3 : 4)));
+                        : ($sizeMegabytes < 6144
+                            ? 3
+                            : 4)));
+
             $sizeBands[$bandIndex]['count']++;
-            $sizeBands[$bandIndex]['total_size'] += $sizeBytes;
+            $sizeBands[$bandIndex]['total_size'] +=
+                $sizeBytes;
         }
 
         sort($sizes, SORT_NUMERIC);
+
         $sizedMovies = count($sizes);
         $medianSize = 0;
 
         if ($sizedMovies > 0) {
             $middle = intdiv($sizedMovies, 2);
+
             $medianSize = $sizedMovies % 2 === 1
                 ? $sizes[$middle]
-                : (int)round(($sizes[$middle - 1] + $sizes[$middle]) / 2);
+                : (int)round(
+                    (
+                        $sizes[$middle - 1] +
+                        $sizes[$middle]
+                    ) / 2
+                );
         }
 
         return [
             'sized_movies' => $sizedMovies,
-            'unsized_movies' => max(0, $totalMovies - $sizedMovies),
+            'unsized_movies' => max(
+                0,
+                $totalMovies - $sizedMovies
+            ),
             'total_size' => $totalSize,
             'average_size' => $sizedMovies > 0
-                ? (int)round($totalSize / $sizedMovies)
+                ? (int)round(
+                    $totalSize / $sizedMovies
+                )
                 : 0,
             'median_size' => $medianSize,
             'largest_movie' => $largestMovie,
@@ -391,7 +516,10 @@ class StatsController
         foreach ($bands as $band) {
             if (
                 $band['count'] > 0 &&
-                ($largest === null || $band['count'] > $largest['count'])
+                (
+                    $largest === null ||
+                    $band['count'] > $largest['count']
+                )
             ) {
                 $largest = $band;
             }
@@ -400,8 +528,9 @@ class StatsController
         return $largest;
     }
 
-    private function getLanguageCountryAnalytics(int $totalMovies): array
-    {
+    private function getLanguageCountryAnalytics(
+        int $totalMovies
+    ): array {
         return [
             'languages' => $this->getDelimitedValueAnalytics(
                 'languages',
@@ -414,8 +543,9 @@ class StatsController
         ];
     }
 
-    private function getTechnicalFormatAnalytics(int $totalMovies): array
-    {
+    private function getTechnicalFormatAnalytics(
+        int $totalMovies
+    ): array {
         return [
             'resolutions' => $this->getConfiguredDelimitedFacet(
                 'resolutions',
@@ -430,6 +560,67 @@ class StatsController
         ];
     }
 
+    private function getCastAnalytics(int $totalMovies): array
+    {
+        $query = $this->sql['actors'] ??
+            "SELECT `ACTORS` FROM movies " .
+            "WHERE `ACTORS` IS NOT NULL " .
+            "AND TRIM(`ACTORS`) <> '';";
+
+        try {
+            $stmt = $this->pdo->query($query);
+
+            return $this->buildCastAnalytics(
+                $stmt->fetchAll(PDO::FETCH_COLUMN),
+                $totalMovies
+            );
+        } catch (Throwable $error) {
+            error_log(
+                'Cast analytics failed: ' . (string)$error
+            );
+
+            return $this->buildCastAnalytics(
+                [],
+                $totalMovies
+            );
+        }
+    }
+
+    private function buildCastAnalytics(
+        array $valueLists,
+        int $totalMovies
+    ): array {
+        $facet = $this->buildDelimitedValueAnalytics(
+            $valueLists,
+            $totalMovies
+        );
+
+        $taggedMovies = $facet['tagged_movies'];
+
+        return [
+            'tagged_movies' => $taggedMovies,
+            'untagged_movies' => $facet['untagged_movies'],
+            'cast_assignments' => $facet['assignments'],
+            'unique_actors' => count($facet['items']),
+            'average_cast_size' => $taggedMovies > 0
+                ? round(
+                    $facet['assignments'] / $taggedMovies,
+                    1
+                )
+                : 0.0,
+            'top_actor' => $facet['top_item'],
+
+            // A cast field can contain thousands of unique
+            // names. Keep the complete totals above while
+            // bounding the dashboard payload.
+            'top_actors' => array_slice(
+                $facet['items'],
+                0,
+                20
+            )
+        ];
+    }
+
     private function getConfiguredDelimitedFacet(
         string $queryKey,
         string $column,
@@ -437,20 +628,29 @@ class StatsController
     ): array {
         $query = $this->sql[$queryKey] ??
             "SELECT `$column` FROM movies " .
-            "WHERE `$column` IS NOT NULL AND TRIM(`$column`) <> '';";
+            "WHERE `$column` IS NOT NULL " .
+            "AND TRIM(`$column`) <> '';";
 
         try {
             $stmt = $this->pdo->query($query);
+
             return $this->buildDelimitedValueAnalytics(
                 $stmt->fetchAll(PDO::FETCH_COLUMN),
                 $totalMovies
             );
         } catch (Throwable $error) {
             error_log(
-                ucfirst(str_replace('_', ' ', $queryKey)) .
-                ' analytics failed: ' . (string)$error
+                ucfirst(
+                    str_replace('_', ' ', $queryKey)
+                ) .
+                ' analytics failed: ' .
+                (string)$error
             );
-            return $this->buildDelimitedValueAnalytics([], $totalMovies);
+
+            return $this->buildDelimitedValueAnalytics(
+                [],
+                $totalMovies
+            );
         }
     }
 
@@ -458,7 +658,10 @@ class StatsController
         string $queryKey,
         int $totalMovies
     ): array {
-        $stmt = $this->pdo->query($this->sql[$queryKey]);
+        $stmt = $this->pdo->query(
+            $this->sql[$queryKey]
+        );
+
         return $this->buildDelimitedValueAnalytics(
             $stmt->fetchAll(PDO::FETCH_COLUMN),
             $totalMovies
@@ -474,7 +677,9 @@ class StatsController
         $assignments = 0;
 
         foreach ($valueLists as $valueList) {
-            $movieValues = $this->splitDelimitedValues((string)$valueList);
+            $movieValues = $this->splitDelimitedValues(
+                (string)$valueList
+            );
 
             if ($movieValues === []) {
                 continue;
@@ -496,25 +701,45 @@ class StatsController
         }
 
         $items = array_values($counts);
-        usort($items, static function (array $left, array $right): int {
-            $countComparison = $right['count'] <=> $left['count'];
-            return $countComparison !== 0
-                ? $countComparison
-                : strcasecmp($left['label'], $right['label']);
-        });
+
+        usort(
+            $items,
+            static function (
+                array $left,
+                array $right
+            ): int {
+                $countComparison =
+                    $right['count'] <=>
+                    $left['count'];
+
+                return $countComparison !== 0
+                    ? $countComparison
+                    : strcasecmp(
+                        $left['label'],
+                        $right['label']
+                    );
+            }
+        );
 
         return [
             'tagged_movies' => $taggedMovies,
-            'untagged_movies' => max(0, $totalMovies - $taggedMovies),
+            'untagged_movies' => max(
+                0,
+                $totalMovies - $taggedMovies
+            ),
             'assignments' => $assignments,
             'top_item' => $items[0] ?? null,
             'items' => $items
         ];
     }
 
-    private function getGenreAnalytics(int $totalMovies): array
-    {
-        $stmt = $this->pdo->query($this->sql['categories']);
+    private function getGenreAnalytics(
+        int $totalMovies
+    ): array {
+        $stmt = $this->pdo->query(
+            $this->sql['categories']
+        );
+
         return $this->buildGenreAnalytics(
             $stmt->fetchAll(PDO::FETCH_COLUMN),
             $totalMovies
@@ -530,7 +755,9 @@ class StatsController
         $genreAssignments = 0;
 
         foreach ($valueLists as $valueList) {
-            $movieGenres = $this->splitDelimitedValues((string)$valueList);
+            $movieGenres = $this->splitDelimitedValues(
+                (string)$valueList
+            );
 
             if ($movieGenres === []) {
                 continue;
@@ -552,30 +779,48 @@ class StatsController
         }
 
         $genres = array_values($genreCounts);
-        usort($genres, static function (array $left, array $right): int {
-            $countComparison = $right['count'] <=> $left['count'];
-            return $countComparison !== 0
-                ? $countComparison
-                : strcasecmp($left['label'], $right['label']);
-        });
+
+        usort(
+            $genres,
+            static function (
+                array $left,
+                array $right
+            ): int {
+                $countComparison =
+                    $right['count'] <=>
+                    $left['count'];
+
+                return $countComparison !== 0
+                    ? $countComparison
+                    : strcasecmp(
+                        $left['label'],
+                        $right['label']
+                    );
+            }
+        );
 
         return [
             'tagged_movies' => $taggedMovies,
-            'untagged_movies' => max(0, $totalMovies - $taggedMovies),
+            'untagged_movies' => max(
+                0,
+                $totalMovies - $taggedMovies
+            ),
             'genre_assignments' => $genreAssignments,
             'top_genre' => $genres[0] ?? null,
             'genres' => $genres
         ];
     }
 
-    private function splitDelimitedValues(string $valueList): array
-    {
+    private function splitDelimitedValues(
+        string $valueList
+    ): array {
         $items = preg_split(
             '/\s*[,;|\/]\s*/u',
             $valueList,
             -1,
             PREG_SPLIT_NO_EMPTY
         );
+
         $values = [];
 
         foreach ($items ?: [] as $item) {
@@ -586,17 +831,26 @@ class StatsController
             }
 
             $key = function_exists('mb_strtolower')
-                ? mb_strtolower($label, 'UTF-8')
+                ? mb_strtolower(
+                    $label,
+                    'UTF-8'
+                )
                 : strtolower($label);
-            $values[$key] = $values[$key] ?? $label;
+
+            $values[$key] =
+                $values[$key] ?? $label;
         }
 
         return $values;
     }
 
-    private function calculateHealthScore(array $stats): int
-    {
-        $totalMovies = max(0, (int)($stats['total_movies'] ?? 0));
+    private function calculateHealthScore(
+        array $stats
+    ): int {
+        $totalMovies = max(
+            0,
+            (int)($stats['total_movies'] ?? 0)
+        );
 
         if ($totalMovies === 0) {
             return 100;
@@ -608,33 +862,59 @@ class StatsController
             (int)($stats['duplicate_count'] ?? 0) +
             (int)($stats['missing_posters'] ?? 0) +
             (int)($stats['incomplete_metadata'] ?? 0);
-        $possibleIssues = $totalMovies * 5;
-        $issueRatio = min(1, $issueCount / $possibleIssues);
 
-        return (int)round((1 - $issueRatio) * 100);
+        $possibleIssues = $totalMovies * 5;
+        $issueRatio = min(
+            1,
+            $issueCount / $possibleIssues
+        );
+
+        return (int)round(
+            (1 - $issueRatio) * 100
+        );
     }
 
-    public function getLibraryIssueRows(string $issueType): array
-    {
-        $queryKey = self::LIBRARY_ISSUE_QUERIES[$issueType] ?? null;
+    public function getLibraryIssueRows(
+        string $issueType
+    ): array {
+        $queryKey =
+            self::LIBRARY_ISSUE_QUERIES[$issueType] ??
+            null;
 
         if ($queryKey === null) {
-            throw new InvalidArgumentException('Unsupported library issue type');
+            throw new InvalidArgumentException(
+                'Unsupported library issue type'
+            );
         }
 
-        $stmt = $this->pdo->query($this->sql[$queryKey]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $this->pdo->query(
+            $this->sql[$queryKey]
+        );
+
+        return $stmt->fetchAll(
+            PDO::FETCH_ASSOC
+        );
     }
 
     public function getDuplicateRows(): array
     {
-        $stmt = $this->pdo->query($this->sql['duplicate_rows']);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $this->pdo->query(
+            $this->sql['duplicate_rows']
+        );
+
+        return $stmt->fetchAll(
+            PDO::FETCH_ASSOC
+        );
     }
 
     public function getBetterCopyRows(): array
     {
-        $stmt = $this->pdo->query($this->sql['needs_better_copy_val']);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $this->pdo->query(
+            $this->sql['needs_better_copy_val']
+        );
+
+        return $stmt->fetchAll(
+            PDO::FETCH_ASSOC
+        );
     }
 }
