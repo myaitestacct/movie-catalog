@@ -7,6 +7,8 @@ movie-catalog/src/config/database.local.json
 # Node.js test tooling
 node_modules/
 npm-debug.log*
+playwright-report/
+test-results/
 
 # IDE and OS-local files
 movie-catalog/nbproject/private/
