@@ -191,6 +191,20 @@ const server = createServer(async (request, response) => {
   send(response, 404, 'Not found', 'text/plain; charset=utf-8');
 });
 
+function parseTitleSearch(value=''){
+  const original=value.toString().trim();
+  const match=original.match(/\s*\(((?:19|20)\d{2})\)\s*$/);
+  if(!match) return {title:original, year:null};
+  return {title:original.replace(/\s*\((?:19|20)\d{2})\)\s*$/,'').trim(), year:match[1]};
+}
+function fuzzyMatch(text='', term=''){
+  if(!text||!term) return false;
+  let idx=0; const lt=text.toLowerCase(), lterm=term.toLowerCase();
+  for(const ch of lterm){ idx=lt.indexOf(ch, idx); if(idx===-1) return false; idx++; }
+  return true;
+}
+// in movieResponse: rank exact first, then contains, then fuzzy
+
 server.listen(port, host, () => { console.log(`Movie Catalog browser-test server listening on http://${host}:${port}`); });
 function shutDown() { server.close(e => { process.exitCode = e ? 1 : 0; }); }
 process.on('SIGINT', shutDown);
