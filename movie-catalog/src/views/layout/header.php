@@ -5,13 +5,12 @@
     <title>Movie Catalog</title>
 
     <?php
-    // Use bundled CSS if available (production), otherwise fall back to individual files (dev)
     $publicRoot = dirname(__DIR__, 3) . '/public';
     $bundleCss = $publicRoot . '/assets/dist/bundle.css';
     $hasBundleCss = is_file($bundleCss);
     if ($hasBundleCss):
     ?>
-    <link rel="stylesheet" href="assets/dist/bundle.css">
+    <link rel="stylesheet" href="assets/dist/bundle.css?v=<?= filemtime($bundleCss) ?>">
     <?php else: ?>
     <link rel="stylesheet" href="assets/css/variables.css">
     <link rel="stylesheet" href="assets/css/base.css">
