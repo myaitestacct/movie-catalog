@@ -4,6 +4,10 @@ movie-catalog/src/config/database.local.json
 .env.*
 !.env.example
 
+# Cache
+movie-catalog/var/cache/*.json
+movie-catalog/var/cache/*.cache
+
 # Node.js test tooling
 node_modules/
 npm-debug.log*
@@ -11,10 +15,7 @@ playwright-report/
 test-results/
 
 # IDE and OS-local files
-movie-catalog/nbproject/private/
+movie-catalog/nbproject/
 .DS_Store
 Thumbs.db
 *.log
-
-movie-catalog/var/cache/*.json
-movie-catalog/var/cache/*.cache
