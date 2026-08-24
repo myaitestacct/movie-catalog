@@ -14,6 +14,8 @@
     <button type="button" class="toggle-col" data-col="PATH"><i class="fa-solid fa-folder-open"></i> Path</button>
 </div>
 
+<div id="search-group-info" class="search-group-info hidden"></div>
+
 <div class="table-wrapper">
     <table id="movies">
         <thead>
