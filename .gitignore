@@ -15,3 +15,6 @@ movie-catalog/nbproject/private/
 .DS_Store
 Thumbs.db
 *.log
+
+movie-catalog/var/cache/*.json
+movie-catalog/var/cache/*.cache
