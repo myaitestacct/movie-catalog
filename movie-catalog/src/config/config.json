@@ -2,5 +2,9 @@
   "pagination": {
     "default_limit": 50,
     "max_limit": 200
+  },
+  "stats": {
+    "cache_enabled": true,
+    "cache_ttl": 300
   }
 }
