@@ -248,3 +248,75 @@ tr.exact-fuzzy-separator .separator-line {
   background: var(--table-bg);
   border-color: #444;
 }
+/* Exact vs Fuzzy separator – highly visible */
+tr.exact-fuzzy-separator {
+  background: transparent !important;
+  pointer-events: none;
+}
+tr.exact-fuzzy-separator td {
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+tr.exact-fuzzy-separator .separator-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 8px;
+  margin: 4px 0;
+  background: linear-gradient(90deg, 
+    color-mix(in srgb, var(--primary), transparent 85%),
+    color-mix(in srgb, var(--primary), transparent 70%),
+    color-mix(in srgb, var(--primary), transparent 85%)
+  );
+  border-top: 2px solid var(--primary);
+  border-bottom: 2px solid var(--primary);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  animation: separatorFadeIn 0.3s ease;
+}
+@keyframes separatorFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+tr.exact-fuzzy-separator .separator-icon {
+  font-size: 14px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+}
+tr.exact-fuzzy-separator .separator-text {
+  font-weight: 800;
+  color: var(--primary);
+  background: var(--table-bg);
+  padding: 4px 14px;
+  border-radius: 20px;
+  border: 2px solid var(--primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  white-space: nowrap;
+}
+tr.exact-fuzzy-separator .separator-line {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(to right, transparent, var(--primary), transparent);
+  opacity: 0.5;
+  border-radius: 1px;
+}
+:root.theme-dark tr.exact-fuzzy-separator .separator-content {
+  background: linear-gradient(90deg, 
+    color-mix(in srgb, var(--primary), black 80%),
+    color-mix(in srgb, var(--primary), black 60%),
+    color-mix(in srgb, var(--primary), black 80%)
+  );
+}
+:root.theme-dark tr.exact-fuzzy-separator .separator-text {
+  background: var(--table-bg);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+tr.exact-fuzzy-separator td {
+  display: table-cell !important;
+}
