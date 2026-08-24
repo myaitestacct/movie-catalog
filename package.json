@@ -7,13 +7,17 @@
     "test:js": "node --test tests/js/*.test.mjs",
     "test:php": "php tests/php/run.php",
     "test:browser": "playwright test",
-    "test:browser:headed": "playwright test --headed"
+    "test:browser:headed": "playwright test --headed",
+    "build": "node build.mjs",
+    "build:watch": "node build.mjs --watch",
+    "dev": "npm run build && npm run test:js"
   },
   "engines": {
     "node": ">=20",
     "php": ">=8.3"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.1"
+    "@playwright/test": "^1.62.1",
+    "esbuild": "^0.23.1"
   }
 }
