@@ -5,6 +5,7 @@ require_once __DIR__ . '/../helpers/FileHelper.php';
 class MovieRepository
 {
     private PDO $pdo;
+    private ?bool $windowFunctionsSupported = null;
 
     private array $sortableColumns = [
         'NUM','FORMATTEDTITLE','YEAR','LENGTH','CERTIFICATION',
@@ -27,11 +28,44 @@ class MovieRepository
     }
 
     /**
-     * Split an explicitly parenthesized trailing year from a title search.
-     *
-     * "Alien (1979)" searches for title "Alien" and year 1979, while titles
-     * such as "1917", "1984", and "2001: A Space Odyssey" remain intact.
+     * Detect whether the connected database supports window functions.
+     * MySQL 8.0+ and MariaDB 10.2+ support ROW_NUMBER().
      */
+    private function supportsWindowFunctions(): bool
+    {
+        if ($this->windowFunctionsSupported !== null) {
+            return $this->windowFunctionsSupported;
+        }
+
+        try {
+            $version = (string)$this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+
+            if (stripos($version, 'MariaDB') !== false) {
+                if (preg_match('/(\d+)\.(\d+)/', $version, $m)) {
+                    $major = (int)$m[1];
+                    $minor = (int)$m[2];
+                    $this->windowFunctionsSupported =
+                        ($major > 10) || ($major === 10 && $minor >= 2);
+                    return $this->windowFunctionsSupported;
+                }
+            } else {
+                if (preg_match('/(\d+)\.(\d+)/', $version, $m)) {
+                    $major = (int)$m[1];
+                    $this->windowFunctionsSupported = $major >= 8;
+                    return $this->windowFunctionsSupported;
+                }
+            }
+
+            // Fallback probe: try a trivial window-function query.
+            $this->pdo->query('SELECT ROW_NUMBER() OVER (ORDER BY 1) AS rn')->fetch();
+            $this->windowFunctionsSupported = true;
+        } catch (Throwable $e) {
+            $this->windowFunctionsSupported = false;
+        }
+
+        return $this->windowFunctionsSupported;
+    }
+
     private function parseTitleFilter(string $value): array
     {
         $value = trim($value);
@@ -48,9 +82,6 @@ class MovieRepository
         return [$title, $year];
     }
 
-    /**
-     * Escape characters that have special meaning in a SQL LIKE pattern.
-     */
     private function escapeLikeValue(string $value): string
     {
         return str_replace(
@@ -60,10 +91,6 @@ class MovieRepository
         );
     }
 
-    /**
-     * Build either a normal contains pattern or an ordered-character fuzzy
-     * pattern. For example, "aln" becomes "%a%l%n%" and matches "Alien".
-     */
     private function buildLikePattern(string $value, bool $fuzzy): string
     {
         if (!$fuzzy) {
@@ -84,11 +111,6 @@ class MovieRepository
         return '%' . implode('%', $characters) . '%';
     }
 
-    /**
-     * Build the directory portion of FILEPATH in SQL. Separators are
-     * normalized only to locate the final separator; the returned path keeps
-     * the original slash style stored in the database.
-     */
     private function pathSqlExpression(): string
     {
         $filepath = "COALESCE(`FILEPATH`, '')";
@@ -103,9 +125,6 @@ class MovieRepository
                 END";
     }
 
-    /**
-     * Convert an allowlisted API sort key to its SQL expression.
-     */
     private function sortSqlExpression(string $sort): string
     {
         return $sort === 'PATH'
@@ -113,10 +132,6 @@ class MovieRepository
             : "`$sort`";
     }
 
-    /**
-     * Build the canonical ORDER BY clause used by both listing and page
-     * lookup. NUM is the deterministic tie-breaker for non-NUM sorts.
-     */
     private function buildOrderByClause(
         array $inputFilters,
         string $sort,
@@ -136,7 +151,6 @@ class MovieRepository
             $orderBy .= ', `NUM` ASC';
         }
 
-        // Title searches are relevance-ranked before the selected sort.
         if (isset($inputFilters['FORMATTEDTITLE'])) {
             [$exactTitle] = $this->parseTitleFilter(
                 (string)$inputFilters['FORMATTEDTITLE']
@@ -167,9 +181,6 @@ class MovieRepository
         return [$orderBy, $params];
     }
 
-    /**
-     * Build dynamic WHERE clause
-     */
     private function buildWhereClause(
         array $inputFilters,
         string $searchMode = 'AND',
@@ -182,7 +193,6 @@ class MovieRepository
         foreach ($inputFilters as $col => $val) {
 
             if ($col === 'GLOBAL') {
-                // FULLTEXT Search
                 $conditions[] = "MATCH(" . implode(',', $this->fulltextColumns) . ")
                                  AGAINST (:globalSearch IN BOOLEAN MODE)";
                 $params['globalSearch'] = $val;
@@ -193,7 +203,6 @@ class MovieRepository
                 continue;
             }
 
-            // FORMATTEDTITLE (with optional YEAR extraction)
             if ($col === 'FORMATTEDTITLE') {
                 [$title, $year] = $this->parseTitleFilter((string)$val);
                 $titleConditions = [];
@@ -208,8 +217,6 @@ class MovieRepository
                     $params['year'] = (int)$year;
                 }
 
-                // A title and year entered in the same field form one filter,
-                // so they stay grouped together even when search mode is OR.
                 if ($titleConditions) {
                     $conditions[] = '(' . implode(' AND ', $titleConditions) . ')';
                 }
@@ -261,18 +268,16 @@ class MovieRepository
         );
         $params = array_merge($params, $orderParams);
 
-        $sql = "
-            SELECT NUM, FORMATTEDTITLE, YEAR, LENGTH, CERTIFICATION,
-                   RATING, DIRECTOR, ACTORS, COUNTRY, DESCRIPTION,
-                   FILESIZE, LANGUAGES, CATEGORY, RESOLUTION,
-                   AUDIOFORMAT, FILEPATH, SUBTITLES, URL, PICTURENAME
+        // Deferred-join optimization for deep pagination
+        $innerSql = "
+            SELECT NUM
             FROM movies
             $whereSql
             ORDER BY $orderBy
             LIMIT :limit OFFSET :offset
         ";
 
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($innerSql);
 
         foreach ($params as $key => $val) {
             $stmt->bindValue(":$key", $val, is_int($val) ? PDO::PARAM_INT : PDO::PARAM_STR);
@@ -282,20 +287,61 @@ class MovieRepository
         $stmt->bindValue(':offset', (int)$pagination->offset, PDO::PARAM_INT);
 
         $stmt->execute();
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $orderedNums = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-        // Fuzzy fallback if FULLTEXT returns nothing
-        if (isset($inputFilters['GLOBAL']) && empty($rows)) {
-            return $this->fuzzyFallback($inputFilters['GLOBAL'], $pagination);
+        if (empty($orderedNums)) {
+            if (isset($inputFilters['GLOBAL'])) {
+                return $this->fuzzyFallback($inputFilters['GLOBAL'], $pagination);
+            }
+            return [];
         }
 
-        foreach ($rows as &$row) {
+        $placeholders = [];
+        $inParams = [];
+        foreach ($orderedNums as $i => $numVal) {
+            $ph = ":id{$i}";
+            $placeholders[] = $ph;
+            $inParams[$ph] = $numVal;
+        }
+
+        $inClause = implode(', ', $placeholders);
+
+        $outerSql = "
+            SELECT NUM, FORMATTEDTITLE, YEAR, LENGTH, CERTIFICATION,
+                   RATING, DIRECTOR, ACTORS, COUNTRY, DESCRIPTION,
+                   FILESIZE, LANGUAGES, CATEGORY, RESOLUTION,
+                   AUDIOFORMAT, FILEPATH, SUBTITLES, URL, PICTURENAME
+            FROM movies
+            WHERE NUM IN ($inClause)
+        ";
+
+        $stmt2 = $this->pdo->prepare($outerSql);
+        foreach ($inParams as $ph => $val) {
+            $stmt2->bindValue($ph, $val, PDO::PARAM_STR);
+        }
+        $stmt2->execute();
+        $rows = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+
+        $map = [];
+        foreach ($rows as $row) {
+            $map[(string)$row['NUM']] = $row;
+        }
+
+        $orderedRows = [];
+        foreach ($orderedNums as $numVal) {
+            $key = (string)$numVal;
+            if (isset($map[$key])) {
+                $orderedRows[] = $map[$key];
+            }
+        }
+
+        foreach ($orderedRows as &$row) {
             $fp = FileHelper::splitPath($row['FILEPATH'] ?? '');
             $row['PATH'] = $fp['path'];
             $row['FILE'] = $fp['file'];
         }
 
-        return $rows;
+        return $orderedRows;
     }
 
     public function countMovies(
@@ -320,9 +366,6 @@ class MovieRepository
         return (int)$stmt->fetchColumn();
     }
 
-    /**
-     * Simple fuzzy fallback (Levenshtein-based)
-     */
     private function fuzzyFallback(string $search, Pagination $pagination): array
     {
         $stmt = $this->pdo->query("
@@ -376,8 +419,54 @@ class MovieRepository
         );
         $params = array_merge($params, $orderParams);
 
-        // Use the same ordered result set as getMovies. This remains
-        // compatible with MySQL versions that do not support window functions.
+        if ($this->supportsWindowFunctions()) {
+            try {
+                $params['targetNum'] = $num;
+
+                $sql = "
+                    SELECT ranked.rn
+                    FROM (
+                        SELECT NUM, ROW_NUMBER() OVER (ORDER BY $orderBy) AS rn
+                        FROM movies
+                        $whereSql
+                    ) AS ranked
+                    WHERE ranked.NUM = :targetNum
+                    LIMIT 1
+                ";
+
+                $stmt = $this->pdo->prepare($sql);
+                foreach ($params as $key => $val) {
+                    $stmt->bindValue(
+                        ":$key",
+                        $val,
+                        is_int($val) ? PDO::PARAM_INT : PDO::PARAM_STR
+                    );
+                }
+                $stmt->execute();
+                $rn = $stmt->fetchColumn();
+
+                if ($rn !== false) {
+                    return intdiv(((int)$rn - 1), $perPage) + 1;
+                }
+
+                return null;
+            } catch (Throwable $e) {
+                error_log('ROW_NUMBER() page lookup failed, falling back to scan: ' . (string)$e);
+                $this->windowFunctionsSupported = false;
+                unset($params['targetNum']);
+            }
+        }
+
+        return $this->getPageForMovieByScanning($num, $perPage, $whereSql, $orderBy, $params);
+    }
+
+    private function getPageForMovieByScanning(
+        int $num,
+        int $perPage,
+        string $whereSql,
+        string $orderBy,
+        array $params
+    ): ?int {
         $sql = "
             SELECT NUM
             FROM movies
@@ -401,11 +490,9 @@ class MovieRepository
             if ((int)$movieNum === $num) {
                 return intdiv($position, $perPage) + 1;
             }
-
             $position++;
         }
 
-        // The movie does not exist or is excluded by the active filters.
         return null;
     }
 }
