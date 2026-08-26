@@ -1,6 +1,5 @@
 <div class="column-toggles">
     <button type="button" id="theme-toggle">🌙</button>
-
     <button type="button" id="search-mode" class="search-mode">AND</button>
 
     <label class="title-search-mode" for="title-search-mode">
