@@ -46,6 +46,23 @@ test.describe('movie catalog', () => {
     await expect(page.locator('tr[data-num="1"] mark')).toHaveCount(1);
   });
 
+  test('identifies an exact-only title result as an exact match', async ({ page }) => {
+    await openCatalog(page);
+
+    await page.locator(
+      '#search-row input[data-col="FORMATTEDTITLE"]'
+    ).fill('Casablanca');
+
+    await expect(page.locator('#movies tbody .exact-header')).toHaveCount(1);
+    await expect(page.locator('#movies tbody .fuzzy-header')).toHaveCount(0);
+    await expect(
+      page.locator('#movies tbody tr[data-match-type="exact"]')
+    ).toHaveCount(1);
+    await expect(page.locator('#search-group-info')).toContainText(
+      '1 exact match for "Casablanca"'
+    );
+  });
+
   test('opens movie details, supports keyboard navigation, and restores focus', async ({ page }) => {
     await openCatalog(page);
 

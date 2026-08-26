@@ -73,12 +73,13 @@ function renderSearchGroupInfo(infoBanner, exactCount, fuzzyCount, exactTitle, f
   hint.textContent = '– exact matches are highlighted green and shown first';
 
   infoBanner.className = 'search-group-info';
-  infoBanner.replaceChildren(
-    exactMessage,
-    separator,
-    fuzzyMessage,
-    hint
-  );
+
+  const messages = [exactMessage];
+  if (fuzzyCount > 0) {
+    messages.push(separator, fuzzyMessage, hint);
+  }
+
+  infoBanner.replaceChildren(...messages);
 }
 
 function renderMovieRow(movie, rows, columns, termsByColumn, fuzzy) {
@@ -202,14 +203,15 @@ export function renderTable(table, rows, columns) {
   let fuzzyRows = [];
   let useGroupedRendering = false;
 
-  if (exactTitle && rows.length > 1) {
+  if (exactTitle) {
     rows.forEach(movie => {
       if (isExactTitleMatch(movie, exactTitle)) exactRows.push(movie);
       else fuzzyRows.push(movie);
     });
-    if (exactRows.length > 0 && fuzzyRows.length > 0) {
-      useGroupedRendering = true;
-    }
+
+    // Keep an exact result visibly identified even when the fuzzy search
+    // produces no additional rows, such as a long, specific title.
+    useGroupedRendering = exactRows.length > 0;
   }
 
   const infoBanner = document.getElementById('search-group-info');
@@ -236,13 +238,15 @@ export function renderTable(table, rows, columns) {
       tr.dataset.matchType = 'exact';
       tbody.appendChild(tr);
     });
-    tbody.appendChild(createGroupHeader('fuzzy', fuzzyRows.length, exactTitle, columns, fuzzy));
-    fuzzyRows.forEach(movie => {
-      const tr = renderMovieRow(movie, rows, columns, termsByColumn, fuzzy);
-      tr.classList.add('fuzzy-match');
-      tr.dataset.matchType = 'fuzzy';
-      tbody.appendChild(tr);
-    });
+    if (fuzzyRows.length > 0) {
+      tbody.appendChild(createGroupHeader('fuzzy', fuzzyRows.length, exactTitle, columns, fuzzy));
+      fuzzyRows.forEach(movie => {
+        const tr = renderMovieRow(movie, rows, columns, termsByColumn, fuzzy);
+        tr.classList.add('fuzzy-match');
+        tr.dataset.matchType = 'fuzzy';
+        tbody.appendChild(tr);
+      });
+    }
   } else {
     rows.forEach(movie => {
       const tr = renderMovieRow(movie, rows, columns, termsByColumn, fuzzy);
