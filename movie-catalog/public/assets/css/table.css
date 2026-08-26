@@ -17,59 +17,7 @@ table {
 
 #movies {
     width: 100%;
-    table-layout: fixed;
-}
-
-#movies th[data-col="NUM"] {
-    width: 5%;
-}
-
-#movies th[data-col="FORMATTEDTITLE"] {
-    width: 18%;
-}
-
-#movies th[data-col="YEAR"] {
-    width: 6%;
-}
-
-#movies th[data-col="RATING"] {
-    width: 6%;
-}
-
-#movies th[data-col="FILESIZE"] {
-    width: 7%;
-}
-
-#movies th[data-col="CERTIFICATION"] {
-    width: 7%;
-}
-
-#movies th[data-col="LENGTH"] {
-    width: 6%;
-}
-
-#movies th[data-col="LANGUAGES"] {
-    width: 7%;
-}
-
-#movies th[data-col="CATEGORY"] {
-    width: 9%;
-}
-
-#movies th[data-col="RESOLUTION"] {
-    width: 7%;
-}
-
-#movies th[data-col="AUDIOFORMAT"] {
-    width: 8%;
-}
-
-#movies th[data-col="FILEPATH"] {
-    width: 8%;
-}
-
-#movies th[data-col="PATH"] {
-    width: 6%;
+    table-layout: auto;
 }
 
 th,
