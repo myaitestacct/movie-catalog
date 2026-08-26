@@ -154,6 +154,53 @@ test.describe('movie catalog', () => {
     await expect(titleLink).toBeFocused();
   });
 
+  test('confirms before modal navigation wraps around the result set', async ({ page }) => {
+    await openCatalog(page);
+
+    await page.locator(
+      'tr[data-num="50"] .movie-title-link'
+    ).click();
+
+    await expect(page.locator('#modalTitle')).toHaveText(
+      'Movie 050'
+    );
+
+    const nextButton = page.getByRole('button', {
+      name: 'Next movie'
+    });
+
+    const dismissDialog = page.waitForEvent('dialog').then(async dialog => {
+      expect(dialog.type()).toBe('confirm');
+      expect(dialog.message()).toBe(
+        'You are viewing the last movie. Continue to the first movie?'
+      );
+      await dialog.dismiss();
+    });
+
+    await Promise.all([
+      dismissDialog,
+      nextButton.click()
+    ]);
+
+    await expect(page.locator('#modalTitle')).toHaveText(
+      'Movie 050'
+    );
+
+    const acceptDialog = page.waitForEvent('dialog').then(async dialog => {
+      expect(dialog.type()).toBe('confirm');
+      await dialog.accept();
+    });
+
+    await Promise.all([
+      acceptDialog,
+      nextButton.click()
+    ]);
+
+    await expect(page.locator('#modalTitle')).toHaveText(
+      'Arrival'
+    );
+  });
+
   test('renders analytics and opens a library issue drill-down', async ({ page }) => {
     await openCatalog(page);
 
@@ -172,11 +219,11 @@ test.describe('movie catalog', () => {
 
     await page.locator('#missing-files-card').click();
 
-    const issueModalTitle = page.locator(
+    const issueModal = page.locator(
       '#library-issue-title'
     );
 
-    await expect(issueModalTitle).toHaveText('Missing Files');
+    await expect(issueModal).toHaveText('Missing Files');
     await expect(
       page.locator('#library-issue-pagination')
     ).toContainText(
@@ -187,7 +234,7 @@ test.describe('movie catalog', () => {
       '.stats-modal:not(.hidden) .stats-close'
     ).click();
 
-    await expect(issueModalTitle).toBeHidden();
+    await expect(issueModal).toBeHidden();
   });
 
   test('persists theme and optional-column preferences', async ({ page }) => {
@@ -212,6 +259,7 @@ test.describe('movie catalog', () => {
     ).click();
 
     await expect(lengthHeader).toBeVisible();
+
     await expect(
       page.locator('.toggle-col[data-col="LENGTH"]')
     ).toHaveAttribute(
@@ -224,9 +272,11 @@ test.describe('movie catalog', () => {
     await expect(page.locator('html')).toHaveClass(
       /theme-dark/
     );
+
     await expect(
       page.locator('#movies th[data-col="LENGTH"]')
     ).toBeVisible();
+
     await expect(
       page.locator('.toggle-col[data-col="LENGTH"]')
     ).toHaveAttribute(
