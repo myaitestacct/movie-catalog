@@ -53,6 +53,34 @@ function createGroupHeader(type, count, exactTitle, columns, fuzzy) {
   return tr;
 }
 
+function renderSearchGroupInfo(infoBanner, exactCount, fuzzyCount, exactTitle, fuzzy) {
+  const exactMessage = document.createElement('span');
+  exactMessage.className = 'info-exact';
+  exactMessage.textContent =
+    `✅ ${exactCount} exact match${exactCount === 1 ? '' : 'es'} for "${exactTitle}"`;
+
+  const separator = document.createElement('span');
+  separator.className = 'info-sep';
+  separator.textContent = '|';
+
+  const fuzzyMessage = document.createElement('span');
+  fuzzyMessage.className = 'info-fuzzy';
+  fuzzyMessage.textContent =
+    `🔍 ${fuzzyCount} ${fuzzy ? 'fuzzy/contains' : 'other'} match${fuzzyCount === 1 ? '' : 'es'}`;
+
+  const hint = document.createElement('span');
+  hint.className = 'info-hint';
+  hint.textContent = '– exact matches are highlighted green and shown first';
+
+  infoBanner.className = 'search-group-info';
+  infoBanner.replaceChildren(
+    exactMessage,
+    separator,
+    fuzzyMessage,
+    hint
+  );
+}
+
 function renderMovieRow(movie, rows, columns, termsByColumn, fuzzy) {
   const tr = document.createElement('tr');
   tr.dataset.num = movie.NUM;
@@ -79,6 +107,7 @@ function renderMovieRow(movie, rows, columns, termsByColumn, fuzzy) {
       } else {
         span.textContent = textValue;
       }
+
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'copy-btn icon-btn';
@@ -88,27 +117,34 @@ function renderMovieRow(movie, rows, columns, termsByColumn, fuzzy) {
         e.stopPropagation();
         copyToClipboard(textValue + '__', btn);
       };
+
       td.append(span, btn);
     } else if (col === 'FORMATTEDTITLE') {
       const a = document.createElement('a');
       a.href = '#';
       a.className = 'movie-title-link';
+
       if (shouldHighlight(value, searchTerms, 'OR', fuzzy)) {
         a.innerHTML = highlightMatch(value, searchTerms, fuzzy);
       } else {
         a.textContent = value;
       }
+
       a.onclick = e => {
         e.preventDefault();
         const index = rows.indexOf(movie);
         const rect = tr.getBoundingClientRect();
         const modalContent = document.querySelector('.movie-modal-content');
+
         if (modalContent) {
-          modalContent.style.transformOrigin = `${rect.left + rect.width / 2}px ${rect.top + rect.height / 2}px`;
+          modalContent.style.transformOrigin =
+            `${rect.left + rect.width / 2}px ${rect.top + rect.height / 2}px`;
         }
+
         Modal.setMovies(rows);
         Modal.show(movie, index);
       };
+
       td.appendChild(a);
     } else if (col === 'RATING') {
       if (!value) {
@@ -117,24 +153,30 @@ function renderMovieRow(movie, rows, columns, termsByColumn, fuzzy) {
         const a = document.createElement('a');
         const hasExternalRating = configureExternalLink(a, movie.URL);
         a.className = 'rating-badge';
-        a.title = hasExternalRating ? 'Open external rating' : 'External rating link unavailable';
+        a.title = hasExternalRating
+          ? 'Open external rating'
+          : 'External rating link unavailable';
+
         if (shouldHighlight(textValue, searchTerms, 'OR', fuzzy)) {
           a.innerHTML = highlightMatch(textValue, searchTerms, fuzzy);
         } else {
           a.textContent = textValue;
         }
+
         a.onclick = e => e.stopPropagation();
         td.appendChild(a);
       }
     } else if (col === 'FILEPATH') {
       const span = document.createElement('span');
       span.className = 'file-name';
+
       const fileName = movie.FILE ?? '';
       if (shouldHighlight(fileName, searchTerms, 'OR', fuzzy)) {
         span.innerHTML = highlightMatch(fileName, searchTerms, fuzzy);
       } else {
         span.textContent = fileName;
       }
+
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'copy-btn icon-btn';
@@ -144,6 +186,7 @@ function renderMovieRow(movie, rows, columns, termsByColumn, fuzzy) {
         e.stopPropagation();
         copyToClipboard(fileName ?? '', btn);
       };
+
       td.append(span, btn);
     } else {
       if (shouldHighlight(value, searchTerms, 'OR', fuzzy)) {
@@ -152,6 +195,7 @@ function renderMovieRow(movie, rows, columns, termsByColumn, fuzzy) {
         td.textContent = value;
       }
     }
+
     tr.appendChild(td);
   });
 
@@ -163,10 +207,13 @@ export function renderTable(table, rows, columns) {
   tbody.innerHTML = '';
 
   const termsByColumn = Object.fromEntries(
-    columns.map(column => [column, collectColumnSearchTerms(state.search, column)])
+    columns.map(column => [
+      column,
+      collectColumnSearchTerms(state.search, column)
+    ])
   );
-  const fuzzy = !!state.fuzzy;
 
+  const fuzzy = !!state.fuzzy;
   const rawTitleSearch = state.search.FORMATTEDTITLE || '';
   const { title: exactTitle } = parseTitleSearch(rawTitleSearch);
 
@@ -176,39 +223,63 @@ export function renderTable(table, rows, columns) {
 
   if (exactTitle && rows.length > 1) {
     rows.forEach(movie => {
-      if (isExactTitleMatch(movie, exactTitle)) exactRows.push(movie);
-      else fuzzyRows.push(movie);
+      if (isExactTitleMatch(movie, exactTitle)) {
+        exactRows.push(movie);
+      } else {
+        fuzzyRows.push(movie);
+      }
     });
+
     if (exactRows.length > 0 && fuzzyRows.length > 0) {
       useGroupedRendering = true;
     }
   }
 
   const infoBanner = document.getElementById('search-group-info');
+
   if (infoBanner) {
     if (useGroupedRendering) {
-      infoBanner.className = 'search-group-info';
-      infoBanner.innerHTML = `
-        <span class="info-exact">✅ ${exactRows.length} exact match${exactRows.length===1?'':'es'} for "${exactTitle}"</span>
-        <span class="info-sep">|</span>
-        <span class="info-fuzzy">🔍 ${fuzzyRows.length} ${fuzzy ? 'fuzzy/contains' : 'other'} match${fuzzyRows.length===1?'':'es'}</span>
-        <span class="info-hint">– exact matches are highlighted green and shown first</span>
-      `;
+      renderSearchGroupInfo(
+        infoBanner,
+        exactRows.length,
+        fuzzyRows.length,
+        exactTitle,
+        fuzzy
+      );
     } else {
       infoBanner.className = 'search-group-info hidden';
-      infoBanner.innerHTML = '';
+      infoBanner.replaceChildren();
     }
   }
 
   if (useGroupedRendering) {
-    tbody.appendChild(createGroupHeader('exact', exactRows.length, exactTitle, columns, fuzzy));
+    tbody.appendChild(
+      createGroupHeader(
+        'exact',
+        exactRows.length,
+        exactTitle,
+        columns,
+        fuzzy
+      )
+    );
+
     exactRows.forEach(movie => {
       const tr = renderMovieRow(movie, rows, columns, termsByColumn, fuzzy);
       tr.classList.add('exact-match');
       tr.dataset.matchType = 'exact';
       tbody.appendChild(tr);
     });
-    tbody.appendChild(createGroupHeader('fuzzy', fuzzyRows.length, exactTitle, columns, fuzzy));
+
+    tbody.appendChild(
+      createGroupHeader(
+        'fuzzy',
+        fuzzyRows.length,
+        exactTitle,
+        columns,
+        fuzzy
+      )
+    );
+
     fuzzyRows.forEach(movie => {
       const tr = renderMovieRow(movie, rows, columns, termsByColumn, fuzzy);
       tr.classList.add('fuzzy-match');
@@ -218,6 +289,7 @@ export function renderTable(table, rows, columns) {
   } else {
     rows.forEach(movie => {
       const tr = renderMovieRow(movie, rows, columns, termsByColumn, fuzzy);
+
       if (exactTitle) {
         if (isExactTitleMatch(movie, exactTitle)) {
           tr.classList.add('exact-match');
@@ -227,6 +299,7 @@ export function renderTable(table, rows, columns) {
           tr.dataset.matchType = 'fuzzy';
         }
       }
+
       tbody.appendChild(tr);
     });
   }
