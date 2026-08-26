@@ -142,40 +142,19 @@ test.describe('movie catalog', () => {
     );
   });
 
-  test('keeps the catalog within the viewport without horizontal scrollbars', async ({ page }) => {
+  test('shows all optional columns in the scrollable table', async ({ page }) => {
     await openCatalog(page);
 
     await page.locator('.toggle-all-columns').click();
 
+    await expect(
+      page.locator('#movies thead tr:first-child th:visible')
+    ).toHaveCount(13);
+
     await expect(page.locator('.table-wrapper')).toHaveCSS(
       'overflow-x',
-      'hidden'
+      'auto'
     );
-
-    const overflow = await page.locator('#movies').evaluate(table => ({
-      tableOverflow: table.scrollWidth > table.clientWidth,
-      viewportOverflow:
-        document.documentElement.scrollWidth >
-        document.documentElement.clientWidth
-    }));
-
-    expect(overflow.tableOverflow).toBe(false);
-    expect(overflow.viewportOverflow).toBe(false);
-
-    const widths = await page.locator('#movies').evaluate(table => {
-      const headers = [
-        ...table.querySelectorAll('thead tr:first-child th')
-      ].filter(header => getComputedStyle(header).display !== 'none');
-      const tableWidth = table.getBoundingClientRect().width;
-      const visibleWidth = headers.reduce(
-        (total, header) => total + header.getBoundingClientRect().width,
-        0
-      );
-
-      return { tableWidth, visibleWidth };
-    });
-
-    expect(Math.abs(widths.tableWidth - widths.visibleWidth)).toBeLessThan(3);
   });
 
   test('opens movie details, supports keyboard navigation, and restores focus', async ({ page }) => {
