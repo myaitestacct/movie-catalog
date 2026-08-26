@@ -1,6 +1,6 @@
 // app.js
 import { fetchMovies } from './core/api.js';
-import { state } from './core/state.js';
+import { state, TITLE_SEARCH_MODES } from './core/state.js';
 import { renderTable } from './table/table.js';
 import { initColumnToggles } from './table/columns.js';
 import { initSearch } from './table/search.js';
@@ -26,19 +26,24 @@ export async function loadMovies() {
       limit: state.limit,
       sort: state.sort,
       dir: state.dir,
-      mode: state.searchMode
+      mode: state.searchMode,
+      titleMode: state.titleSearchMode
     });
 
     Object.entries(state.search).forEach(([k, v]) => {
       if (v) params.append(k, v);
     });
 
-    if (state.fuzzy) params.append('fuzzy', 'true');
+    if (state.fuzzy) {
+      params.append('fuzzy', 'true');
+    }
 
     const data = await fetchMovies(params);
 
     clearError('movies');
+
     renderTable(table, data.data, columns);
+
     renderPagination(
       pagination,
       data.pages,
@@ -52,6 +57,7 @@ export async function loadMovies() {
     }
   } catch (error) {
     console.error('Movie load failed:', error);
+
     showError(error.message || 'Unable to load movies', {
       scope: 'movies',
       retry: loadMovies
@@ -70,70 +76,126 @@ export async function loadMovies() {
   pagination = document.getElementById('pagination');
   statsPanel = document.getElementById('stats-panel');
 
-  if (!table || !searchRow || !pagination) return;
+  if (!table || !searchRow || !pagination) {
+    return;
+  }
 
-  columns = [...table.querySelectorAll('thead th')].map(th => th.dataset.col);
+  columns = [...table.querySelectorAll('thead th')]
+    .map(th => th.dataset.col);
 
   // 1️⃣ Column toggles
-  const toggleContainer = document.querySelector('.column-toggles');
-  if (toggleContainer) initColumnToggles(table, toggleContainer);
+  const toggleContainer =
+    document.querySelector('.column-toggles');
+
+  if (toggleContainer) {
+    initColumnToggles(
+      table,
+      toggleContainer
+    );
+  }
 
   // 2️⃣ Search
-  initSearch(columns, searchRow, loadMovies);
+  initSearch(
+    columns,
+    searchRow,
+    loadMovies
+  );
 
   // 2.5️⃣ Search mode toggle
-  const searchModeBtn = document.getElementById('search-mode');
+  const searchModeBtn =
+    document.getElementById('search-mode');
+
   if (searchModeBtn) {
-    searchModeBtn.textContent = state.searchMode;
+    searchModeBtn.textContent =
+      state.searchMode;
 
     searchModeBtn.onclick = () => {
-      state.searchMode = state.searchMode === 'AND' ? 'OR' : 'AND';
-      searchModeBtn.textContent = state.searchMode;
-      searchModeBtn.classList.toggle('or', state.searchMode === 'OR');
+      state.searchMode =
+        state.searchMode === 'AND'
+          ? 'OR'
+          : 'AND';
+
+      searchModeBtn.textContent =
+        state.searchMode;
+
+      searchModeBtn.classList.toggle(
+        'or',
+        state.searchMode === 'OR'
+      );
+
       state.page = 1;
       loadMovies();
     };
   }
 
-  // 2.6️⃣ Fuzzy search toggle
-  const fuzzyBtn = document.getElementById('fuzzy-toggle');
-  if (fuzzyBtn) {
-    fuzzyBtn.textContent = `Fuzzy: ${state.fuzzy ? 'ON' : 'OFF'}`;
+  // 2.6️⃣ Explicit title-search mode
+  const titleSearchMode =
+    document.getElementById('title-search-mode');
 
-    fuzzyBtn.onclick = () => {
-      state.fuzzy = !state.fuzzy;
-      fuzzyBtn.textContent = `Fuzzy: ${state.fuzzy ? 'ON' : 'OFF'}`;
-      state.page = 1;
-      loadMovies();
-    };
+  if (titleSearchMode) {
+    titleSearchMode.value =
+      TITLE_SEARCH_MODES.includes(
+        state.titleSearchMode
+      )
+        ? state.titleSearchMode
+        : 'FUZZY';
+
+    titleSearchMode.addEventListener(
+      'change',
+      () => {
+        if (
+          !TITLE_SEARCH_MODES.includes(
+            titleSearchMode.value
+          )
+        ) {
+          return;
+        }
+
+        state.titleSearchMode =
+          titleSearchMode.value;
+
+        state.page = 1;
+        loadMovies();
+      }
+    );
   }
 
 /* ==============================
    Theme System
 ============================== */
 
-const themeToggle = document.getElementById('theme-toggle');
+const themeToggle =
+  document.getElementById('theme-toggle');
 
 if (themeToggle) {
-
-  const storedTheme = localStorage.getItem('theme');
+  const storedTheme =
+    localStorage.getItem('theme');
 
   if (storedTheme) {
-    document.documentElement.classList.add(`theme-${storedTheme}`);
+    document.documentElement.classList.add(
+      `theme-${storedTheme}`
+    );
   }
 
   const updateIcon = () => {
-    const dark = document.documentElement.classList.contains('theme-dark');
-    themeToggle.textContent = dark ? '☀️' : '🌙';
+    const dark =
+      document.documentElement.classList.contains(
+        'theme-dark'
+      );
+
+    themeToggle.textContent =
+      dark ? '☀️' : '🌙';
   };
 
   updateIcon();
 
   themeToggle.onclick = () => {
+    const root =
+      document.documentElement;
 
-    const root = document.documentElement;
-
-    if (root.classList.contains('theme-dark')) {
+    if (
+      root.classList.contains('theme-dark')
+    ) {
       root.classList.remove('theme-dark');
       root.classList.add('theme-light');
       localStorage.setItem('theme', 'light');
@@ -151,10 +213,15 @@ if (themeToggle) {
   initSorting(table, loadMovies);
 
   // 4️⃣ Stats
-  const statsToggle = document.getElementById('stats-toggle');
+  const statsToggle =
+    document.getElementById('stats-toggle');
+
   if (statsToggle && statsPanel) {
     initStats(statsToggle, statsPanel);
-    if (statsPanel.classList.contains('show')) refreshStats();
+
+    if (statsPanel.classList.contains('show')) {
+      refreshStats();
+    }
   }
 
   // 5️⃣ Initial load
