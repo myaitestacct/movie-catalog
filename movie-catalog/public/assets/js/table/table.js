@@ -296,8 +296,7 @@ export function renderTable(table, rows, columns) {
     useGroupedRendering = exactRows.length > 0;
   }
 
-  const infoBanner =
-    document.getElementById('search-group-info');
+  const infoBanner = document.getElementById('search-group-info');
 
   if (infoBanner) {
     if (useGroupedRendering) {
