@@ -91,6 +91,37 @@ test.describe('movie catalog', () => {
     await expect(titleLink).toBeFocused();
   });
 
+  test('confirms before modal navigation wraps around the result set', async ({ page }) => {
+    await openCatalog(page);
+
+    await page.locator(
+      'tr[data-num="50"] .movie-title-link'
+    ).click();
+    await expect(page.locator('#modalTitle')).toHaveText('Movie 050');
+
+    const nextButton = page.getByRole('button', {
+      name: 'Next movie'
+    });
+    const dismissDialog = page.waitForEvent('dialog').then(async dialog => {
+      expect(dialog.type()).toBe('confirm');
+      expect(dialog.message()).toBe(
+        'You are viewing the last movie. Continue to the first movie?'
+      );
+      await dialog.dismiss();
+    });
+
+    await Promise.all([dismissDialog, nextButton.click()]);
+    await expect(page.locator('#modalTitle')).toHaveText('Movie 050');
+
+    const acceptDialog = page.waitForEvent('dialog').then(async dialog => {
+      expect(dialog.type()).toBe('confirm');
+      await dialog.accept();
+    });
+
+    await Promise.all([acceptDialog, nextButton.click()]);
+    await expect(page.locator('#modalTitle')).toHaveText('Arrival');
+  });
+
   test('renders analytics and opens a library issue drill-down', async ({ page }) => {
     await openCatalog(page);
 

@@ -293,3 +293,77 @@ test('opening and closing modal isolates background and restores focus', () => {
   assert.equal(document.activeElement, trigger);
   assert.equal(activeMovieRow.classList.contains('active-movie-row'), false);
 });
+
+test('confirmation is required before previous and next navigation wraps', () => {
+  const firstMovie = {
+    NUM: 1,
+    FORMATTEDTITLE: 'First Movie',
+    YEAR: 2020,
+    LENGTH: 100,
+    CERTIFICATION: 'PG',
+    LANGUAGES: 'English',
+    CATEGORY: 'Drama',
+    COUNTRY: 'USA',
+    DIRECTOR: 'Director One',
+    ACTORS: 'Actor One',
+    FILESIZE: 1000,
+    RESOLUTION: '1080p',
+    AUDIOFORMAT: 'AAC',
+    SUBTITLES: 'English',
+    FILEPATH: 'C:\\Movies\\first.mkv',
+    URL: 'https://www.imdb.com/title/tt0000001/',
+    PICTURENAME: 'first.jpg'
+  };
+  const secondMovie = {
+    ...firstMovie,
+    NUM: 2,
+    FORMATTEDTITLE: 'Second Movie',
+    FILEPATH: 'C:\\Movies\\second.mkv',
+    URL: 'https://www.imdb.com/title/tt0000002/',
+    PICTURENAME: 'second.jpg'
+  };
+  const modal = document.body.querySelector('#movieModal');
+  const title = () => modal.querySelector('#modalTitle').textContent;
+  const originalConfirm = globalThis.confirm;
+  const prompts = [];
+
+  try {
+    globalThis.confirm = message => {
+      prompts.push(message);
+      return false;
+    };
+
+    Modal.setMovies([firstMovie, secondMovie]);
+    Modal.show(firstMovie, 0);
+
+    Modal.prev();
+    assert.equal(title(), 'First Movie');
+    assert.deepEqual(prompts, [
+      'You are viewing the first movie. Continue to the last movie?'
+    ]);
+
+    globalThis.confirm = message => {
+      prompts.push(message);
+      return true;
+    };
+
+    Modal.prev();
+    assert.equal(title(), 'Second Movie');
+
+    Modal.next();
+    assert.equal(title(), 'First Movie');
+    assert.deepEqual(prompts, [
+      'You are viewing the first movie. Continue to the last movie?',
+      'You are viewing the first movie. Continue to the last movie?',
+      'You are viewing the last movie. Continue to the first movie?'
+    ]);
+  } finally {
+    if (originalConfirm === undefined) {
+      delete globalThis.confirm;
+    } else {
+      globalThis.confirm = originalConfirm;
+    }
+
+    Modal.close();
+  }
+});

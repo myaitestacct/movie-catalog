@@ -319,6 +319,18 @@ export const Modal = (() => {
         openModal();
     }
 
+    function requestWrapConfirmation(direction) {
+        const message = direction === 'next'
+            ? 'You are viewing the last movie. Continue to the first movie?'
+            : 'You are viewing the first movie. Continue to the last movie?';
+
+        if (typeof globalThis.confirm !== 'function') {
+            return false;
+        }
+
+        return globalThis.confirm(message);
+    }
+
     return {
         setMovies(list) {
             movies = list || [];
@@ -330,12 +342,32 @@ export const Modal = (() => {
         close: closeModal,
         next() {
             if (!movies.length) return;
-            currentIndex = (currentIndex + 1) % movies.length;
+
+            const isAtLastMovie = currentIndex >= movies.length - 1;
+            if (isAtLastMovie) {
+                const shouldWrap = requestWrapConfirmation('next');
+                if (!shouldWrap) return;
+
+                currentIndex = 0;
+            } else {
+                currentIndex += 1;
+            }
+
             renderMovie(movies[currentIndex]);
         },
         prev() {
             if (!movies.length) return;
-            currentIndex = (currentIndex - 1 + movies.length) % movies.length;
+
+            const isAtFirstMovie = currentIndex <= 0;
+            if (isAtFirstMovie) {
+                const shouldWrap = requestWrapConfirmation('previous');
+                if (!shouldWrap) return;
+
+                currentIndex = movies.length - 1;
+            } else {
+                currentIndex -= 1;
+            }
+
             renderMovie(movies[currentIndex]);
         }
     };
