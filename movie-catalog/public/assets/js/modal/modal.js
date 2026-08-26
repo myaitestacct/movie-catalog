@@ -93,10 +93,16 @@ export const Modal = (() => {
         const last = focusable[focusable.length - 1];
         const active = document.activeElement;
 
-        if (event.shiftKey && (active === first || !modal.contains(active))) {
+        if (
+            event.shiftKey &&
+            (active === first || !modal.contains(active))
+        ) {
             event.preventDefault();
             last.focus();
-        } else if (!event.shiftKey && (active === last || !modal.contains(active))) {
+        } else if (
+            !event.shiftKey &&
+            (active === last || !modal.contains(active))
+        ) {
             event.preventDefault();
             first.focus();
         }
@@ -111,6 +117,7 @@ export const Modal = (() => {
                 event.preventDefault();
                 posterZoom.focus();
             }
+
             return;
         }
 
@@ -133,7 +140,10 @@ export const Modal = (() => {
     function setBackgroundInert(inert) {
         if (inert) {
             backgroundState = [...document.body.children]
-                .filter(element => element !== modal && element !== posterZoom)
+                .filter(element =>
+                    element !== modal &&
+                    element !== posterZoom
+                )
                 .map(element => ({
                     element,
                     inert: Boolean(element.inert),
@@ -144,10 +154,15 @@ export const Modal = (() => {
                 element.inert = true;
                 element.setAttribute('aria-hidden', 'true');
             });
+
             return;
         }
 
-        backgroundState.forEach(({ element, inert: wasInert, ariaHidden }) => {
+        backgroundState.forEach(({
+            element,
+            inert: wasInert,
+            ariaHidden
+        }) => {
             element.inert = wasInert;
 
             if (ariaHidden === null) {
@@ -156,6 +171,7 @@ export const Modal = (() => {
                 element.setAttribute('aria-hidden', ariaHidden);
             }
         });
+
         backgroundState = [];
     }
 
@@ -183,7 +199,10 @@ export const Modal = (() => {
         lastFocusedElement = null;
 
         requestAnimationFrame(() => {
-            if (focusTarget?.isConnected && typeof focusTarget.focus === 'function') {
+            if (
+                focusTarget?.isConnected &&
+                typeof focusTarget.focus === 'function'
+            ) {
                 focusTarget.focus();
             }
         });
@@ -193,7 +212,9 @@ export const Modal = (() => {
         if (!poster?.src) return;
 
         posterZoomImg.src = poster.src;
-        posterZoomImg.alt = poster.alt || 'Enlarged movie poster';
+        posterZoomImg.alt =
+            poster.alt || 'Enlarged movie poster';
+
         modal.inert = true;
         modal.setAttribute('aria-hidden', 'true');
         posterZoom.setAttribute('aria-hidden', 'false');
@@ -226,7 +247,10 @@ export const Modal = (() => {
 
     function highlightRow(movie) {
         clearActiveRow();
-        activeRow = document.querySelector(`tr[data-num="${movie.NUM}"]`);
+
+        activeRow = document.querySelector(
+            `tr[data-num="${movie.NUM}"]`
+        );
 
         if (activeRow) {
             activeRow.classList.add('active-movie-row');
@@ -242,15 +266,26 @@ export const Modal = (() => {
         );
 
         const displayTitle = (
-            movie.FORMATTEDTITLE || movie.ORIGINALTITLE || ''
+            movie.FORMATTEDTITLE ||
+            movie.ORIGINALTITLE ||
+            ''
         ).trim();
+
         const titleEl = modal.querySelector('#modalTitle');
         titleEl.textContent = displayTitle;
-        poster.alt = displayTitle ? `${displayTitle} poster` : 'Movie poster';
+
+        poster.alt = displayTitle
+            ? `${displayTitle} poster`
+            : 'Movie poster';
 
         const ratingEl = modal.querySelector('#modalRating');
         ratingEl.textContent = movie.RATING || '';
-        const hasRatingLink = configureExternalLink(ratingEl, movie.URL);
+
+        const hasRatingLink = configureExternalLink(
+            ratingEl,
+            movie.URL
+        );
+
         ratingEl.setAttribute(
             'aria-label',
             hasRatingLink && displayTitle
@@ -279,13 +314,16 @@ export const Modal = (() => {
         });
 
         const { path, file } = splitPath(movie.FILEPATH);
+
         modal.querySelector('#modalPath').textContent = path;
 
         const fileContainer = modal.querySelector('#modalFile');
         const fileSpan = fileContainer.querySelector('.file-name');
         const fileBtn = fileContainer.querySelector('.copy-btn');
 
-        if (fileSpan) fileSpan.textContent = file || '';
+        if (fileSpan) {
+            fileSpan.textContent = file || '';
+        }
 
         if (fileBtn) {
             fileBtn.onclick = event => {
@@ -305,7 +343,10 @@ export const Modal = (() => {
         if (numBtn) {
             numBtn.onclick = event => {
                 event.stopPropagation();
-                copyToClipboard(`${movie.NUM ?? ''}__`, numBtn);
+                copyToClipboard(
+                    `${movie.NUM ?? ''}__`,
+                    numBtn
+                );
             };
         }
 
@@ -313,29 +354,77 @@ export const Modal = (() => {
     }
 
     function renderMovie(movie) {
-        if (!modal) initDOM();
+        if (!modal) {
+            initDOM();
+        }
 
         renderMovieView(movie);
         openModal();
+    }
+
+    function requestWrapConfirmation(direction) {
+        const message = direction === 'next'
+            ? 'You are viewing the last movie. Continue to the first movie?'
+            : 'You are viewing the first movie. Continue to the last movie?';
+
+        if (typeof globalThis.confirm !== 'function') {
+            return false;
+        }
+
+        return globalThis.confirm(message);
     }
 
     return {
         setMovies(list) {
             movies = list || [];
         },
+
         show(movie, index = -1) {
             currentIndex = index;
-            if (movie) renderMovie(movie);
+
+            if (movie) {
+                renderMovie(movie);
+            }
         },
+
         close: closeModal,
+
         next() {
             if (!movies.length) return;
-            currentIndex = (currentIndex + 1) % movies.length;
+
+            const isAtLastMovie =
+                currentIndex >= movies.length - 1;
+
+            if (isAtLastMovie) {
+                const shouldWrap =
+                    requestWrapConfirmation('next');
+
+                if (!shouldWrap) return;
+
+                currentIndex = 0;
+            } else {
+                currentIndex += 1;
+            }
+
             renderMovie(movies[currentIndex]);
         },
+
         prev() {
             if (!movies.length) return;
-            currentIndex = (currentIndex - 1 + movies.length) % movies.length;
+
+            const isAtFirstMovie = currentIndex <= 0;
+
+            if (isAtFirstMovie) {
+                const shouldWrap =
+                    requestWrapConfirmation('previous');
+
+                if (!shouldWrap) return;
+
+                currentIndex = movies.length - 1;
+            } else {
+                currentIndex -= 1;
+            }
+
             renderMovie(movies[currentIndex]);
         }
     };
