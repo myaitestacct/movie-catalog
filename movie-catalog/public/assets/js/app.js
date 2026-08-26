@@ -1,6 +1,9 @@
 // app.js
 import { fetchMovies } from './core/api.js';
-import { state, TITLE_SEARCH_MODES } from './core/state.js';
+import {
+  state,
+  TITLE_SEARCH_MODES
+} from './core/state.js';
 import { renderTable } from './table/table.js';
 import { initColumnToggles } from './table/columns.js';
 import { initSearch } from './table/search.js';
@@ -9,7 +12,23 @@ import { renderPagination } from './table/pagination.js';
 import { initStats, refreshStats } from './stats/stats.js';
 import { clearError, showError } from './utils/feedback.js';
 
-let table, searchRow, pagination, columns, statsPanel;
+let table;
+let searchRow;
+let pagination;
+let columns;
+let statsPanel;
+
+function hasActiveSearchFilters() {
+  return Object.values(state.search).some(
+    value => String(value ?? '').trim() !== ''
+  );
+}
+
+function syncClearFiltersButton(button) {
+  if (!button) return;
+
+  button.disabled = !hasActiveSearchFilters();
+}
 
 /* ==============================
    EXPORTED: loadMovies
@@ -18,7 +37,7 @@ export async function loadMovies() {
   table.classList.remove('show');
   table.classList.add('table-fade');
 
-  await new Promise(r => setTimeout(r, 150));
+  await new Promise(resolve => setTimeout(resolve, 150));
 
   try {
     const params = new URLSearchParams({
@@ -30,8 +49,10 @@ export async function loadMovies() {
       titleMode: state.titleSearchMode
     });
 
-    Object.entries(state.search).forEach(([k, v]) => {
-      if (v) params.append(k, v);
+    Object.entries(state.search).forEach(([key, value]) => {
+      if (value) {
+        params.append(key, value);
+      }
     });
 
     if (state.fuzzy) {
@@ -42,7 +63,11 @@ export async function loadMovies() {
 
     clearError('movies');
 
-    renderTable(table, data.data, columns);
+    renderTable(
+      table,
+      data.data,
+      columns
+    );
 
     renderPagination(
       pagination,
@@ -52,18 +77,25 @@ export async function loadMovies() {
       loadMovies
     );
 
-    if (statsPanel?.classList.contains('show')) {
+    if (
+      statsPanel?.classList.contains('show')
+    ) {
       refreshStats();
     }
   } catch (error) {
     console.error('Movie load failed:', error);
 
-    showError(error.message || 'Unable to load movies', {
-      scope: 'movies',
-      retry: loadMovies
-    });
+    showError(
+      error.message || 'Unable to load movies',
+      {
+        scope: 'movies',
+        retry: loadMovies
+      }
+    );
   } finally {
-    requestAnimationFrame(() => table.classList.add('show'));
+    requestAnimationFrame(() => {
+      table.classList.add('show');
+    });
   }
 }
 
@@ -80,8 +112,9 @@ export async function loadMovies() {
     return;
   }
 
-  columns = [...table.querySelectorAll('thead th')]
-    .map(th => th.dataset.col);
+  columns = [
+    ...table.querySelectorAll('thead th')
+  ].map(th => th.dataset.col);
 
   // 1️⃣ Column toggles
   const toggleContainer =
@@ -95,10 +128,51 @@ export async function loadMovies() {
   }
 
   // 2️⃣ Search
+  const clearFiltersButton =
+    document.getElementById('clear-filters');
+
+  if (clearFiltersButton) {
+    clearFiltersButton.onclick = () => {
+      clearTimeout(state.debounce);
+
+      state.search = {};
+
+      searchRow
+        .querySelectorAll('input')
+        .forEach(input => {
+          input.value = '';
+        });
+
+      searchRow
+        .querySelectorAll('.clear-search')
+        .forEach(button => {
+          button.hidden = true;
+        });
+
+      state.page = 1;
+
+      syncClearFiltersButton(
+        clearFiltersButton
+      );
+
+      loadMovies();
+    };
+
+    syncClearFiltersButton(
+      clearFiltersButton
+    );
+  }
+
   initSearch(
     columns,
     searchRow,
-    loadMovies
+    () => {
+      syncClearFiltersButton(
+        clearFiltersButton
+      );
+
+      loadMovies();
+    }
   );
 
   // 2.5️⃣ Search mode toggle
@@ -130,7 +204,9 @@ export async function loadMovies() {
 
   // 2.6️⃣ Explicit title-search mode
   const titleSearchMode =
-    document.getElementById('title-search-mode');
+    document.getElementById(
+      'title-search-mode'
+    );
 
   if (titleSearchMode) {
     titleSearchMode.value =
@@ -160,54 +236,60 @@ export async function loadMovies() {
     );
   }
 
-/* ==============================
-   Theme System
-============================== */
+  /* ==============================
+     Theme System
+  ============================== */
 
-const themeToggle =
-  document.getElementById('theme-toggle');
+  const themeToggle =
+    document.getElementById('theme-toggle');
 
-if (themeToggle) {
-  const storedTheme =
-    localStorage.getItem('theme');
+  if (themeToggle) {
+    const storedTheme =
+      localStorage.getItem('theme');
 
-  if (storedTheme) {
-    document.documentElement.classList.add(
-      `theme-${storedTheme}`
-    );
-  }
-
-  const updateIcon = () => {
-    const dark =
-      document.documentElement.classList.contains(
-        'theme-dark'
+    if (storedTheme) {
+      document.documentElement.classList.add(
+        `theme-${storedTheme}`
       );
-
-    themeToggle.textContent =
-      dark ? '☀️' : '🌙';
-  };
-
-  updateIcon();
-
-  themeToggle.onclick = () => {
-    const root =
-      document.documentElement;
-
-    if (
-      root.classList.contains('theme-dark')
-    ) {
-      root.classList.remove('theme-dark');
-      root.classList.add('theme-light');
-      localStorage.setItem('theme', 'light');
-    } else {
-      root.classList.remove('theme-light');
-      root.classList.add('theme-dark');
-      localStorage.setItem('theme', 'dark');
     }
 
+    const updateIcon = () => {
+      const dark =
+        document.documentElement.classList.contains(
+          'theme-dark'
+        );
+
+      themeToggle.textContent =
+        dark ? '☀️' : '🌙';
+    };
+
     updateIcon();
-  };
-}
+
+    themeToggle.onclick = () => {
+      const root =
+        document.documentElement;
+
+      if (
+        root.classList.contains('theme-dark')
+      ) {
+        root.classList.remove('theme-dark');
+        root.classList.add('theme-light');
+        localStorage.setItem(
+          'theme',
+          'light'
+        );
+      } else {
+        root.classList.remove('theme-light');
+        root.classList.add('theme-dark');
+        localStorage.setItem(
+          'theme',
+          'dark'
+        );
+      }
+
+      updateIcon();
+    };
+  }
 
   // 3️⃣ Sorting
   initSorting(table, loadMovies);
@@ -217,9 +299,14 @@ if (themeToggle) {
     document.getElementById('stats-toggle');
 
   if (statsToggle && statsPanel) {
-    initStats(statsToggle, statsPanel);
+    initStats(
+      statsToggle,
+      statsPanel
+    );
 
-    if (statsPanel.classList.contains('show')) {
+    if (
+      statsPanel.classList.contains('show')
+    ) {
       refreshStats();
     }
   }
