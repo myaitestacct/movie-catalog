@@ -119,33 +119,6 @@ thead th {
     outline: none;
     box-shadow: 0 0 2px var(--primary);
 }
-#search-row .search-control {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-}
-#search-row .search-control input {
-    width: auto;
-    min-width: 0;
-    flex: 1 1 auto;
-}
-#search-row .clear-search {
-    flex: 0 0 auto;
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--header-color);
-    cursor: pointer;
-    font-size: 16px;
-    line-height: 1;
-}
-#search-row .clear-search:hover {
-    background: var(--button-hover);
-    color: var(--primary);
-}
 .hidden-col {
     opacity: 0;
     max-width: 0;

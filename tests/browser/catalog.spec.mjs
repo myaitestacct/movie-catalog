@@ -109,30 +109,21 @@ test.describe('movie catalog', () => {
     ).toHaveText('Fuzzy Matches (3)');
   });
 
-  test('clears individual and all search filters', async ({ page }) => {
+  test('clears all search filters with the global control', async ({ page }) => {
     await openCatalog(page);
 
     const titleInput = page.locator(
       '#search-row input[data-col="FORMATTEDTITLE"]'
     );
-    const individualClear = page.locator(
-      '#search-row .clear-search[data-col="FORMATTEDTITLE"]'
-    );
     const clearAll = page.locator('#clear-filters');
 
-    await titleInput.fill('Arrival');
-    await expect(individualClear).toBeVisible();
-    await expect(clearAll).toBeEnabled();
-
-    await individualClear.click();
-    await expect(titleInput).toHaveValue('');
-    await expect(individualClear).toBeHidden();
-    await expect(page.locator('#pagination .info')).toHaveText(
-      'Showing 1-50 of 55 results'
-    );
+    await expect(
+      page.locator('#search-row .clear-search')
+    ).toHaveCount(0);
 
     await titleInput.fill('Arrival');
     await expect(clearAll).toBeEnabled();
+
     await clearAll.click();
 
     await expect(titleInput).toHaveValue('');

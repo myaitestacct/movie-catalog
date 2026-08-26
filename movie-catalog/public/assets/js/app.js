@@ -101,9 +101,6 @@ export async function loadMovies() {
       searchRow.querySelectorAll('input').forEach(input => {
         input.value = '';
       });
-      searchRow.querySelectorAll('.clear-search').forEach(button => {
-        button.hidden = true;
-      });
       state.page = 1;
       syncClearFiltersButton(clearFiltersButton);
       loadMovies();
