@@ -244,6 +244,29 @@ test.describe('movie catalog', () => {
     );
   });
 
+  test('keeps the catalog within the viewport without horizontal scrollbars', async ({ page }) => {
+    await openCatalog(page);
+
+    await page.locator(
+      '.toggle-all-columns'
+    ).click();
+
+    await expect(
+      page.locator('.table-wrapper')
+    ).toHaveCSS(
+      'overflow-x',
+      'hidden'
+    );
+
+    const viewportOverflow =
+      await page.evaluate(() =>
+        document.documentElement.scrollWidth >
+        document.documentElement.clientWidth
+      );
+
+    expect(viewportOverflow).toBe(false);
+  });
+
   test('opens movie details, supports keyboard navigation, and restores focus', async ({ page }) => {
     await openCatalog(page);
 
@@ -258,18 +281,24 @@ test.describe('movie catalog', () => {
 
     await expect(modal).toHaveClass(/open/);
 
-    await expect(modal).toHaveAttribute(
+    await expect(
+      modal
+    ).toHaveAttribute(
       'aria-hidden',
       'false'
     );
 
     await expect(
       page.locator('#modalTitle')
-    ).toHaveText('Arrival');
+    ).toHaveText(
+      'Arrival'
+    );
 
     await expect(
       page.locator('#modalDescription')
-    ).toContainText('linguist');
+    ).toContainText(
+      'linguist'
+    );
 
     await expect(
       page.locator('#modalPoster')
@@ -285,20 +314,30 @@ test.describe('movie catalog', () => {
       'true'
     );
 
-    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press(
+      'ArrowRight'
+    );
 
     await expect(
       page.locator('#modalTitle')
-    ).toHaveText('Arrival 2');
+    ).toHaveText(
+      'Arrival 2'
+    );
 
-    await page.keyboard.press('Escape');
+    await page.keyboard.press(
+      'Escape'
+    );
 
-    await expect(modal).toHaveAttribute(
+    await expect(
+      modal
+    ).toHaveAttribute(
       'aria-hidden',
       'true'
     );
 
-    await expect(titleLink).toBeFocused();
+    await expect(
+      titleLink
+    ).toBeFocused();
   });
 
   test('confirms before modal navigation wraps around the result set', async ({ page }) => {
@@ -310,12 +349,17 @@ test.describe('movie catalog', () => {
 
     await expect(
       page.locator('#modalTitle')
-    ).toHaveText('Movie 050');
+    ).toHaveText(
+      'Movie 050'
+    );
 
     const nextButton =
-      page.getByRole('button', {
-        name: 'Next movie'
-      });
+      page.getByRole(
+        'button',
+        {
+          name: 'Next movie'
+        }
+      );
 
     const dismissDialog =
       page.waitForEvent('dialog').then(
@@ -339,7 +383,9 @@ test.describe('movie catalog', () => {
 
     await expect(
       page.locator('#modalTitle')
-    ).toHaveText('Movie 050');
+    ).toHaveText(
+      'Movie 050'
+    );
 
     const acceptDialog =
       page.waitForEvent('dialog').then(
@@ -359,46 +405,65 @@ test.describe('movie catalog', () => {
 
     await expect(
       page.locator('#modalTitle')
-    ).toHaveText('Arrival');
+    ).toHaveText(
+      'Arrival'
+    );
   });
 
   test('renders analytics and opens a library issue drill-down', async ({ page }) => {
     await openCatalog(page);
 
-    await page.getByRole('button', {
-      name: /Analytics/
-    }).click();
+    await page.getByRole(
+      'button',
+      {
+        name: /Analytics/
+      }
+    ).click();
 
     const statsPanel =
       page.locator('#stats-panel');
 
-    await expect(statsPanel).toHaveClass(/show/);
+    await expect(
+      statsPanel
+    ).toHaveClass(/show/);
 
     await expect(
       page.locator('#total-movies')
-    ).toHaveText('55');
+    ).toHaveText(
+      '55'
+    );
 
     await expect(
       page.locator('#top-genre')
-    ).toHaveText('Drama');
+    ).toHaveText(
+      'Drama'
+    );
 
     await expect(
       page.locator('#health-score')
-    ).toHaveText('91/100');
+    ).toHaveText(
+      '91/100'
+    );
 
     await page.locator(
       '#missing-files-card'
     ).click();
 
     const issueModal =
-      page.locator('#library-issue-title');
+      page.locator(
+        '#library-issue-title'
+      );
 
-    await expect(issueModal).toHaveText(
+    await expect(
+      issueModal
+    ).toHaveText(
       'Missing Files'
     );
 
     await expect(
-      page.locator('#library-issue-pagination')
+      page.locator(
+        '#library-issue-pagination'
+      )
     ).toContainText(
       'Page 1 of 1 • 1 movie'
     );
@@ -407,7 +472,9 @@ test.describe('movie catalog', () => {
       '.stats-modal:not(.hidden) .stats-close'
     ).click();
 
-    await expect(issueModal).toBeHidden();
+    await expect(
+      issueModal
+    ).toBeHidden();
   });
 
   test('persists theme and optional-column preferences', async ({ page }) => {
@@ -427,13 +494,17 @@ test.describe('movie catalog', () => {
         '#movies th[data-col="LENGTH"]'
       );
 
-    await expect(lengthHeader).toBeHidden();
+    await expect(
+      lengthHeader
+    ).toBeHidden();
 
     await page.locator(
       '.toggle-col[data-col="LENGTH"]'
     ).click();
 
-    await expect(lengthHeader).toBeVisible();
+    await expect(
+      lengthHeader
+    ).toBeVisible();
 
     await expect(
       page.locator(
@@ -497,13 +568,18 @@ test.describe('movie catalog', () => {
       '.api-error[data-error-scope="movies"]'
     );
 
-    await expect(error).toContainText(
+    await expect(
+      error
+    ).toContainText(
       'Mock movie failure'
     );
 
-    await error.getByRole('button', {
-      name: 'Retry'
-    }).click();
+    await error.getByRole(
+      'button',
+      {
+        name: 'Retry'
+      }
+    ).click();
 
     await expect(
       page.locator(
@@ -511,7 +587,10 @@ test.describe('movie catalog', () => {
       ).first()
     ).toBeVisible();
 
-    await expect(error).toHaveCount(0);
+    await expect(
+      error
+    ).toHaveCount(0);
+
     expect(movieRequestCount).toBe(2);
   });
 });
