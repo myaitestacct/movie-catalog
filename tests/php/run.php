@@ -349,6 +349,49 @@ assertSameValue(
     'Health score never drops below zero'
 );
 
+$cacheController = $statsReflection->newInstanceWithoutConstructor();
+$cacheConfig = $statsReflection->getProperty('config');
+$cacheConfig->setAccessible(true);
+$cacheConfig->setValue($cacheController, [
+    'stats' => [
+        'cache_enabled' => true,
+        'cache_ttl' => 300
+    ]
+]);
+
+$cachePath = sys_get_temp_dir() . '/movie-catalog-cache-' . bin2hex(random_bytes(8)) . '/stats.json';
+$cachePathProperty = $statsReflection->getProperty('statsCachePath');
+$cachePathProperty->setAccessible(true);
+$cachePathProperty->setValue($cacheController, $cachePath);
+
+$writeStatsCache = $statsReflection->getMethod('writeStatsCache');
+$writeStatsCache->setAccessible(true);
+$readStatsCache = $statsReflection->getMethod('readStatsCache');
+$readStatsCache->setAccessible(true);
+$clearStatsCache = $statsReflection->getMethod('clearStatsCache');
+$clearStatsCache->setAccessible(true);
+
+$cachedStats = [
+    'total_movies' => 42,
+    'health_score' => 100
+];
+$writeStatsCache->invoke($cacheController, $cachedStats);
+
+assertSameValue(
+    $cachedStats,
+    $readStatsCache->invoke($cacheController),
+    'Stats cache writes and reads a valid payload'
+);
+
+$clearStatsCache->invoke($cacheController);
+assertSameValue(
+    null,
+    $readStatsCache->invoke($cacheController),
+    'Stats cache can be cleared'
+);
+
+@rmdir(dirname($cachePath));
+
 if ($failures > 0) {
     echo "\n{$failures} test(s) failed.\n";
     exit(1);
