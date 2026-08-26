@@ -9,6 +9,9 @@
             <option value="FUZZY">Fuzzy</option>
         </select>
     </label>
+    <button type="button" id="clear-filters" class="clear-filters" disabled>
+        Clear filters
+    </button>
 
     <button type="button" class="toggle-col" data-col="LANGUAGES"><i class="fa-solid fa-language"></i> Language</button>
     <button type="button" class="toggle-col" data-col="LENGTH"><i class="fa-solid fa-clock"></i> Length</button>

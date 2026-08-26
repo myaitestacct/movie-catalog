@@ -109,6 +109,39 @@ test.describe('movie catalog', () => {
     ).toHaveText('Fuzzy Matches (3)');
   });
 
+  test('clears individual and all search filters', async ({ page }) => {
+    await openCatalog(page);
+
+    const titleInput = page.locator(
+      '#search-row input[data-col="FORMATTEDTITLE"]'
+    );
+    const individualClear = page.locator(
+      '#search-row .clear-search[data-col="FORMATTEDTITLE"]'
+    );
+    const clearAll = page.locator('#clear-filters');
+
+    await titleInput.fill('Arrival');
+    await expect(individualClear).toBeVisible();
+    await expect(clearAll).toBeEnabled();
+
+    await individualClear.click();
+    await expect(titleInput).toHaveValue('');
+    await expect(individualClear).toBeHidden();
+    await expect(page.locator('#pagination .info')).toHaveText(
+      'Showing 1-50 of 55 results'
+    );
+
+    await titleInput.fill('Arrival');
+    await expect(clearAll).toBeEnabled();
+    await clearAll.click();
+
+    await expect(titleInput).toHaveValue('');
+    await expect(clearAll).toBeDisabled();
+    await expect(page.locator('#pagination .info')).toHaveText(
+      'Showing 1-50 of 55 results'
+    );
+  });
+
   test('opens movie details, supports keyboard navigation, and restores focus', async ({ page }) => {
     await openCatalog(page);
 

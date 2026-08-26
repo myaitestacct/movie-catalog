@@ -11,6 +11,17 @@ import { clearError, showError } from './utils/feedback.js';
 
 let table, searchRow, pagination, columns, statsPanel;
 
+function hasActiveSearchFilters() {
+  return Object.values(state.search).some(
+    value => String(value ?? '').trim() !== ''
+  );
+}
+
+function syncClearFiltersButton(button) {
+  if (!button) return;
+  button.disabled = !hasActiveSearchFilters();
+}
+
 /* ==============================
    EXPORTED: loadMovies
 ============================== */
@@ -80,7 +91,31 @@ export async function loadMovies() {
   if (toggleContainer) initColumnToggles(table, toggleContainer);
 
   // 2️⃣ Search
-  initSearch(columns, searchRow, loadMovies);
+  const clearFiltersButton =
+    document.getElementById('clear-filters');
+
+  if (clearFiltersButton) {
+    clearFiltersButton.onclick = () => {
+      clearTimeout(state.debounce);
+      state.search = {};
+      searchRow.querySelectorAll('input').forEach(input => {
+        input.value = '';
+      });
+      searchRow.querySelectorAll('.clear-search').forEach(button => {
+        button.hidden = true;
+      });
+      state.page = 1;
+      syncClearFiltersButton(clearFiltersButton);
+      loadMovies();
+    };
+
+    syncClearFiltersButton(clearFiltersButton);
+  }
+
+  initSearch(columns, searchRow, () => {
+    syncClearFiltersButton(clearFiltersButton);
+    loadMovies();
+  });
 
   // 2.5️⃣ Search mode toggle
   const searchModeBtn = document.getElementById('search-mode');
