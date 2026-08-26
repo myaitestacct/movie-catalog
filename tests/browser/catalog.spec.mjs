@@ -61,6 +61,12 @@ test.describe('movie catalog', () => {
     await expect(page.locator('#search-group-info')).toHaveClass(
       /search-group-info/
     );
+    await expect(page.locator('#search-group-info')).toContainText(
+      '1 exact match for "Casablanca"'
+    );
+    await expect(page.locator('#search-group-info')).toContainText(
+      'No additional matches'
+    );
   });
 
   test('title search mode controls exact, contains, and fuzzy matching', async ({ page }) => {

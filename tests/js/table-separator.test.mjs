@@ -215,8 +215,35 @@ test('exact matches remain grouped when no fuzzy matches are returned', () => {
   assert.equal(tbody.children[0].className, 'group-header exact-header');
   assert.equal(tbody.children[1].dataset.matchType, 'exact');
   assert.equal(infoBanner.className, 'search-group-info');
+  assert.equal(infoBanner.children.length, 2);
+  assert.equal(
+    infoBanner.children[0].textContent,
+    '✅ 1 exact match for "Arrival"'
+  );
+  assert.equal(
+    infoBanner.children[1].textContent,
+    'No additional matches'
+  );
+});
+
+test('search group info describes a title search with no matches', () => {
+  const columns = ['NUM', 'FORMATTEDTITLE', 'YEAR', 'RATING', 'FILESIZE'];
+  const { table, tbody } = makeTable();
+  const infoBanner = new MockElement('div');
+  installDocumentMock(infoBanner);
+  state.search = { FORMATTEDTITLE: 'The Breakfast Club' };
+  state.columnVisibility = {};
+  state.fuzzy = true;
+
+  renderTable(table, [], columns);
+
+  assert.equal(tbody.children.length, 0);
+  assert.equal(infoBanner.className, 'search-group-info');
   assert.equal(infoBanner.children.length, 1);
-  assert.equal(infoBanner.children[0].textContent, '');
+  assert.equal(
+    infoBanner.children[0].textContent,
+    'No matches for "The Breakfast Club"'
+  );
 });
 
 test('exact matches remain grouped when fuzzy search is disabled', () => {

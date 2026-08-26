@@ -61,32 +61,60 @@ function createGroupHeader(type, count, exactTitle, columns, titleSearchMode) {
   return tr;
 }
 
-function renderSearchGroupInfo(infoBanner, exactCount, fuzzyCount, exactTitle, titleSearchMode) {
-  const fuzzy = titleSearchMode === 'FUZZY';
+function renderSearchGroupInfo(
+  infoBanner,
+  exactCount,
+  otherCount,
+  exactTitle,
+  titleSearchMode
+) {
   const exactMessage = document.createElement('span');
   exactMessage.className = 'info-exact';
-  //exactMessage.textContent =
-  //  `✅ ${exactCount} exact match${exactCount === 1 ? '' : 'es'} for "${exactTitle}"`;
+  exactMessage.textContent =
+    `✅ ${exactCount} exact match${exactCount === 1 ? '' : 'es'} for "${exactTitle}"`;
 
   const separator = document.createElement('span');
   separator.className = 'info-sep';
-  //separator.textContent = '| ';
+  separator.textContent = '|';
 
-  const fuzzyMessage = document.createElement('span');
-  fuzzyMessage.className = 'info-fuzzy';
-  //fuzzyMessage.textContent =
-  //  `🔍 ${fuzzyCount} ${fuzzy ? 'fuzzy/contains' : 'other'} match${fuzzyCount === 1 ? '' : 'es'}`;
+  const otherMessage = document.createElement('span');
+  otherMessage.className = 'info-fuzzy';
+
+  const modeLabel = titleSearchMode === 'FUZZY'
+    ? 'fuzzy'
+    : titleSearchMode === 'CONTAINS'
+      ? 'contains'
+      : 'other';
+
+  if (otherCount > 0) {
+    otherMessage.textContent =
+      `🔍 ${otherCount} ${modeLabel} match${otherCount === 1 ? '' : 'es'}`;
+  } else {
+    otherMessage.textContent = 'No additional matches';
+  }
 
   const hint = document.createElement('span');
   hint.className = 'info-hint';
-  //hint.textContent =
-    '– exact matches are shown first';
+  hint.textContent = '– exact matches are shown first';
+
+  const noMatchMessage = document.createElement('span');
+  noMatchMessage.className = 'info-empty';
+  noMatchMessage.textContent = `No matches for "${exactTitle}"`;
 
   infoBanner.className = 'search-group-info';
 
-  const messages = [exactMessage];
-  if (fuzzyCount > 0) {
-    messages.push(separator, fuzzyMessage, hint);
+  const messages = [];
+  if (exactCount > 0) {
+    messages.push(exactMessage);
+  }
+  if (otherCount > 0) {
+    if (messages.length > 0) messages.push(separator);
+    messages.push(otherMessage, hint);
+  } else if (exactCount > 0) {
+    messages.push(otherMessage);
+  }
+  if (messages.length === 0) {
+    messages.push(noMatchMessage);
   }
 
   infoBanner.replaceChildren(...messages);
@@ -234,7 +262,7 @@ export function renderTable(table, rows, columns) {
 
   const infoBanner = document.getElementById('search-group-info');
   if (infoBanner) {
-    if (useGroupedRendering) {
+    if (exactTitle) {
       renderSearchGroupInfo(
         infoBanner,
         exactRows.length,
