@@ -12,9 +12,7 @@ test.describe('movie catalog', () => {
   test('renders the first page and navigates to the final page', async ({ page }) => {
     await openCatalog(page);
 
-    const movieRows = page.locator(
-      '#movies tbody tr[data-num]'
-    );
+    const movieRows = page.locator('#movies tbody tr[data-num]');
 
     await expect(movieRows).toHaveCount(50);
     await expect(page.locator('#pagination .info')).toHaveText(
@@ -102,6 +100,82 @@ test.describe('movie catalog', () => {
     ).toHaveClass(
       /search-group-info/
     );
+
+    await expect(
+      page.locator('#search-group-info')
+    ).toContainText(
+      '1 exact match for "Casablanca"'
+    );
+
+    await expect(
+      page.locator('#search-group-info')
+    ).toContainText(
+      'No additional matches'
+    );
+  });
+
+  test('title search mode controls exact, contains, and fuzzy matching', async ({ page }) => {
+    await openCatalog(page);
+
+    const mode = page.locator('#title-search-mode');
+    const titleInput = page.locator(
+      '#search-row input[data-col="FORMATTEDTITLE"]'
+    );
+
+    await mode.selectOption('EXACT');
+    await titleInput.fill('Arrival');
+
+    await expect(
+      page.locator(
+        '#movies tbody tr[data-match-type="exact"]'
+      )
+    ).toHaveCount(1);
+
+    await expect(
+      page.locator(
+        '#movies tbody tr[data-match-type="fuzzy"]'
+      )
+    ).toHaveCount(0);
+
+    await expect(
+      page.locator(
+        '#movies tbody .exact-header .group-header-title'
+      )
+    ).toHaveText(
+      'Exact Matches (1) for "Arrival"'
+    );
+
+    await mode.selectOption('CONTAINS');
+
+    await expect(
+      page.locator(
+        '#movies tbody tr[data-match-type="exact"]'
+      )
+    ).toHaveCount(1);
+
+    await expect(
+      page.locator(
+        '#movies tbody tr[data-match-type="fuzzy"]'
+      )
+    ).toHaveCount(3);
+
+    await expect(
+      page.locator(
+        '#movies tbody .fuzzy-header .group-header-title'
+      )
+    ).toHaveText(
+      'Contains Matches (3)'
+    );
+
+    await mode.selectOption('FUZZY');
+
+    await expect(
+      page.locator(
+        '#movies tbody .fuzzy-header .group-header-title'
+      )
+    ).toHaveText(
+      'Fuzzy Matches (3)'
+    );
   });
 
   test('opens movie details, supports keyboard navigation, and restores focus', async ({ page }) => {
@@ -120,9 +194,11 @@ test.describe('movie catalog', () => {
       'aria-hidden',
       'false'
     );
+
     await expect(page.locator('#modalTitle')).toHaveText(
       'Arrival'
     );
+
     await expect(
       page.locator('#modalDescription')
     ).toContainText('linguist');
@@ -151,6 +227,7 @@ test.describe('movie catalog', () => {
       'aria-hidden',
       'true'
     );
+
     await expect(titleLink).toBeFocused();
   });
 
@@ -169,13 +246,16 @@ test.describe('movie catalog', () => {
       name: 'Next movie'
     });
 
-    const dismissDialog = page.waitForEvent('dialog').then(async dialog => {
-      expect(dialog.type()).toBe('confirm');
-      expect(dialog.message()).toBe(
-        'You are viewing the last movie. Continue to the first movie?'
-      );
-      await dialog.dismiss();
-    });
+    const dismissDialog = page.waitForEvent('dialog').then(
+      async dialog => {
+        expect(dialog.type()).toBe('confirm');
+        expect(dialog.message()).toBe(
+          'You are viewing the last movie. Continue to the first movie?'
+        );
+
+        await dialog.dismiss();
+      }
+    );
 
     await Promise.all([
       dismissDialog,
@@ -186,10 +266,12 @@ test.describe('movie catalog', () => {
       'Movie 050'
     );
 
-    const acceptDialog = page.waitForEvent('dialog').then(async dialog => {
-      expect(dialog.type()).toBe('confirm');
-      await dialog.accept();
-    });
+    const acceptDialog = page.waitForEvent('dialog').then(
+      async dialog => {
+        expect(dialog.type()).toBe('confirm');
+        await dialog.accept();
+      }
+    );
 
     await Promise.all([
       acceptDialog,
@@ -223,7 +305,10 @@ test.describe('movie catalog', () => {
       '#library-issue-title'
     );
 
-    await expect(issueModal).toHaveText('Missing Files');
+    await expect(issueModal).toHaveText(
+      'Missing Files'
+    );
+
     await expect(
       page.locator('#library-issue-pagination')
     ).toContainText(
@@ -288,24 +373,27 @@ test.describe('movie catalog', () => {
   test('shows an API error and recovers with retry', async ({ page }) => {
     let movieRequestCount = 0;
 
-    await page.route('**/api/movies.php*', async route => {
-      movieRequestCount++;
+    await page.route(
+      '**/api/movies.php*',
+      async route => {
+        movieRequestCount++;
 
-      if (movieRequestCount === 1) {
-        await route.fulfill({
-          status: 500,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            error: true,
-            message: 'Mock movie failure'
-          })
-        });
+        if (movieRequestCount === 1) {
+          await route.fulfill({
+            status: 500,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              error: true,
+              message: 'Mock movie failure'
+            })
+          });
 
-        return;
+          return;
+        }
+
+        await route.continue();
       }
-
-      await route.continue();
-    });
+    );
 
     await page.goto('/');
 
