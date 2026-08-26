@@ -161,6 +161,21 @@ test.describe('movie catalog', () => {
 
     expect(overflow.tableOverflow).toBe(false);
     expect(overflow.viewportOverflow).toBe(false);
+
+    const widths = await page.locator('#movies').evaluate(table => {
+      const headers = [
+        ...table.querySelectorAll('thead tr:first-child th')
+      ].filter(header => getComputedStyle(header).display !== 'none');
+      const tableWidth = table.getBoundingClientRect().width;
+      const visibleWidth = headers.reduce(
+        (total, header) => total + header.getBoundingClientRect().width,
+        0
+      );
+
+      return { tableWidth, visibleWidth };
+    });
+
+    expect(Math.abs(widths.tableWidth - widths.visibleWidth)).toBeLessThan(3);
   });
 
   test('opens movie details, supports keyboard navigation, and restores focus', async ({ page }) => {
