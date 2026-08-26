@@ -4,7 +4,9 @@ async function openCatalog(page) {
   await page.goto('/');
 
   await expect(
-    page.locator('#movies tbody tr[data-num]').first()
+    page.locator(
+      '#movies tbody tr[data-num]'
+    ).first()
   ).toBeVisible();
 }
 
@@ -12,13 +14,21 @@ test.describe('movie catalog', () => {
   test('renders the first page and navigates to the final page', async ({ page }) => {
     await openCatalog(page);
 
-    const movieRows = page.locator('#movies tbody tr[data-num]');
+    const movieRows = page.locator(
+      '#movies tbody tr[data-num]'
+    );
 
     await expect(movieRows).toHaveCount(50);
-    await expect(page.locator('#pagination .info')).toHaveText(
+
+    await expect(
+      page.locator('#pagination .info')
+    ).toHaveText(
       'Showing 1-50 of 55 results'
     );
-    await expect(page.locator('#pagination select')).toHaveValue('1');
+
+    await expect(
+      page.locator('#pagination select')
+    ).toHaveValue('1');
 
     await page.getByRole('button', {
       name: '>',
@@ -26,14 +36,21 @@ test.describe('movie catalog', () => {
     }).click();
 
     await expect(movieRows).toHaveCount(5);
+
     await expect(movieRows.first()).toHaveAttribute(
       'data-num',
       '51'
     );
-    await expect(page.locator('#pagination .info')).toHaveText(
+
+    await expect(
+      page.locator('#pagination .info')
+    ).toHaveText(
       'Showing 51-55 of 55 results'
     );
-    await expect(page.locator('#pagination select')).toHaveValue('2');
+
+    await expect(
+      page.locator('#pagination select')
+    ).toHaveValue('2');
   });
 
   test('debounces title filtering and separates exact from fuzzy matches', async ({ page }) => {
@@ -65,7 +82,9 @@ test.describe('movie catalog', () => {
       )
     ).toHaveCount(3);
 
-    await expect(page.locator('#pagination .info')).toHaveText(
+    await expect(
+      page.locator('#pagination .info')
+    ).toHaveText(
       'Showing 1-4 of 4 results'
     );
 
@@ -117,7 +136,9 @@ test.describe('movie catalog', () => {
   test('title search mode controls exact, contains, and fuzzy matching', async ({ page }) => {
     await openCatalog(page);
 
-    const mode = page.locator('#title-search-mode');
+    const mode =
+      page.locator('#title-search-mode');
+
     const titleInput = page.locator(
       '#search-row input[data-col="FORMATTEDTITLE"]'
     );
@@ -178,6 +199,51 @@ test.describe('movie catalog', () => {
     );
   });
 
+  test('clears individual and all search filters', async ({ page }) => {
+    await openCatalog(page);
+
+    const titleInput = page.locator(
+      '#search-row input[data-col="FORMATTEDTITLE"]'
+    );
+
+    const individualClear = page.locator(
+      '#search-row .clear-search[data-col="FORMATTEDTITLE"]'
+    );
+
+    const clearAll =
+      page.locator('#clear-filters');
+
+    await titleInput.fill('Arrival');
+
+    await expect(individualClear).toBeVisible();
+    await expect(clearAll).toBeEnabled();
+
+    await individualClear.click();
+
+    await expect(titleInput).toHaveValue('');
+    await expect(individualClear).toBeHidden();
+
+    await expect(
+      page.locator('#pagination .info')
+    ).toHaveText(
+      'Showing 1-50 of 55 results'
+    );
+
+    await titleInput.fill('Arrival');
+    await expect(clearAll).toBeEnabled();
+
+    await clearAll.click();
+
+    await expect(titleInput).toHaveValue('');
+    await expect(clearAll).toBeDisabled();
+
+    await expect(
+      page.locator('#pagination .info')
+    ).toHaveText(
+      'Showing 1-50 of 55 results'
+    );
+  });
+
   test('opens movie details, supports keyboard navigation, and restores focus', async ({ page }) => {
     await openCatalog(page);
 
@@ -187,23 +253,27 @@ test.describe('movie catalog', () => {
 
     await titleLink.click();
 
-    const modal = page.locator('#movieModal');
+    const modal =
+      page.locator('#movieModal');
 
     await expect(modal).toHaveClass(/open/);
+
     await expect(modal).toHaveAttribute(
       'aria-hidden',
       'false'
     );
 
-    await expect(page.locator('#modalTitle')).toHaveText(
-      'Arrival'
-    );
+    await expect(
+      page.locator('#modalTitle')
+    ).toHaveText('Arrival');
 
     await expect(
       page.locator('#modalDescription')
     ).toContainText('linguist');
 
-    await expect(page.locator('#modalPoster')).toHaveAttribute(
+    await expect(
+      page.locator('#modalPoster')
+    ).toHaveAttribute(
       'src',
       /\/movies\/antexport\/arrival\.jpg$/
     );
@@ -217,9 +287,9 @@ test.describe('movie catalog', () => {
 
     await page.keyboard.press('ArrowRight');
 
-    await expect(page.locator('#modalTitle')).toHaveText(
-      'Arrival 2'
-    );
+    await expect(
+      page.locator('#modalTitle')
+    ).toHaveText('Arrival 2');
 
     await page.keyboard.press('Escape');
 
@@ -238,49 +308,58 @@ test.describe('movie catalog', () => {
       'tr[data-num="50"] .movie-title-link'
     ).click();
 
-    await expect(page.locator('#modalTitle')).toHaveText(
-      'Movie 050'
-    );
+    await expect(
+      page.locator('#modalTitle')
+    ).toHaveText('Movie 050');
 
-    const nextButton = page.getByRole('button', {
-      name: 'Next movie'
-    });
+    const nextButton =
+      page.getByRole('button', {
+        name: 'Next movie'
+      });
 
-    const dismissDialog = page.waitForEvent('dialog').then(
-      async dialog => {
-        expect(dialog.type()).toBe('confirm');
-        expect(dialog.message()).toBe(
-          'You are viewing the last movie. Continue to the first movie?'
-        );
+    const dismissDialog =
+      page.waitForEvent('dialog').then(
+        async dialog => {
+          expect(dialog.type()).toBe(
+            'confirm'
+          );
 
-        await dialog.dismiss();
-      }
-    );
+          expect(dialog.message()).toBe(
+            'You are viewing the last movie. Continue to the first movie?'
+          );
+
+          await dialog.dismiss();
+        }
+      );
 
     await Promise.all([
       dismissDialog,
       nextButton.click()
     ]);
 
-    await expect(page.locator('#modalTitle')).toHaveText(
-      'Movie 050'
-    );
+    await expect(
+      page.locator('#modalTitle')
+    ).toHaveText('Movie 050');
 
-    const acceptDialog = page.waitForEvent('dialog').then(
-      async dialog => {
-        expect(dialog.type()).toBe('confirm');
-        await dialog.accept();
-      }
-    );
+    const acceptDialog =
+      page.waitForEvent('dialog').then(
+        async dialog => {
+          expect(dialog.type()).toBe(
+            'confirm'
+          );
+
+          await dialog.accept();
+        }
+      );
 
     await Promise.all([
       acceptDialog,
       nextButton.click()
     ]);
 
-    await expect(page.locator('#modalTitle')).toHaveText(
-      'Arrival'
-    );
+    await expect(
+      page.locator('#modalTitle')
+    ).toHaveText('Arrival');
   });
 
   test('renders analytics and opens a library issue drill-down', async ({ page }) => {
@@ -290,20 +369,29 @@ test.describe('movie catalog', () => {
       name: /Analytics/
     }).click();
 
-    const statsPanel = page.locator('#stats-panel');
+    const statsPanel =
+      page.locator('#stats-panel');
 
     await expect(statsPanel).toHaveClass(/show/);
-    await expect(page.locator('#total-movies')).toHaveText('55');
-    await expect(page.locator('#top-genre')).toHaveText('Drama');
-    await expect(page.locator('#health-score')).toHaveText(
-      '91/100'
-    );
 
-    await page.locator('#missing-files-card').click();
+    await expect(
+      page.locator('#total-movies')
+    ).toHaveText('55');
 
-    const issueModal = page.locator(
-      '#library-issue-title'
-    );
+    await expect(
+      page.locator('#top-genre')
+    ).toHaveText('Drama');
+
+    await expect(
+      page.locator('#health-score')
+    ).toHaveText('91/100');
+
+    await page.locator(
+      '#missing-files-card'
+    ).click();
+
+    const issueModal =
+      page.locator('#library-issue-title');
 
     await expect(issueModal).toHaveText(
       'Missing Files'
@@ -325,17 +413,19 @@ test.describe('movie catalog', () => {
   test('persists theme and optional-column preferences', async ({ page }) => {
     await openCatalog(page);
 
-    const themeToggle = page.locator('#theme-toggle');
+    const themeToggle =
+      page.locator('#theme-toggle');
 
     await themeToggle.click();
 
-    await expect(page.locator('html')).toHaveClass(
-      /theme-dark/
-    );
+    await expect(
+      page.locator('html')
+    ).toHaveClass(/theme-dark/);
 
-    const lengthHeader = page.locator(
-      '#movies th[data-col="LENGTH"]'
-    );
+    const lengthHeader =
+      page.locator(
+        '#movies th[data-col="LENGTH"]'
+      );
 
     await expect(lengthHeader).toBeHidden();
 
@@ -346,7 +436,9 @@ test.describe('movie catalog', () => {
     await expect(lengthHeader).toBeVisible();
 
     await expect(
-      page.locator('.toggle-col[data-col="LENGTH"]')
+      page.locator(
+        '.toggle-col[data-col="LENGTH"]'
+      )
     ).toHaveAttribute(
       'aria-pressed',
       'true'
@@ -354,16 +446,20 @@ test.describe('movie catalog', () => {
 
     await page.reload();
 
-    await expect(page.locator('html')).toHaveClass(
-      /theme-dark/
-    );
+    await expect(
+      page.locator('html')
+    ).toHaveClass(/theme-dark/);
 
     await expect(
-      page.locator('#movies th[data-col="LENGTH"]')
+      page.locator(
+        '#movies th[data-col="LENGTH"]'
+      )
     ).toBeVisible();
 
     await expect(
-      page.locator('.toggle-col[data-col="LENGTH"]')
+      page.locator(
+        '.toggle-col[data-col="LENGTH"]'
+      )
     ).toHaveAttribute(
       'aria-pressed',
       'true'
@@ -410,11 +506,12 @@ test.describe('movie catalog', () => {
     }).click();
 
     await expect(
-      page.locator('#movies tbody tr[data-num]').first()
+      page.locator(
+        '#movies tbody tr[data-num]'
+      ).first()
     ).toBeVisible();
 
     await expect(error).toHaveCount(0);
-
     expect(movieRequestCount).toBe(2);
   });
 });
