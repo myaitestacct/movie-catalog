@@ -45,12 +45,43 @@ function createGroupHeader(type, count, exactTitle, columns, fuzzy) {
 
   const badge = document.createElement('span');
   badge.className = `group-header-badge ${type}-badge`;
-  badge.textContent = type === 'exact' ? 'EXACT' : (fuzzy ? 'FUZZY' : 'OTHER');
+  //badge.textContent =
+    //type === 'exact' ? ' EXACT' : (fuzzy ? ' FUZZY' : ' OTHER');
 
   wrapper.append(icon, titleSpan, badge);
   td.appendChild(wrapper);
   tr.appendChild(td);
   return tr;
+}
+
+function renderSearchGroupInfo(infoBanner, exactCount, fuzzyCount, exactTitle, fuzzy) {
+  const exactMessage = document.createElement('span');
+  exactMessage.className = 'info-exact';
+  //exactMessage.textContent =
+  //  `✅ ${exactCount} exact match${exactCount === 1 ? '' : 'es'} for "${exactTitle}"`;
+
+  const separator = document.createElement('span');
+  separator.className = 'info-sep';
+  //separator.textContent = '| ';
+
+  const fuzzyMessage = document.createElement('span');
+  fuzzyMessage.className = 'info-fuzzy';
+  //fuzzyMessage.textContent =
+  //  `🔍 ${fuzzyCount} ${fuzzy ? 'fuzzy/contains' : 'other'} match${fuzzyCount === 1 ? '' : 'es'}`;
+
+  const hint = document.createElement('span');
+  hint.className = 'info-hint';
+  //hint.textContent =
+    '– exact matches are shown first';
+
+  infoBanner.className = 'search-group-info';
+
+  const messages = [exactMessage];
+  if (fuzzyCount > 0) {
+    messages.push(separator, fuzzyMessage, hint);
+  }
+
+  infoBanner.replaceChildren(...messages);
 }
 
 function renderMovieRow(movie, rows, columns, termsByColumn, fuzzy) {
@@ -174,29 +205,30 @@ export function renderTable(table, rows, columns) {
   let fuzzyRows = [];
   let useGroupedRendering = false;
 
-  if (exactTitle && rows.length > 1) {
+  if (exactTitle) {
     rows.forEach(movie => {
       if (isExactTitleMatch(movie, exactTitle)) exactRows.push(movie);
       else fuzzyRows.push(movie);
     });
-    if (exactRows.length > 0 && fuzzyRows.length > 0) {
-      useGroupedRendering = true;
-    }
+
+    // Keep an exact result visibly identified even when the fuzzy search
+    // produces no additional rows, such as a long, specific title.
+    useGroupedRendering = exactRows.length > 0;
   }
 
   const infoBanner = document.getElementById('search-group-info');
   if (infoBanner) {
     if (useGroupedRendering) {
-      infoBanner.className = 'search-group-info';
-      infoBanner.innerHTML = `
-        <span class="info-exact">✅ ${exactRows.length} exact match${exactRows.length===1?'':'es'} for "${exactTitle}"</span>
-        <span class="info-sep">|</span>
-        <span class="info-fuzzy">🔍 ${fuzzyRows.length} ${fuzzy ? 'fuzzy/contains' : 'other'} match${fuzzyRows.length===1?'':'es'}</span>
-        <span class="info-hint">– exact matches are highlighted green and shown first</span>
-      `;
+      renderSearchGroupInfo(
+        infoBanner,
+        exactRows.length,
+        fuzzyRows.length,
+        exactTitle,
+        fuzzy
+      );
     } else {
       infoBanner.className = 'search-group-info hidden';
-      infoBanner.innerHTML = '';
+      infoBanner.replaceChildren();
     }
   }
 
@@ -208,13 +240,15 @@ export function renderTable(table, rows, columns) {
       tr.dataset.matchType = 'exact';
       tbody.appendChild(tr);
     });
-    tbody.appendChild(createGroupHeader('fuzzy', fuzzyRows.length, exactTitle, columns, fuzzy));
-    fuzzyRows.forEach(movie => {
-      const tr = renderMovieRow(movie, rows, columns, termsByColumn, fuzzy);
-      tr.classList.add('fuzzy-match');
-      tr.dataset.matchType = 'fuzzy';
-      tbody.appendChild(tr);
-    });
+    if (fuzzyRows.length > 0) {
+      tbody.appendChild(createGroupHeader('fuzzy', fuzzyRows.length, exactTitle, columns, fuzzy));
+      fuzzyRows.forEach(movie => {
+        const tr = renderMovieRow(movie, rows, columns, termsByColumn, fuzzy);
+        tr.classList.add('fuzzy-match');
+        tr.dataset.matchType = 'fuzzy';
+        tbody.appendChild(tr);
+      });
+    }
   } else {
     rows.forEach(movie => {
       const tr = renderMovieRow(movie, rows, columns, termsByColumn, fuzzy);
