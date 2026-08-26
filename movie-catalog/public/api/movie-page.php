@@ -22,17 +22,29 @@ try {
     $requestedPerPage = (int)(
         $_GET['perPage'] ?? $config['pagination']['default_limit']
     );
+
     $pagination = new Pagination(
         1,
         $requestedPerPage,
         (int)$config['pagination']['max_limit']
     );
+
     $perPage = $pagination->limit;
     $sort = $_GET['sort'] ?? 'NUM';
     $dir  = $_GET['dir'] ?? 'ASC';
     $mode = strtoupper($_GET['mode'] ?? 'AND');
     $mode = $mode === 'OR' ? 'OR' : 'AND';
-    $fuzzy = filter_var($_GET['fuzzy'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+    $fuzzy = filter_var(
+        $_GET['fuzzy'] ?? false,
+        FILTER_VALIDATE_BOOLEAN
+    );
+
+    $titleSearchMode = $_GET['titleMode'] ?? null;
+    $titleSearchMode = is_string($titleSearchMode)
+        ? strtoupper($titleSearchMode)
+        : null;
+
     $filters = $_GET['filters'] ?? [];
 
     // Compute page for given NUM
@@ -43,7 +55,8 @@ try {
         $dir,
         $filters,
         $mode,
-        $fuzzy
+        $fuzzy,
+        $titleSearchMode
     );
 
     echo json_encode([
