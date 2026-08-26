@@ -261,6 +261,7 @@ export async function refreshStats() {
         yearRange.textContent = oldestYear > 0 && newestYear > 0
             ? `${oldestYear}–${newestYear}`
             : 'No dated movies';
+
         releaseYearAnalytics.renderReleaseYearAnalytics?.(
             data.release_year_analytics,
             data.total_movies
@@ -309,6 +310,7 @@ export async function refreshStats() {
             : data.health_score >= 75
                 ? 'warning'
                 : 'critical';
+
         const healthIssues = [
             `${data.missing_files} missing files`,
             `${data.needs_better_copy_count} replacement copies`,
@@ -316,6 +318,7 @@ export async function refreshStats() {
             `${data.missing_posters} missing posters`,
             `${data.incomplete_metadata} incomplete metadata records`
         ];
+
         healthCard.title = healthIssues.join(' • ');
         healthCard.setAttribute(
             'aria-label',
@@ -330,13 +333,15 @@ export async function refreshStats() {
             const actionText = issueCount > 0
                 ? `Show ${issueCount} ${issueCount === 1 ? 'movie' : 'movies'} in ${config.title}`
                 : `Check ${config.title}`;
+
             issueCard.title = actionText;
             issueCard.setAttribute('aria-label', actionText);
         });
 
         const duplicateCard = el('duplicate-card');
         duplicateCard.disabled = data.duplicate_count === 0;
-        duplicateCard.onclick = data.duplicate_count > 0 ? loadDuplicates : null;
+        duplicateCard.onclick =
+            data.duplicate_count > 0 ? loadDuplicates : null;
 
         const betterCopyCard = el('better-copy-card');
         betterCopyCard.title = data.needs_better_copy_count > 0
@@ -454,6 +459,7 @@ function showDuplicateModal() {
                 <div class="pagination" id="dup-pagination"></div>
             </div>
         `;
+
         document.body.appendChild(duplicateModal);
 
         duplicateModal.querySelector('.stats-close').onclick =
@@ -481,7 +487,6 @@ function renderDuplicatePage() {
     const pageGroups = dupGroups.slice(start, start + REC_PER_PAGE);
 
     let alt = false;
-//console.log('Rendering Get Better Copy Page', pageGroups);  // Debugging step
 
     pageGroups.forEach(group => {
         alt = !alt;
@@ -528,6 +533,7 @@ async function loadIssueRows(config) {
         if (!request.isCurrent()) return;
 
         clearError(config.scope);
+
         if (rows.length === 0) {
             alert(config.emptyMessage);
             return;
@@ -541,10 +547,14 @@ async function loadIssueRows(config) {
         if (!request.isCurrent() || isAbortError(error)) return;
 
         console.error(`Failed to load ${config.title}`, error);
-        showError(error.message || `Unable to load ${config.title.toLowerCase()}`, {
-            scope: config.scope,
-            retry: config.retry
-        });
+        showError(
+            error.message ||
+                `Unable to load ${config.title.toLowerCase()}`,
+            {
+                scope: config.scope,
+                retry: config.retry
+            }
+        );
     } finally {
         request.finish();
     }
@@ -557,7 +567,8 @@ function loadLibraryIssues(issueType) {
     return loadIssueRows({
         ...config,
         scope: `library-issue-${issueType}`,
-        fetchRows: signal => fetchLibraryIssueRows(issueType, { signal }),
+        fetchRows: signal =>
+            fetchLibraryIssueRows(issueType, { signal }),
         retry: () => loadLibraryIssues(issueType)
     });
 }
@@ -566,22 +577,29 @@ function loadMetadataIssues(field) {
     if (!field?.key || !field?.label) return;
 
     const title = `Missing ${field.label}`;
+
     return loadIssueRows({
         title,
-        emptyMessage: `No movies missing ${field.label.toLowerCase()} were found.`,
+        emptyMessage:
+            `No movies missing ${field.label.toLowerCase()} were found.`,
         paginationLabel: `${title} pagination`,
         scope: `metadata-field-${field.key}`,
-        fetchRows: signal => fetchMetadataIssueRows(field.key, { signal }),
+        fetchRows: signal =>
+            fetchMetadataIssueRows(field.key, { signal }),
         retry: () => loadMetadataIssues(field)
     });
 }
 
 function closeLibraryIssueModal(restoreFocus = true) {
-    if (!libraryIssueModal || libraryIssueModal.classList.contains('hidden')) {
+    if (
+        !libraryIssueModal ||
+        libraryIssueModal.classList.contains('hidden')
+    ) {
         return;
     }
 
     libraryIssueModal.classList.add('hidden');
+
     const focusTarget = libraryIssueFocusReturn;
     libraryIssueFocusReturn = null;
 
@@ -599,7 +617,11 @@ function showLibraryIssueModal() {
         libraryIssueModal.className = 'stats-modal hidden';
         libraryIssueModal.setAttribute('role', 'dialog');
         libraryIssueModal.setAttribute('aria-modal', 'true');
-        libraryIssueModal.setAttribute('aria-labelledby', 'library-issue-title');
+        libraryIssueModal.setAttribute(
+            'aria-labelledby',
+            'library-issue-title'
+        );
+
         libraryIssueModal.innerHTML = `
             <div class="stats-modal-content">
                 <div class="stats-modal-header">
@@ -621,6 +643,7 @@ function showLibraryIssueModal() {
                 <div class="pagination" id="library-issue-pagination"></div>
             </div>
         `;
+
         document.body.appendChild(libraryIssueModal);
 
         libraryIssueModal.querySelector('.stats-close').onclick = () => {
@@ -634,8 +657,10 @@ function showLibraryIssueModal() {
         };
     }
 
-    libraryIssueModal.querySelector('#library-issue-title').textContent =
-        config.title;
+    libraryIssueModal.querySelector(
+        '#library-issue-title'
+    ).textContent = config.title;
+
     libraryIssueModal.querySelector('.stats-close').setAttribute(
         'aria-label',
         `Close ${config.title.toLowerCase()} dialog`
@@ -648,6 +673,7 @@ function showLibraryIssueModal() {
     }
 
     libraryIssueModal.classList.remove('hidden');
+
     requestAnimationFrame(() => {
         libraryIssueModal.querySelector('.stats-close')?.focus();
     });
@@ -661,6 +687,7 @@ function renderLibraryIssuePage() {
     const pager = libraryIssueModal.querySelector(
         '#library-issue-pagination'
     );
+
     tbody.innerHTML = '';
 
     const start = (libraryIssuePage - 1) * REC_PER_PAGE;
@@ -668,20 +695,31 @@ function renderLibraryIssuePage() {
         start,
         start + REC_PER_PAGE
     );
+
     let alternate = false;
 
     pageGroups.forEach(group => {
         alternate = !alternate;
-        const header = createGroupHeader(group, 3, alternate, 'movie');
+
+        const header = createGroupHeader(
+            group,
+            3,
+            alternate,
+            'movie'
+        );
+
         header.onclick = () => {
             group.open = !group.open;
             renderLibraryIssuePage();
         };
+
         tbody.appendChild(header);
 
         if (group.open) {
             group.rows.forEach(row => {
-                tbody.appendChild(createMovieReferenceRow(row));
+                tbody.appendChild(
+                    createMovieReferenceRow(row)
+                );
             });
         }
     });
@@ -712,17 +750,19 @@ async function loadGetBetterCopy() {
     const request = statsDetailRequests.start();
 
     try {
-        const rows = await fetchBetterCopyRows({ signal: request.signal });
+        const rows = await fetchBetterCopyRows({
+            signal: request.signal
+        });
+
         if (!request.isCurrent()) return;
 
         clearError('better-copy');
-        // Check if there are movies to display
+
         if (!Array.isArray(rows) || rows.length === 0) {
             alert("No movies found with 'Get Better Copy'!");
             return;
         }
 
-        // Group the movies by the necessary fields
         getBetterCopyGroups = groupMovieRows(rows);
         getBetterCopyPage = 1;
         showGetBetterCopyModal();
@@ -730,10 +770,15 @@ async function loadGetBetterCopy() {
         if (!request.isCurrent() || isAbortError(error)) return;
 
         console.error('Get Better Copy load failed', error);
-        showError(error.message || 'Unable to load better-copy movies', {
-            scope: 'better-copy',
-            retry: loadGetBetterCopy
-        });
+
+        showError(
+            error.message ||
+                'Unable to load better-copy movies',
+            {
+                scope: 'better-copy',
+                retry: loadGetBetterCopy
+            }
+        );
     } finally {
         request.finish();
     }
@@ -766,13 +811,14 @@ function showGetBetterCopyModal() {
                 <div class="pagination" id="better-copy-pagination"></div>
             </div>
         `;
+
         document.body.appendChild(getBetterCopyModal);
 
         getBetterCopyModal.querySelector('.stats-close').onclick =
             () => getBetterCopyModal.classList.add('hidden');
 
-        getBetterCopyModal.onclick = e => {
-            if (e.target === getBetterCopyModal) {
+        getBetterCopyModal.onclick = event => {
+            if (event.target === getBetterCopyModal) {
                 getBetterCopyModal.classList.add('hidden');
             }
         };
@@ -784,21 +830,26 @@ function showGetBetterCopyModal() {
 
 function renderGetBetterCopyPage() {
     const tbody = getBetterCopyModal.querySelector('tbody');
-    const pager = getBetterCopyModal.querySelector('#better-copy-pagination');
+    const pager = getBetterCopyModal.querySelector(
+        '#better-copy-pagination'
+    );
 
     tbody.innerHTML = '';
     pager.innerHTML = '';
 
     const start = (getBetterCopyPage - 1) * REC_PER_PAGE;
-    const pageGroups = getBetterCopyGroups.slice(start, start + REC_PER_PAGE);
+    const pageGroups = getBetterCopyGroups.slice(
+        start,
+        start + REC_PER_PAGE
+    );
 
     let alt = false;
 
     pageGroups.forEach(group => {
         alt = !alt;
 
-        /* ---------- GROUP HEADER ---------- */
         const header = createGroupHeader(group, 3, alt);
+
         header.onclick = () => {
             group.open = !group.open;
             renderGetBetterCopyPage();
@@ -806,19 +857,25 @@ function renderGetBetterCopyPage() {
 
         tbody.appendChild(header);
 
-        /* ---------- CHILD ROWS ---------- */
         if (group.open) {
             group.rows.forEach(row => {
-                tbody.appendChild(createMovieReferenceRow(row));
+                tbody.appendChild(
+                    createMovieReferenceRow(row)
+                );
             });
         }
     });
 
     const pages = Math.max(
         1,
-        Math.ceil(getBetterCopyGroups.length / REC_PER_PAGE)
+        Math.ceil(
+            getBetterCopyGroups.length / REC_PER_PAGE
+        )
     );
-    const totalMovies = countGroupedRows(getBetterCopyGroups);
+
+    const totalMovies = countGroupedRows(
+        getBetterCopyGroups
+    );
 
     renderStatsPagination(pager, {
         currentPage: getBetterCopyPage,
@@ -836,6 +893,7 @@ function renderGetBetterCopyPage() {
 /* =============================
    Jump to table row
 ============================= */
+
 function getMovieStateSignature() {
     return JSON.stringify({
         page: state.page,
@@ -844,15 +902,18 @@ function getMovieStateSignature() {
         dir: state.dir,
         mode: state.searchMode,
         fuzzy: state.fuzzy,
-        search: Object.entries(state.search).sort(([left], [right]) =>
-            left.localeCompare(right)
+        titleMode: state.titleSearchMode,
+        search: Object.entries(state.search).sort(
+            ([left], [right]) =>
+                left.localeCompare(right)
         )
     });
 }
 
 async function jumpToMovie(num) {
     const request = movieJumpRequests.start();
-    const movieStateSignature = getMovieStateSignature();
+    const movieStateSignature =
+        getMovieStateSignature();
 
     try {
         const params = new URLSearchParams({
@@ -861,20 +922,29 @@ async function jumpToMovie(num) {
             sort: state.sort,
             dir: state.dir,
             mode: state.searchMode,
-            fuzzy: state.fuzzy
+            fuzzy: state.fuzzy,
+            titleMode: state.titleSearchMode
         });
 
-        Object.entries(state.search).forEach(([column, value]) => {
-            if (value) params.append(`filters[${column}]`, value);
-        });
+        Object.entries(state.search).forEach(
+            ([column, value]) => {
+                if (value) {
+                    params.append(
+                        `filters[${column}]`,
+                        value
+                    );
+                }
+            }
+        );
 
-        // Get the page containing this movie under the current table state.
         const data = await fetchMoviePage(params, {
             signal: request.signal
         });
+
         if (
             !request.isCurrent() ||
-            movieStateSignature !== getMovieStateSignature()
+            movieStateSignature !==
+                getMovieStateSignature()
         ) {
             return;
         }
@@ -890,28 +960,50 @@ async function jumpToMovie(num) {
         }
 
         const targetPage = data.page;
+
         if (targetPage !== state.page) {
             state.page = targetPage;
             const rendered = await loadMovies();
-            if (!rendered || !request.isCurrent()) return;
+
+            if (!rendered || !request.isCurrent()) {
+                return;
+            }
         }
 
-        // Scroll to the row
-        const row = document.querySelector(`tr[data-num="${num}"]`);
+        const row = document.querySelector(
+            `tr[data-num="${num}"]`
+        );
+
         if (!row) return;
 
-        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+
         row.classList.add('row-highlight');
 
-        setTimeout(() => row.classList.remove('row-highlight'), 2000);
+        setTimeout(() => {
+            row.classList.remove('row-highlight');
+        }, 2000);
     } catch (error) {
-        if (!request.isCurrent() || isAbortError(error)) return;
+        if (
+            !request.isCurrent() ||
+            isAbortError(error)
+        ) {
+            return;
+        }
 
         console.error('Failed to jump to movie:', error);
-        showError(error.message || 'Unable to locate the movie', {
-            scope: 'movie-jump',
-            retry: () => jumpToMovie(num)
-        });
+
+        showError(
+            error.message ||
+                'Unable to locate the movie',
+            {
+                scope: 'movie-jump',
+                retry: () => jumpToMovie(num)
+            }
+        );
     } finally {
         request.finish();
     }
