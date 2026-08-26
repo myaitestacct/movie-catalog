@@ -152,12 +152,15 @@ test.describe('movie catalog', () => {
       'hidden'
     );
 
-    const viewportOverflow = await page.evaluate(() =>
-      document.documentElement.scrollWidth >
-      document.documentElement.clientWidth
-    );
+    const overflow = await page.locator('#movies').evaluate(table => ({
+      tableOverflow: table.scrollWidth > table.clientWidth,
+      viewportOverflow:
+        document.documentElement.scrollWidth >
+        document.documentElement.clientWidth
+    }));
 
-    expect(viewportOverflow).toBe(false);
+    expect(overflow.tableOverflow).toBe(false);
+    expect(overflow.viewportOverflow).toBe(false);
   });
 
   test('opens movie details, supports keyboard navigation, and restores focus', async ({ page }) => {

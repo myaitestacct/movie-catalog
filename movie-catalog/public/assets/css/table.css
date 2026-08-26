@@ -13,6 +13,23 @@ table {
     background: var(--table-bg);
     max-width: 100%;
 }
+#movies {
+    width: 100%;
+    table-layout: fixed;
+}
+#movies th[data-col="NUM"] { width: 5%; }
+#movies th[data-col="FORMATTEDTITLE"] { width: 18%; }
+#movies th[data-col="YEAR"] { width: 6%; }
+#movies th[data-col="RATING"] { width: 6%; }
+#movies th[data-col="FILESIZE"] { width: 7%; }
+#movies th[data-col="CERTIFICATION"] { width: 7%; }
+#movies th[data-col="LENGTH"] { width: 6%; }
+#movies th[data-col="LANGUAGES"] { width: 7%; }
+#movies th[data-col="CATEGORY"] { width: 9%; }
+#movies th[data-col="RESOLUTION"] { width: 7%; }
+#movies th[data-col="AUDIOFORMAT"] { width: 8%; }
+#movies th[data-col="FILEPATH"] { width: 8%; }
+#movies th[data-col="PATH"] { width: 6%; }
 th, td {
     border-bottom: 1px solid var(--border-light);
     font-size: 13px;
@@ -182,7 +199,24 @@ td:not(.hidden-col), th:not(.hidden-col) {
 .copy-btn:hover { background: rgba(255,255,255,0.15); }
 .copy-btn.copied { color: #2ecc71 !important; background: var(--success); }
 .copy-btn.copied::after { content: ' ✓'; font-size: 11px; }
-.file-name { margin-right: 6px; word-break: break-all; }
+.file-name {
+  display: inline-block;
+  max-width: calc(100% - 24px);
+  margin-right: 4px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  vertical-align: middle;
+}
+#movies .rating-badge {
+  padding: 3px 5px;
+  font-size: 0.72rem;
+  white-space: normal;
+}
+#movies .copy-btn.icon-btn {
+  padding: 2px;
+  font-size: 0.65rem;
+}
 .copy-btn.icon-btn {
   background: none;
   border: none;
