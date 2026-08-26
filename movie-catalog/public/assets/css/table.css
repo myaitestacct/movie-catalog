@@ -1,6 +1,6 @@
 .table-wrapper {
     width: 100%;
-    overflow-x: auto;
+    overflow-x: hidden;
     overflow-y: auto;
     padding-bottom: 25px;
     max-height: calc(115vh - 150px);
@@ -9,7 +9,7 @@
 table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: auto;
+    table-layout: fixed;
     background: var(--table-bg);
     max-width: 100%;
 }
@@ -17,10 +17,16 @@ th, td {
     border-bottom: 1px solid var(--border-light);
     font-size: 13px;
     text-align: left;
-    min-width: 60px;
+    min-width: 0;
+    max-width: 0;
+    overflow-wrap: anywhere;
     box-sizing: border-box;
 }
-th { cursor: pointer; white-space: nowrap; }
+th {
+    cursor: pointer;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
 th:hover { background: #57606f; }
 tbody tr:hover { background: var(--table-hover); }
 .badge {
@@ -81,7 +87,8 @@ thead th {
     line-height: 1.2;
     padding: 2px 6px;
     font-size: 12px;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 #search-row td {
@@ -157,6 +164,7 @@ td:not(.hidden-col), th:not(.hidden-col) {
     text-decoration: none;
     cursor: pointer;
     font-weight: 500;
+    overflow-wrap: anywhere;
 }
 .movie-title-link:hover { color: var(--primary); text-decoration: underline; }
 .copy-btn {
@@ -241,7 +249,9 @@ tbody tr.row-hover { background: rgba(255, 69, 0, 0.1); transition: background 0
   padding: 4px 12px;
   border-radius: 6px;
   font-size: 0.8rem;
-  white-space: nowrap;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
   text-decoration: none;
   display: inline-flex;
   align-items: center;

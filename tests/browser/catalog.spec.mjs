@@ -142,6 +142,24 @@ test.describe('movie catalog', () => {
     );
   });
 
+  test('keeps the catalog within the viewport without horizontal scrollbars', async ({ page }) => {
+    await openCatalog(page);
+
+    await page.locator('.toggle-all-columns').click();
+
+    await expect(page.locator('.table-wrapper')).toHaveCSS(
+      'overflow-x',
+      'hidden'
+    );
+
+    const viewportOverflow = await page.evaluate(() =>
+      document.documentElement.scrollWidth >
+      document.documentElement.clientWidth
+    );
+
+    expect(viewportOverflow).toBe(false);
+  });
+
   test('opens movie details, supports keyboard navigation, and restores focus', async ({ page }) => {
     await openCatalog(page);
 
