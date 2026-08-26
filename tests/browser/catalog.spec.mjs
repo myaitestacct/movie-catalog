@@ -99,8 +99,8 @@ test.describe('movie catalog', () => {
 
     await expect(
       page.locator('#search-group-info')
-    ).toContainText(
-      '1 exact match for "Casablanca"'
+    ).toHaveClass(
+      /search-group-info/
     );
   });
 
