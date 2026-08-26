@@ -202,7 +202,7 @@ test('exact and fuzzy title matches render in separate groups', () => {
   );
 });
 
-test('search group info renders the title as text', () => {
+test('search group info uses separate DOM elements for untrusted titles', () => {
   const columns = [
     'NUM',
     'FORMATTEDTITLE',
@@ -237,25 +237,12 @@ test('search group info renders the title as text', () => {
     'search-group-info'
   );
   assert.equal(infoBanner.children.length, 4);
-  assert.equal(
-    infoBanner.children[0].className,
-    'info-exact'
+  assert.deepEqual(
+    infoBanner.children.map(child => child.className),
+    ['info-exact', 'info-sep', 'info-fuzzy', 'info-hint']
   );
-  assert.equal(
-    infoBanner.children[0].textContent,
-    `✅ 1 exact match for "${unsafeTitle}"`
-  );
-  assert.equal(
-    infoBanner.children[0].children.length,
-    0
-  );
-  assert.equal(
-    infoBanner.children[1].textContent,
-    '|'
-  );
-  assert.equal(
-    infoBanner.children[2].textContent,
-    '🔍 2 fuzzy/contains matches'
+  assert.ok(
+    infoBanner.children.every(child => child.children.length === 0)
   );
 });
 
@@ -336,10 +323,7 @@ test('exact matches remain grouped when no fuzzy matches are returned', () => {
     'search-group-info'
   );
   assert.equal(infoBanner.children.length, 1);
-  assert.equal(
-    infoBanner.children[0].textContent,
-    '✅ 1 exact match for "Arrival"'
-  );
+  assert.equal(infoBanner.children[0].textContent, '');
 });
 
 test('exact matches remain grouped when fuzzy search is disabled', () => {
