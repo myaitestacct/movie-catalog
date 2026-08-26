@@ -1,17 +1,55 @@
 <div class="column-toggles">
     <button type="button" id="theme-toggle">🌙</button>
-    
     <button type="button" id="search-mode" class="search-mode">AND</button>
-    <button type="button" id="fuzzy-toggle">Fuzzy: OFF</button>
 
-    <button type="button" class="toggle-col" data-col="LANGUAGES"><i class="fa-solid fa-language"></i> Language</button>
-    <button type="button" class="toggle-col" data-col="LENGTH"><i class="fa-solid fa-clock"></i> Length</button>
-    <button type="button" class="toggle-col" data-col="CERTIFICATION"><i class="fa-solid fa-ribbon"></i> Cert</button>
-    <button type="button" class="toggle-col" data-col="CATEGORY"><i class="fa-solid fa-tags"></i> Genre</button>
-    <button type="button" class="toggle-col" data-col="RESOLUTION"><i class="fa-solid fa-expand"></i> Resolution</button>
-    <button type="button" class="toggle-col" data-col="AUDIOFORMAT"><i class="fa-solid fa-volume-high"></i> Audio</button>
-    <button type="button" class="toggle-col" data-col="FILEPATH"><i class="fa-solid fa-file-video"></i> File</button>
-    <button type="button" class="toggle-col" data-col="PATH"><i class="fa-solid fa-folder-open"></i> Path</button>
+    <label class="title-search-mode" for="title-search-mode">
+        <span>Title:</span>
+        <select id="title-search-mode" aria-label="Title search mode">
+            <option value="EXACT">Exact</option>
+            <option value="CONTAINS">Contains</option>
+            <option value="FUZZY">Fuzzy</option>
+        </select>
+    </label>
+
+    <button type="button" class="toggle-col" data-col="LANGUAGES">
+        <i class="fa-solid fa-language"></i>
+        Language
+    </button>
+
+    <button type="button" class="toggle-col" data-col="LENGTH">
+        <i class="fa-solid fa-clock"></i>
+        Length
+    </button>
+
+    <button type="button" class="toggle-col" data-col="CERTIFICATION">
+        <i class="fa-solid fa-ribbon"></i>
+        Cert
+    </button>
+
+    <button type="button" class="toggle-col" data-col="CATEGORY">
+        <i class="fa-solid fa-tags"></i>
+        Genre
+    </button>
+
+    <button type="button" class="toggle-col" data-col="RESOLUTION">
+        <i class="fa-solid fa-expand"></i>
+        Resolution
+    </button>
+
+    <button type="button" class="toggle-col" data-col="AUDIOFORMAT">
+        <i class="fa-solid fa-volume-high"></i>
+        Audio
+    </button>
+
+    <button type="button" class="toggle-col" data-col="FILEPATH">
+        <i class="fa-solid fa-file-video"></i>
+        File
+    </button>
+
+    <button type="button" class="toggle-col" data-col="PATH">
+        <i class="fa-solid fa-folder-open"></i>
+        Path
+    </button>
 </div>
 
 <div id="search-group-info" class="search-group-info hidden"></div>
@@ -34,8 +72,10 @@
           <th data-col="FILEPATH" style="display:none;">File</th>
           <th data-col="PATH" style="display:none;">Path</th>
         </tr>
+
         <tr id="search-row"></tr>
         </thead>
+
         <tbody></tbody>
     </table>
 </div>
