@@ -1,6 +1,6 @@
 .table-wrapper {
     width: 100%;
-    overflow-x: hidden;
+    overflow-x: auto;
     overflow-y: auto;
     padding-bottom: 25px;
     max-height: calc(115vh - 150px);
@@ -10,14 +10,9 @@
 table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;
+    table-layout: auto;
     background: var(--table-bg);
     max-width: 100%;
-}
-
-#movies {
-    width: 100%;
-    table-layout: auto;
 }
 
 th,
@@ -25,16 +20,13 @@ td {
     border-bottom: 1px solid var(--border-light);
     font-size: 13px;
     text-align: left;
-    min-width: 0;
-    max-width: 0;
-    overflow-wrap: anywhere;
+    min-width: 60px;
     box-sizing: border-box;
 }
 
 th {
     cursor: pointer;
-    white-space: normal;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
 }
 
 th:hover {
@@ -131,8 +123,7 @@ thead th {
     line-height: 1.2;
     padding: 2px 6px;
     font-size: 12px;
-    white-space: normal;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
@@ -161,37 +152,6 @@ thead th {
     border-color: var(--primary);
     outline: none;
     box-shadow: 0 0 2px var(--primary);
-}
-
-#search-row .search-control {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-}
-
-#search-row .search-control input {
-    width: auto;
-    min-width: 0;
-    flex: 1 1 auto;
-}
-
-#search-row .clear-search {
-    flex: 0 0 auto;
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--header-color);
-    cursor: pointer;
-    font-size: 16px;
-    line-height: 1;
-}
-
-#search-row .clear-search:hover {
-    background: var(--button-hover);
-    color: var(--primary);
 }
 
 .hidden-col {
@@ -229,7 +189,6 @@ th:not(.hidden-col) {
     text-decoration: none;
     cursor: pointer;
     font-weight: 500;
-    overflow-wrap: anywhere;
 }
 
 .movie-title-link:hover {
@@ -267,24 +226,8 @@ th:not(.hidden-col) {
 }
 
 .file-name {
-    display: inline-block;
-    max-width: calc(100% - 24px);
-    margin-right: 4px;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-    white-space: normal;
-    vertical-align: middle;
-}
-
-#movies .rating-badge {
-    padding: 3px 5px;
-    font-size: 0.72rem;
-    white-space: normal;
-}
-
-#movies .copy-btn.icon-btn {
-    padding: 2px;
-    font-size: 0.65rem;
+    margin-right: 6px;
+    word-break: break-all;
 }
 
 .copy-btn.icon-btn {
@@ -350,11 +293,6 @@ mark {
     outline-offset: 1px;
 }
 
-#clear-filters:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-}
-
 tbody tr.row-hover {
     background: rgba(255, 69, 0, 0.1);
     transition: background 0.2s ease;
@@ -390,9 +328,7 @@ tbody tr.row-hover {
     padding: 4px 12px;
     border-radius: 6px;
     font-size: 0.8rem;
-    max-width: 100%;
-    white-space: normal;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
