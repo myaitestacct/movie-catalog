@@ -70,6 +70,11 @@ try {
         FILTER_VALIDATE_BOOLEAN
     );
 
+    $titleSearchMode = $_GET['titleMode'] ?? null;
+    $titleSearchMode = is_string($titleSearchMode)
+        ? strtoupper($titleSearchMode)
+        : null;
+
     $searchableColumns = [
         'NUM',
         'FORMATTEDTITLE',
@@ -118,7 +123,8 @@ try {
         $repository->countMovies(
             $filters,
             $mode,
-            $fuzzy
+            $fuzzy,
+            $titleSearchMode
         );
 
     $movies =
@@ -128,7 +134,8 @@ try {
             $dir,
             $pagination,
             $mode,
-            $fuzzy
+            $fuzzy,
+            $titleSearchMode
         );
 
     echo json_encode([
