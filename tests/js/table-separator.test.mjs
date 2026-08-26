@@ -62,19 +62,24 @@ class MockElement {
     children.forEach(child => this.children.push(child));
   }
 
+  replaceChildren(...children) {
+    this.children = [...children];
+    this.innerHTML = '';
+  }
+
   querySelector(selector) {
     if (selector === 'tbody') return this.tbody || null;
     return null;
   }
 }
 
-function installDocumentMock() {
+function installDocumentMock(searchGroupInfo = null) {
   globalThis.document = {
     createElement(tag) {
       return new MockElement(tag);
     },
-    getElementById() {
-      return null;
+    getElementById(id) {
+      return id === 'search-group-info' ? searchGroupInfo : null;
     },
     querySelector() {
       return null;
@@ -141,6 +146,34 @@ test('exact and fuzzy title matches render in separate groups', () => {
   assert.equal(tbody.children[2].dataset.testid, 'fuzzy-header');
   assert.equal(tbody.children[3].dataset.matchType, 'fuzzy');
   assert.equal(tbody.children[4].dataset.matchType, 'fuzzy');
+});
+
+test('search group info renders the title as text', () => {
+  const columns = ['NUM', 'FORMATTEDTITLE', 'YEAR', 'RATING', 'FILESIZE'];
+  const { table } = makeTable();
+  const infoBanner = new MockElement('div');
+  installDocumentMock(infoBanner);
+  const unsafeTitle = '<img src=x onerror=alert(1)>';
+  const rows = makeRows();
+  rows[0].FORMATTEDTITLE = unsafeTitle;
+  rows[1].FORMATTEDTITLE = `${unsafeTitle} sequel`;
+
+  state.search = { FORMATTEDTITLE: unsafeTitle };
+  state.columnVisibility = {};
+  state.fuzzy = true;
+
+  renderTable(table, rows, columns);
+
+  assert.equal(infoBanner.className, 'search-group-info');
+  assert.equal(infoBanner.children.length, 4);
+  assert.equal(infoBanner.children[0].className, 'info-exact');
+  assert.equal(
+    infoBanner.children[0].textContent,
+    `✅ 1 exact match for "${unsafeTitle}"`
+  );
+  assert.equal(infoBanner.children[0].children.length, 0);
+  assert.equal(infoBanner.children[1].textContent, '|');
+  assert.equal(infoBanner.children[2].textContent, '🔍 2 fuzzy/contains matches');
 });
 
 test('no exact-match group is rendered when there is no exact match', () => {

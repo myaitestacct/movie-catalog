@@ -53,6 +53,34 @@ function createGroupHeader(type, count, exactTitle, columns, fuzzy) {
   return tr;
 }
 
+function renderSearchGroupInfo(infoBanner, exactCount, fuzzyCount, exactTitle, fuzzy) {
+  const exactMessage = document.createElement('span');
+  exactMessage.className = 'info-exact';
+  exactMessage.textContent =
+    `✅ ${exactCount} exact match${exactCount === 1 ? '' : 'es'} for "${exactTitle}"`;
+
+  const separator = document.createElement('span');
+  separator.className = 'info-sep';
+  separator.textContent = '|';
+
+  const fuzzyMessage = document.createElement('span');
+  fuzzyMessage.className = 'info-fuzzy';
+  fuzzyMessage.textContent =
+    `🔍 ${fuzzyCount} ${fuzzy ? 'fuzzy/contains' : 'other'} match${fuzzyCount === 1 ? '' : 'es'}`;
+
+  const hint = document.createElement('span');
+  hint.className = 'info-hint';
+  hint.textContent = '– exact matches are highlighted green and shown first';
+
+  infoBanner.className = 'search-group-info';
+  infoBanner.replaceChildren(
+    exactMessage,
+    separator,
+    fuzzyMessage,
+    hint
+  );
+}
+
 function renderMovieRow(movie, rows, columns, termsByColumn, fuzzy) {
   const tr = document.createElement('tr');
   tr.dataset.num = movie.NUM;
@@ -187,16 +215,16 @@ export function renderTable(table, rows, columns) {
   const infoBanner = document.getElementById('search-group-info');
   if (infoBanner) {
     if (useGroupedRendering) {
-      infoBanner.className = 'search-group-info';
-      infoBanner.innerHTML = `
-        <span class="info-exact">✅ ${exactRows.length} exact match${exactRows.length===1?'':'es'} for "${exactTitle}"</span>
-        <span class="info-sep">|</span>
-        <span class="info-fuzzy">🔍 ${fuzzyRows.length} ${fuzzy ? 'fuzzy/contains' : 'other'} match${fuzzyRows.length===1?'':'es'}</span>
-        <span class="info-hint">– exact matches are highlighted green and shown first</span>
-      `;
+      renderSearchGroupInfo(
+        infoBanner,
+        exactRows.length,
+        fuzzyRows.length,
+        exactTitle,
+        fuzzy
+      );
     } else {
       infoBanner.className = 'search-group-info hidden';
-      infoBanner.innerHTML = '';
+      infoBanner.replaceChildren();
     }
   }
 
