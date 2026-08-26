@@ -18,13 +18,22 @@ class MockElement {
     this.rel = '';
     this.attributes = new Map();
     this.listeners = new Map();
+
     this.classList = {
       _set: new Set(),
-      add: name => this.classList._set.add(name),
-      contains: name => this.classList._set.has(name),
+
+      add: name => {
+        this.classList._set.add(name);
+      },
+
+      contains: name => {
+        return this.classList._set.has(name);
+      },
+
       toggle: (name, force) => {
         const hasClass = this.classList._set.has(name);
-        const enabled = force !== undefined ? force : !hasClass;
+        const enabled =
+          force !== undefined ? force : !hasClass;
 
         if (enabled) {
           this.classList._set.add(name);
@@ -62,20 +71,32 @@ class MockElement {
     children.forEach(child => this.children.push(child));
   }
 
+  replaceChildren(...children) {
+    this.children = [...children];
+    this.innerHTML = '';
+  }
+
   querySelector(selector) {
-    if (selector === 'tbody') return this.tbody || null;
+    if (selector === 'tbody') {
+      return this.tbody || null;
+    }
+
     return null;
   }
 }
 
-function installDocumentMock() {
+function installDocumentMock(searchGroupInfo = null) {
   globalThis.document = {
     createElement(tag) {
       return new MockElement(tag);
     },
-    getElementById() {
-      return null;
+
+    getElementById(id) {
+      return id === 'search-group-info'
+        ? searchGroupInfo
+        : null;
     },
+
     querySelector() {
       return null;
     }
@@ -85,8 +106,11 @@ function installDocumentMock() {
 function makeTable() {
   const table = new MockElement('table');
   const tbody = new MockElement('tbody');
+
   table.tbody = tbody;
-  table.querySelector = selector => selector === 'tbody' ? tbody : null;
+  table.querySelector = selector =>
+    selector === 'tbody' ? tbody : null;
+
   return { table, tbody };
 }
 
@@ -123,47 +147,220 @@ function makeRows() {
 }
 
 test('exact and fuzzy title matches render in separate groups', () => {
-  const columns = ['NUM', 'FORMATTEDTITLE', 'YEAR', 'RATING', 'FILESIZE'];
+  const columns = [
+    'NUM',
+    'FORMATTEDTITLE',
+    'YEAR',
+    'RATING',
+    'FILESIZE'
+  ];
+
   const { table, tbody } = makeTable();
+
   installDocumentMock();
-  state.search = { FORMATTEDTITLE: 'Arrival' };
+
+  state.search = {
+    FORMATTEDTITLE: 'Arrival'
+  };
   state.columnVisibility = {};
   state.fuzzy = true;
 
   renderTable(table, makeRows(), columns);
 
   assert.equal(tbody.children.length, 5);
-  assert.equal(tbody.children[0].className, 'group-header exact-header');
-  assert.equal(tbody.children[0].dataset.testid, 'exact-header');
-  assert.equal(tbody.children[0].children[0].colSpan, columns.length);
-  assert.equal(tbody.children[1].dataset.matchType, 'exact');
-  assert.equal(tbody.children[2].className, 'group-header fuzzy-header');
-  assert.equal(tbody.children[2].dataset.testid, 'fuzzy-header');
-  assert.equal(tbody.children[3].dataset.matchType, 'fuzzy');
-  assert.equal(tbody.children[4].dataset.matchType, 'fuzzy');
+  assert.equal(
+    tbody.children[0].className,
+    'group-header exact-header'
+  );
+  assert.equal(
+    tbody.children[0].dataset.testid,
+    'exact-header'
+  );
+  assert.equal(
+    tbody.children[0].children[0].colSpan,
+    columns.length
+  );
+  assert.equal(
+    tbody.children[1].dataset.matchType,
+    'exact'
+  );
+  assert.equal(
+    tbody.children[2].className,
+    'group-header fuzzy-header'
+  );
+  assert.equal(
+    tbody.children[2].dataset.testid,
+    'fuzzy-header'
+  );
+  assert.equal(
+    tbody.children[3].dataset.matchType,
+    'fuzzy'
+  );
+  assert.equal(
+    tbody.children[4].dataset.matchType,
+    'fuzzy'
+  );
+});
+
+test('search group info renders the title as text', () => {
+  const columns = [
+    'NUM',
+    'FORMATTEDTITLE',
+    'YEAR',
+    'RATING',
+    'FILESIZE'
+  ];
+
+  const { table } = makeTable();
+  const infoBanner = new MockElement('div');
+
+  installDocumentMock(infoBanner);
+
+  const unsafeTitle =
+    '<img src=x onerror=alert(1)>';
+
+  const rows = makeRows();
+  rows[0].FORMATTEDTITLE = unsafeTitle;
+  rows[1].FORMATTEDTITLE =
+    `${unsafeTitle} sequel`;
+
+  state.search = {
+    FORMATTEDTITLE: unsafeTitle
+  };
+  state.columnVisibility = {};
+  state.fuzzy = true;
+
+  renderTable(table, rows, columns);
+
+  assert.equal(
+    infoBanner.className,
+    'search-group-info'
+  );
+  assert.equal(infoBanner.children.length, 4);
+  assert.equal(
+    infoBanner.children[0].className,
+    'info-exact'
+  );
+  assert.equal(
+    infoBanner.children[0].textContent,
+    `✅ 1 exact match for "${unsafeTitle}"`
+  );
+  assert.equal(
+    infoBanner.children[0].children.length,
+    0
+  );
+  assert.equal(
+    infoBanner.children[1].textContent,
+    '|'
+  );
+  assert.equal(
+    infoBanner.children[2].textContent,
+    '🔍 2 fuzzy/contains matches'
+  );
 });
 
 test('no exact-match group is rendered when there is no exact match', () => {
-  const columns = ['NUM', 'FORMATTEDTITLE', 'YEAR', 'RATING', 'FILESIZE'];
+  const columns = [
+    'NUM',
+    'FORMATTEDTITLE',
+    'YEAR',
+    'RATING',
+    'FILESIZE'
+  ];
+
   const { table, tbody } = makeTable();
+
   installDocumentMock();
-  state.search = { FORMATTEDTITLE: 'Nonexistent' };
+
+  state.search = {
+    FORMATTEDTITLE: 'Nonexistent'
+  };
   state.columnVisibility = {};
   state.fuzzy = true;
 
   renderTable(table, makeRows(), columns);
 
   assert.equal(tbody.children.length, 3);
-  assert.ok(tbody.children.every(row => row.dataset.matchType === 'fuzzy'));
+  assert.ok(
+    tbody.children.every(
+      row => row.dataset.matchType === 'fuzzy'
+    )
+  );
 });
 
-test('no groups are rendered when all results are exact matches', () => {
-  const columns = ['NUM', 'FORMATTEDTITLE', 'YEAR', 'RATING', 'FILESIZE'];
+test('exact matches remain grouped when no fuzzy matches are returned', () => {
+  const columns = [
+    'NUM',
+    'FORMATTEDTITLE',
+    'YEAR',
+    'RATING',
+    'FILESIZE'
+  ];
+
   const { table, tbody } = makeTable();
+  const infoBanner = new MockElement('div');
+
+  installDocumentMock(infoBanner);
+
+  state.search = {
+    FORMATTEDTITLE: 'Arrival'
+  };
+  state.columnVisibility = {};
+  state.fuzzy = true;
+
+  const rows = [
+    {
+      NUM: '1',
+      FORMATTEDTITLE: 'Arrival',
+      YEAR: '2016',
+      RATING: '7.9',
+      FILESIZE: '1000',
+      FILE: 'arrival.mkv',
+      URL: 'https://example.com'
+    }
+  ];
+
+  renderTable(table, rows, columns);
+
+  assert.equal(tbody.children.length, 2);
+  assert.equal(
+    tbody.children[0].className,
+    'group-header exact-header'
+  );
+  assert.equal(
+    tbody.children[1].dataset.matchType,
+    'exact'
+  );
+  assert.equal(
+    infoBanner.className,
+    'search-group-info'
+  );
+  assert.equal(infoBanner.children.length, 1);
+  assert.equal(
+    infoBanner.children[0].textContent,
+    '✅ 1 exact match for "Arrival"'
+  );
+});
+
+test('exact matches remain grouped when fuzzy search is disabled', () => {
+  const columns = [
+    'NUM',
+    'FORMATTEDTITLE',
+    'YEAR',
+    'RATING',
+    'FILESIZE'
+  ];
+
+  const { table, tbody } = makeTable();
+
   installDocumentMock();
-  state.search = { FORMATTEDTITLE: 'Arrival' };
+
+  state.search = {
+    FORMATTEDTITLE: 'Arrival'
+  };
   state.columnVisibility = {};
   state.fuzzy = false;
+
   const rows = [
     {
       NUM: '1',
@@ -187,24 +384,58 @@ test('no groups are rendered when all results are exact matches', () => {
 
   renderTable(table, rows, columns);
 
-  assert.equal(tbody.children.length, 2);
-  assert.ok(tbody.children.every(row => row.dataset.matchType === 'exact'));
+  assert.equal(tbody.children.length, 3);
+  assert.equal(
+    tbody.children[0].className,
+    'group-header exact-header'
+  );
+  assert.ok(
+    tbody.children
+      .slice(1)
+      .every(row => row.dataset.matchType === 'exact')
+  );
 });
 
 test('title and year parsing still groups exact and fuzzy matches', () => {
-  const columns = ['NUM', 'FORMATTEDTITLE', 'YEAR', 'RATING', 'FILESIZE'];
+  const columns = [
+    'NUM',
+    'FORMATTEDTITLE',
+    'YEAR',
+    'RATING',
+    'FILESIZE'
+  ];
+
   const { table, tbody } = makeTable();
+
   installDocumentMock();
-  state.search = { FORMATTEDTITLE: 'Arrival (2016)' };
+
+  state.search = {
+    FORMATTEDTITLE: 'Arrival (2016)'
+  };
   state.columnVisibility = {};
   state.fuzzy = true;
 
   renderTable(table, makeRows(), columns);
 
   assert.equal(tbody.children.length, 5);
-  assert.equal(tbody.children[0].className, 'group-header exact-header');
-  assert.equal(tbody.children[1].dataset.matchType, 'exact');
-  assert.equal(tbody.children[2].className, 'group-header fuzzy-header');
-  assert.equal(tbody.children[3].dataset.matchType, 'fuzzy');
-  assert.equal(tbody.children[4].dataset.matchType, 'fuzzy');
+  assert.equal(
+    tbody.children[0].className,
+    'group-header exact-header'
+  );
+  assert.equal(
+    tbody.children[1].dataset.matchType,
+    'exact'
+  );
+  assert.equal(
+    tbody.children[2].className,
+    'group-header fuzzy-header'
+  );
+  assert.equal(
+    tbody.children[3].dataset.matchType,
+    'fuzzy'
+  );
+  assert.equal(
+    tbody.children[4].dataset.matchType,
+    'fuzzy'
+  );
 });
