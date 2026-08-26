@@ -70,8 +70,10 @@ class MockElement {
 
   contains(element) {
     if (element === this) return true;
+
     return this.children.some(child =>
-      child instanceof MockElement && child.contains(element)
+      child instanceof MockElement &&
+      child.contains(element)
     );
   }
 
@@ -86,14 +88,21 @@ class MockElement {
 
   querySelector(selector) {
     if (selector.startsWith('#')) {
-      return findElement(this, element => element.id === selector.slice(1));
+      return findElement(
+        this,
+        element => element.id === selector.slice(1)
+      );
     }
 
     if (selector.startsWith('.')) {
       const className = selector.slice(1);
+
       return findElement(
         this,
-        element => element.className.split(/\s+/).includes(className)
+        element =>
+          element.className
+            .split(/\s+/)
+            .includes(className)
       );
     }
 
@@ -112,6 +121,7 @@ function findElement(root, predicate) {
     if (!(child instanceof MockElement)) continue;
 
     const match = findElement(child, predicate);
+
     if (match) return match;
   }
 
@@ -119,7 +129,9 @@ function findElement(root, predicate) {
 }
 
 function findElements(root, predicate, results = []) {
-  if (predicate(root)) results.push(root);
+  if (predicate(root)) {
+    results.push(root);
+  }
 
   for (const child of root.children) {
     if (child instanceof MockElement) {
@@ -136,19 +148,26 @@ const activeMovieRow = new MockElement('tr');
 globalThis.document = {
   body: new MockElement('body'),
   activeElement: null,
+
   createElement(tagName) {
     return new MockElement(tagName);
   },
+
   createTextNode(text) {
     const node = new MockElement('#text');
     node.textContent = text;
     return node;
   },
+
   addEventListener(type, listener) {
     documentListeners.set(type, listener);
   },
+
   querySelector(selector) {
-    if (selector.startsWith('tr[data-num=')) return activeMovieRow;
+    if (selector.startsWith('tr[data-num=')) {
+      return activeMovieRow;
+    }
+
     return this.body.querySelector(selector);
   }
 };
@@ -161,9 +180,11 @@ globalThis.requestAnimationFrame = callback => {
 const { createModalDOM } = await import(
   '../../movie-catalog/public/assets/js/modal/modal.dom.js'
 );
+
 const { fillFields } = await import(
   '../../movie-catalog/public/assets/js/modal/modal.utils.js'
 );
+
 const { Modal } = await import(
   '../../movie-catalog/public/assets/js/modal/modal.js'
 );
@@ -176,13 +197,19 @@ test('movie-number field contains one persistent span and copy button', () => {
 
   const numberSpans = findElements(
     numberField,
-    element => element.className.split(/\s+/).includes('num-value')
+    element =>
+      element.className
+        .split(/\s+/)
+        .includes('num-value')
   );
+
   const copyButtons = findElements(
     numberField,
     element =>
       element.tagName === 'BUTTON' &&
-      element.className.split(/\s+/).includes('copy-btn')
+      element.className
+        .split(/\s+/)
+        .includes('copy-btn')
   );
 
   assert.equal(numberSpans.length, 1);
@@ -201,7 +228,11 @@ test('updating ordinary modal fields does not rebuild movie-number controls', ()
     modalLength: 108
   });
 
-  assert.deepEqual(numberField.children, originalChildren);
+  assert.deepEqual(
+    numberField.children,
+    originalChildren
+  );
+
   assert.equal(
     findElements(
       numberField,
@@ -229,20 +260,43 @@ test('modal DOM exposes accessible labels and poster controls', () => {
   assert.equal(content.tabIndex, -1);
 
   assert.equal(prevBtn.type, 'button');
-  assert.equal(prevBtn.getAttribute('aria-label'), 'Previous movie');
+  assert.equal(
+    prevBtn.getAttribute('aria-label'),
+    'Previous movie'
+  );
+
   assert.equal(nextBtn.type, 'button');
-  assert.equal(nextBtn.getAttribute('aria-label'), 'Next movie');
+  assert.equal(
+    nextBtn.getAttribute('aria-label'),
+    'Next movie'
+  );
+
   assert.equal(closeBtn.type, 'button');
-  assert.equal(closeBtn.getAttribute('aria-label'), 'Close movie details');
+  assert.equal(
+    closeBtn.getAttribute('aria-label'),
+    'Close movie details'
+  );
 
   assert.equal(poster.alt, 'Movie poster');
   assert.equal(poster.tabIndex, 0);
   assert.equal(poster.getAttribute('role'), 'button');
-  assert.equal(poster.getAttribute('aria-label'), 'Enlarge movie poster');
+  assert.equal(
+    poster.getAttribute('aria-label'),
+    'Enlarge movie poster'
+  );
 
-  assert.equal(posterZoom.getAttribute('role'), 'dialog');
-  assert.equal(posterZoom.getAttribute('aria-hidden'), 'true');
-  assert.equal(posterZoomImg.alt, 'Enlarged movie poster');
+  assert.equal(
+    posterZoom.getAttribute('role'),
+    'dialog'
+  );
+  assert.equal(
+    posterZoom.getAttribute('aria-hidden'),
+    'true'
+  );
+  assert.equal(
+    posterZoomImg.alt,
+    'Enlarged movie poster'
+  );
 });
 
 test('opening and closing modal isolates background and restores focus', () => {
@@ -254,6 +308,7 @@ test('opening and closing modal isolates background and restores focus', () => {
   document.activeElement = trigger;
 
   Modal.setMovies([]);
+
   Modal.show({
     NUM: 42,
     FORMATTEDTITLE: 'Sing',
@@ -280,16 +335,109 @@ test('opening and closing modal isolates background and restores focus', () => {
   assert.equal(modal.classList.contains('open'), true);
   assert.equal(modal.getAttribute('aria-hidden'), 'false');
   assert.equal(trigger.inert, true);
-  assert.equal(trigger.getAttribute('aria-hidden'), 'true');
+  assert.equal(
+    trigger.getAttribute('aria-hidden'),
+    'true'
+  );
   assert.equal(document.activeElement, closeButton);
-  assert.equal(activeMovieRow.classList.contains('active-movie-row'), true);
+  assert.equal(
+    activeMovieRow.classList.contains('active-movie-row'),
+    true
+  );
 
   closeButton.onclick();
 
   assert.equal(modal.classList.contains('open'), false);
   assert.equal(modal.getAttribute('aria-hidden'), 'true');
   assert.equal(trigger.inert, false);
-  assert.equal(trigger.getAttribute('aria-hidden'), null);
+  assert.equal(
+    trigger.getAttribute('aria-hidden'),
+    null
+  );
   assert.equal(document.activeElement, trigger);
-  assert.equal(activeMovieRow.classList.contains('active-movie-row'), false);
+  assert.equal(
+    activeMovieRow.classList.contains('active-movie-row'),
+    false
+  );
+});
+
+test('confirmation is required before previous and next navigation wraps', () => {
+  const firstMovie = {
+    NUM: 1,
+    FORMATTEDTITLE: 'First Movie',
+    YEAR: 2020,
+    LENGTH: 100,
+    CERTIFICATION: 'PG',
+    LANGUAGES: 'English',
+    CATEGORY: 'Drama',
+    COUNTRY: 'USA',
+    DIRECTOR: 'Director One',
+    ACTORS: 'Actor One',
+    FILESIZE: 1000,
+    RESOLUTION: '1080p',
+    AUDIOFORMAT: 'AAC',
+    SUBTITLES: 'English',
+    FILEPATH: 'C:\\Movies\\first.mkv',
+    URL: 'https://www.imdb.com/title/tt0000001/',
+    PICTURENAME: 'first.jpg'
+  };
+
+  const secondMovie = {
+    ...firstMovie,
+    NUM: 2,
+    FORMATTEDTITLE: 'Second Movie',
+    FILEPATH: 'C:\\Movies\\second.mkv',
+    URL: 'https://www.imdb.com/title/tt0000002/',
+    PICTURENAME: 'second.jpg'
+  };
+
+  const modal = document.body.querySelector('#movieModal');
+  const title = () =>
+    modal.querySelector('#modalTitle').textContent;
+
+  const originalConfirm = globalThis.confirm;
+  const prompts = [];
+
+  try {
+    globalThis.confirm = message => {
+      prompts.push(message);
+      return false;
+    };
+
+    Modal.setMovies([firstMovie, secondMovie]);
+    Modal.show(firstMovie, 0);
+
+    Modal.prev();
+
+    assert.equal(title(), 'First Movie');
+    assert.deepEqual(prompts, [
+      'You are viewing the first movie. Continue to the last movie?'
+    ]);
+
+    globalThis.confirm = message => {
+      prompts.push(message);
+      return true;
+    };
+
+    Modal.prev();
+
+    assert.equal(title(), 'Second Movie');
+
+    Modal.next();
+
+    assert.equal(title(), 'First Movie');
+    assert.deepEqual(prompts, [
+      'You are viewing the first movie. Continue to the last movie?',
+      'You are viewing the first movie. Continue to the last movie?',
+      'You are viewing the last movie. Continue to the first movie?'
+    ]);
+  } finally {
+    if (originalConfirm === undefined) {
+      delete globalThis.confirm;
+    } else {
+      globalThis.confirm = originalConfirm;
+    }
+
+    Modal.close();
+  }
 });
