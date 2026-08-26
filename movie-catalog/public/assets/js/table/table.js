@@ -50,8 +50,8 @@ function createGroupHeader(type, count, exactTitle, columns, fuzzy) {
 
   const badge = document.createElement('span');
   badge.className = `group-header-badge ${type}-badge`;
-  badge.textContent =
-    type === 'exact' ? 'EXACT' : (fuzzy ? 'FUZZY' : 'OTHER');
+  //badge.textContent =
+    //type === 'exact' ? ' EXACT' : (fuzzy ? ' FUZZY' : ' OTHER');
 
   wrapper.append(icon, titleSpan, badge);
   td.appendChild(wrapper);
@@ -69,22 +69,22 @@ function renderSearchGroupInfo(
 ) {
   const exactMessage = document.createElement('span');
   exactMessage.className = 'info-exact';
-  exactMessage.textContent =
-    `✅ ${exactCount} exact match${exactCount === 1 ? '' : 'es'} for "${exactTitle}"`;
+  //exactMessage.textContent =
+  //  `✅ ${exactCount} exact match${exactCount === 1 ? '' : 'es'} for "${exactTitle}"`;
 
   const separator = document.createElement('span');
   separator.className = 'info-sep';
-  separator.textContent = '|';
+  //separator.textContent = '| ';
 
   const fuzzyMessage = document.createElement('span');
   fuzzyMessage.className = 'info-fuzzy';
-  fuzzyMessage.textContent =
-    `🔍 ${fuzzyCount} ${fuzzy ? 'fuzzy/contains' : 'other'} match${fuzzyCount === 1 ? '' : 'es'}`;
+  //fuzzyMessage.textContent =
+  //  `🔍 ${fuzzyCount} ${fuzzy ? 'fuzzy/contains' : 'other'} match${fuzzyCount === 1 ? '' : 'es'}`;
 
   const hint = document.createElement('span');
   hint.className = 'info-hint';
-  hint.textContent =
-    '– exact matches are highlighted green and shown first';
+  //hint.textContent =
+    '– exact matches are shown first';
 
   infoBanner.className = 'search-group-info';
 
