@@ -174,6 +174,30 @@ mark {
   cursor: pointer;
 }
 .search-mode.or { background: #ffe066; border-color: #f1c40f; }
+.title-search-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px;
+  border: 1px solid var(--button-border);
+  border-radius: 6px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  font-weight: 600;
+}
+.title-search-mode select {
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--table-bg);
+  color: var(--text-color);
+  font: inherit;
+  cursor: pointer;
+}
+.title-search-mode select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
 tbody tr.row-hover { background: rgba(255, 69, 0, 0.1); transition: background 0.2s ease; }
 .movie-modal-content { transition: transform 0.3s ease, opacity 0.3s ease; }
 .num-value { margin-right: 6px; white-space: nowrap; }

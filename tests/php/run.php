@@ -109,6 +109,54 @@ assertSameValue(
     'LIKE pattern escapes wildcard and escape characters'
 );
 
+$buildWhereClause = $repositoryReflection->getMethod('buildWhereClause');
+$buildWhereClause->setAccessible(true);
+
+assertSameValue(
+    [
+        ' WHERE ((TRIM(`FORMATTEDTITLE`) = :title))',
+        ['title' => 'The Breakfast Club']
+    ],
+    $buildWhereClause->invoke(
+        $repository,
+        ['FORMATTEDTITLE' => 'The Breakfast Club'],
+        'AND',
+        true,
+        'EXACT'
+    ),
+    'Exact title mode matches the complete normalized title'
+);
+
+assertSameValue(
+    [
+        ' WHERE ((`FORMATTEDTITLE` LIKE :title ESCAPE \'=\'))',
+        ['title' => '%The Breakfast Club%']
+    ],
+    $buildWhereClause->invoke(
+        $repository,
+        ['FORMATTEDTITLE' => 'The Breakfast Club'],
+        'AND',
+        true,
+        'CONTAINS'
+    ),
+    'Contains title mode matches a title substring'
+);
+
+assertSameValue(
+    [
+        ' WHERE ((`FORMATTEDTITLE` LIKE :title ESCAPE \'=\'))',
+        ['title' => '%t%h%e% %b%r%e%a%k%f%a%s%t% %c%l%u%b%']
+    ],
+    $buildWhereClause->invoke(
+        $repository,
+        ['FORMATTEDTITLE' => 'The Breakfast Club'],
+        'AND',
+        true,
+        'FUZZY'
+    ),
+    'Fuzzy title mode matches ordered title characters'
+);
+
 $statsReflection = new ReflectionClass(StatsController::class);
 $statsController = $statsReflection->newInstanceWithoutConstructor();
 $calculateHealthScore = $statsReflection->getMethod('calculateHealthScore');

@@ -1,8 +1,14 @@
 <div class="column-toggles">
     <button type="button" id="theme-toggle">🌙</button>
-    
     <button type="button" id="search-mode" class="search-mode">AND</button>
-    <button type="button" id="fuzzy-toggle">Fuzzy: OFF</button>
+    <label class="title-search-mode" for="title-search-mode">
+        <span>Title:</span>
+        <select id="title-search-mode" aria-label="Title search mode">
+            <option value="EXACT">Exact</option>
+            <option value="CONTAINS">Contains</option>
+            <option value="FUZZY">Fuzzy</option>
+        </select>
+    </label>
 
     <button type="button" class="toggle-col" data-col="LANGUAGES"><i class="fa-solid fa-language"></i> Language</button>
     <button type="button" class="toggle-col" data-col="LENGTH"><i class="fa-solid fa-clock"></i> Length</button>

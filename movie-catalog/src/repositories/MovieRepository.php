@@ -4,6 +4,8 @@ require_once __DIR__ . '/../helpers/FileHelper.php';
 
 class MovieRepository
 {
+    private const TITLE_SEARCH_MODES = ['EXACT', 'CONTAINS', 'FUZZY'];
+
     private PDO $pdo;
     private ?bool $windowFunctionsSupported = null;
 
@@ -111,6 +113,19 @@ class MovieRepository
         return '%' . implode('%', $characters) . '%';
     }
 
+    private function normalizeTitleSearchMode(
+        ?string $titleSearchMode,
+        bool $fuzzy
+    ): string {
+        $mode = strtoupper(trim((string)$titleSearchMode));
+
+        if (in_array($mode, self::TITLE_SEARCH_MODES, true)) {
+            return $mode;
+        }
+
+        return $fuzzy ? 'FUZZY' : 'CONTAINS';
+    }
+
     private function pathSqlExpression(): string
     {
         $filepath = "COALESCE(`FILEPATH`, '')";
@@ -136,8 +151,14 @@ class MovieRepository
         array $inputFilters,
         string $sort,
         string $dir,
-        bool $fuzzy
+        bool $fuzzy,
+        ?string $titleSearchMode = null
     ): array {
+        $titleSearchMode = $this->normalizeTitleSearchMode(
+            $titleSearchMode,
+            $fuzzy
+        );
+
         if (!in_array($sort, $this->sortableColumns)) {
             $sort = 'NUM';
         }
@@ -157,7 +178,17 @@ class MovieRepository
             );
 
             if ($exactTitle !== '') {
-                if ($fuzzy) {
+                if ($titleSearchMode === 'FUZZY') {
+                    $orderBy = "CASE
+                                    WHEN TRIM(`FORMATTEDTITLE`) = :exactTitle THEN 0
+                                    WHEN `FORMATTEDTITLE` LIKE :containsTitle ESCAPE '=' THEN 1
+                                    ELSE 2
+                                END ASC, $orderBy";
+                    $params['containsTitle'] = $this->buildLikePattern(
+                        $exactTitle,
+                        false
+                    );
+                } elseif ($titleSearchMode === 'CONTAINS') {
                     $orderBy = "CASE
                                     WHEN TRIM(`FORMATTEDTITLE`) = :exactTitle THEN 0
                                     WHEN `FORMATTEDTITLE` LIKE :containsTitle ESCAPE '=' THEN 1
@@ -184,11 +215,16 @@ class MovieRepository
     private function buildWhereClause(
         array $inputFilters,
         string $searchMode = 'AND',
-        bool $fuzzy = false
+        bool $fuzzy = false,
+        ?string $titleSearchMode = null
     ): array {
         $conditions = [];
         $params = [];
         $searchMode = strtoupper($searchMode) === 'OR' ? 'OR' : 'AND';
+        $titleSearchMode = $this->normalizeTitleSearchMode(
+            $titleSearchMode,
+            $fuzzy
+        );
 
         foreach ($inputFilters as $col => $val) {
 
@@ -208,8 +244,16 @@ class MovieRepository
                 $titleConditions = [];
 
                 if ($title !== '') {
-                    $titleConditions[] = "`FORMATTEDTITLE` LIKE :title ESCAPE '='";
-                    $params['title'] = $this->buildLikePattern($title, $fuzzy);
+                    if ($titleSearchMode === 'EXACT') {
+                        $titleConditions[] = "TRIM(`FORMATTEDTITLE`) = :title";
+                        $params['title'] = $title;
+                    } else {
+                        $titleConditions[] = "`FORMATTEDTITLE` LIKE :title ESCAPE '='";
+                        $params['title'] = $this->buildLikePattern(
+                            $title,
+                            $titleSearchMode === 'FUZZY'
+                        );
+                    }
                 }
 
                 if ($year) {
@@ -252,19 +296,22 @@ class MovieRepository
         string $dir,
         Pagination $pagination,
         string $searchMode = 'AND',
-        bool $fuzzy = false
+        bool $fuzzy = false,
+        ?string $titleSearchMode = null
     ): array {
         [$whereSql, $params] = $this->buildWhereClause(
             $inputFilters,
             $searchMode,
-            $fuzzy
+            $fuzzy,
+            $titleSearchMode
         );
 
         [$orderBy, $orderParams] = $this->buildOrderByClause(
             $inputFilters,
             $sort,
             $dir,
-            $fuzzy
+            $fuzzy,
+            $titleSearchMode
         );
         $params = array_merge($params, $orderParams);
 
@@ -347,12 +394,14 @@ class MovieRepository
     public function countMovies(
         array $inputFilters,
         string $searchMode = 'AND',
-        bool $fuzzy = false
+        bool $fuzzy = false,
+        ?string $titleSearchMode = null
     ): int {
         [$whereSql, $params] = $this->buildWhereClause(
             $inputFilters,
             $searchMode,
-            $fuzzy
+            $fuzzy,
+            $titleSearchMode
         );
 
         $sql = "SELECT COUNT(*) FROM movies $whereSql";
@@ -402,20 +451,23 @@ class MovieRepository
         string $dir,
         array $filters = [],
         string $searchMode = 'AND',
-        bool $fuzzy = false
+        bool $fuzzy = false,
+        ?string $titleSearchMode = null
     ): ?int {
         $perPage = max(1, $perPage);
 
         [$whereSql, $params] = $this->buildWhereClause(
             $filters,
             $searchMode,
-            $fuzzy
+            $fuzzy,
+            $titleSearchMode
         );
         [$orderBy, $orderParams] = $this->buildOrderByClause(
             $filters,
             $sort,
             $dir,
-            $fuzzy
+            $fuzzy,
+            $titleSearchMode
         );
         $params = array_merge($params, $orderParams);
 

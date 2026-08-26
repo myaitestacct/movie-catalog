@@ -63,6 +63,46 @@ test.describe('movie catalog', () => {
     );
   });
 
+  test('title search mode controls exact, contains, and fuzzy matching', async ({ page }) => {
+    await openCatalog(page);
+
+    const mode = page.locator('#title-search-mode');
+    const titleInput = page.locator(
+      '#search-row input[data-col="FORMATTEDTITLE"]'
+    );
+
+    await mode.selectOption('EXACT');
+    await titleInput.fill('Arrival');
+
+    await expect(
+      page.locator('#movies tbody tr[data-match-type="exact"]')
+    ).toHaveCount(1);
+    await expect(
+      page.locator('#movies tbody tr[data-match-type="fuzzy"]')
+    ).toHaveCount(0);
+    await expect(
+      page.locator('#movies tbody .exact-header .group-header-title')
+    ).toHaveText('Exact Matches (1) for "Arrival"');
+
+    await mode.selectOption('CONTAINS');
+
+    await expect(
+      page.locator('#movies tbody tr[data-match-type="exact"]')
+    ).toHaveCount(1);
+    await expect(
+      page.locator('#movies tbody tr[data-match-type="fuzzy"]')
+    ).toHaveCount(3);
+    await expect(
+      page.locator('#movies tbody .fuzzy-header .group-header-title')
+    ).toHaveText('Contains Matches (3)');
+
+    await mode.selectOption('FUZZY');
+
+    await expect(
+      page.locator('#movies tbody .fuzzy-header .group-header-title')
+    ).toHaveText('Fuzzy Matches (3)');
+  });
+
   test('opens movie details, supports keyboard navigation, and restores focus', async ({ page }) => {
     await openCatalog(page);
 
