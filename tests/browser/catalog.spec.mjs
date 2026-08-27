@@ -199,43 +199,35 @@ test.describe('movie catalog', () => {
     );
   });
 
-  test('clears individual and all search filters', async ({ page }) => {
+  test('clears all search filters with the global control', async ({ page }) => {
     await openCatalog(page);
 
     const titleInput = page.locator(
       '#search-row input[data-col="FORMATTEDTITLE"]'
     );
 
-    const individualClear = page.locator(
-      '#search-row .clear-search[data-col="FORMATTEDTITLE"]'
-    );
-
     const clearAll =
       page.locator('#clear-filters');
 
+    await expect(
+      page.locator('#search-row .clear-search')
+    ).toHaveCount(0);
+
     await titleInput.fill('Arrival');
-
-    await expect(individualClear).toBeVisible();
-    await expect(clearAll).toBeEnabled();
-
-    await individualClear.click();
-
-    await expect(titleInput).toHaveValue('');
-    await expect(individualClear).toBeHidden();
 
     await expect(
-      page.locator('#pagination .info')
-    ).toHaveText(
-      'Showing 1-50 of 55 results'
-    );
-
-    await titleInput.fill('Arrival');
-    await expect(clearAll).toBeEnabled();
+      clearAll
+    ).toBeEnabled();
 
     await clearAll.click();
 
-    await expect(titleInput).toHaveValue('');
-    await expect(clearAll).toBeDisabled();
+    await expect(
+      titleInput
+    ).toHaveValue('');
+
+    await expect(
+      clearAll
+    ).toBeDisabled();
 
     await expect(
       page.locator('#pagination .info')
@@ -244,7 +236,7 @@ test.describe('movie catalog', () => {
     );
   });
 
-  test('keeps the catalog within the viewport without horizontal scrollbars', async ({ page }) => {
+  test('shows all optional columns in the scrollable table', async ({ page }) => {
     await openCatalog(page);
 
     await page.locator(
@@ -252,23 +244,17 @@ test.describe('movie catalog', () => {
     ).click();
 
     await expect(
+      page.locator(
+        '#movies thead tr:first-child th:visible'
+      )
+    ).toHaveCount(13);
+
+    await expect(
       page.locator('.table-wrapper')
     ).toHaveCSS(
       'overflow-x',
-      'hidden'
+      'auto'
     );
-
-    const overflow =
-      await page.locator('#movies').evaluate(table => ({
-        tableOverflow:
-          table.scrollWidth > table.clientWidth,
-        viewportOverflow:
-          document.documentElement.scrollWidth >
-          document.documentElement.clientWidth
-      }));
-
-    expect(overflow.tableOverflow).toBe(false);
-    expect(overflow.viewportOverflow).toBe(false);
   });
 
   test('opens movie details, supports keyboard navigation, and restores focus', async ({ page }) => {
@@ -283,7 +269,9 @@ test.describe('movie catalog', () => {
     const modal =
       page.locator('#movieModal');
 
-    await expect(modal).toHaveClass(/open/);
+    await expect(
+      modal
+    ).toHaveClass(/open/);
 
     await expect(
       modal
