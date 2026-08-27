@@ -384,10 +384,14 @@ function fuzzyMatch(text = '', term = '') {
 }
 
 function movieResponse(url) {
-  const reservedParameters = new Set(['page','limit','sort','dir','mode','fuzzy']);
+  const reservedParameters = new Set(['page','limit','sort','dir','mode','fuzzy','titleMode']);
   const rawFilters = [...url.searchParams.entries()].filter(([k,v])=>!reservedParameters.has(k)&&v.trim());
   const mode = url.searchParams.get('mode') === 'OR' ? 'OR' : 'AND';
   const isFuzzy = url.searchParams.get('fuzzy') === 'true';
+  const requestedTitleMode = url.searchParams.get('titleMode');
+  const titleMode = ['EXACT', 'CONTAINS', 'FUZZY'].includes(requestedTitleMode)
+    ? requestedTitleMode
+    : (isFuzzy ? 'FUZZY' : 'CONTAINS');
 
   const titleSearchRaw = url.searchParams.get('FORMATTEDTITLE') || '';
   const { title: exactTitle } = parseTitleSearch(titleSearchRaw);
@@ -401,7 +405,14 @@ function movieResponse(url) {
         let titleMatch = true;
         let yearMatch = true;
         if (title) {
-          titleMatch = isFuzzy ? fuzzyMatch(movieVal, title) : movieVal.toLowerCase().includes(title.toLowerCase());
+          const normalizedMovieValue = movieVal.trim().toLowerCase();
+          const normalizedTitle = title.trim().toLowerCase();
+
+          titleMatch = titleMode === 'EXACT'
+            ? normalizedMovieValue === normalizedTitle
+            : titleMode === 'FUZZY'
+              ? fuzzyMatch(movieVal, title)
+              : normalizedMovieValue.includes(normalizedTitle);
         }
         if (year) {
           yearMatch = String(movie.YEAR ?? '') === year;

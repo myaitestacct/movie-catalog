@@ -109,6 +109,54 @@ assertSameValue(
     'LIKE pattern escapes wildcard and escape characters'
 );
 
+$buildWhereClause = $repositoryReflection->getMethod('buildWhereClause');
+$buildWhereClause->setAccessible(true);
+
+assertSameValue(
+    [
+        ' WHERE ((TRIM(`FORMATTEDTITLE`) = :title))',
+        ['title' => 'The Breakfast Club']
+    ],
+    $buildWhereClause->invoke(
+        $repository,
+        ['FORMATTEDTITLE' => 'The Breakfast Club'],
+        'AND',
+        true,
+        'EXACT'
+    ),
+    'Exact title mode matches the complete normalized title'
+);
+
+assertSameValue(
+    [
+        ' WHERE ((`FORMATTEDTITLE` LIKE :title ESCAPE \'=\'))',
+        ['title' => '%The Breakfast Club%']
+    ],
+    $buildWhereClause->invoke(
+        $repository,
+        ['FORMATTEDTITLE' => 'The Breakfast Club'],
+        'AND',
+        true,
+        'CONTAINS'
+    ),
+    'Contains title mode matches a title substring'
+);
+
+assertSameValue(
+    [
+        ' WHERE ((`FORMATTEDTITLE` LIKE :title ESCAPE \'=\'))',
+        ['title' => '%t%h%e% %b%r%e%a%k%f%a%s%t% %c%l%u%b%']
+    ],
+    $buildWhereClause->invoke(
+        $repository,
+        ['FORMATTEDTITLE' => 'The Breakfast Club'],
+        'AND',
+        true,
+        'FUZZY'
+    ),
+    'Fuzzy title mode matches ordered title characters'
+);
+
 $statsReflection = new ReflectionClass(StatsController::class);
 $statsController = $statsReflection->newInstanceWithoutConstructor();
 $calculateHealthScore = $statsReflection->getMethod('calculateHealthScore');
@@ -348,6 +396,49 @@ assertSameValue(
     ]),
     'Health score never drops below zero'
 );
+
+$cacheController = $statsReflection->newInstanceWithoutConstructor();
+$cacheConfig = $statsReflection->getProperty('config');
+$cacheConfig->setAccessible(true);
+$cacheConfig->setValue($cacheController, [
+    'stats' => [
+        'cache_enabled' => true,
+        'cache_ttl' => 300
+    ]
+]);
+
+$cachePath = sys_get_temp_dir() . '/movie-catalog-cache-' . bin2hex(random_bytes(8)) . '/stats.json';
+$cachePathProperty = $statsReflection->getProperty('statsCachePath');
+$cachePathProperty->setAccessible(true);
+$cachePathProperty->setValue($cacheController, $cachePath);
+
+$writeStatsCache = $statsReflection->getMethod('writeStatsCache');
+$writeStatsCache->setAccessible(true);
+$readStatsCache = $statsReflection->getMethod('readStatsCache');
+$readStatsCache->setAccessible(true);
+$clearStatsCache = $statsReflection->getMethod('clearStatsCache');
+$clearStatsCache->setAccessible(true);
+
+$cachedStats = [
+    'total_movies' => 42,
+    'health_score' => 100
+];
+$writeStatsCache->invoke($cacheController, $cachedStats);
+
+assertSameValue(
+    $cachedStats,
+    $readStatsCache->invoke($cacheController),
+    'Stats cache writes and reads a valid payload'
+);
+
+$clearStatsCache->invoke($cacheController);
+assertSameValue(
+    null,
+    $readStatsCache->invoke($cacheController),
+    'Stats cache can be cleared'
+);
+
+@rmdir(dirname($cachePath));
 
 if ($failures > 0) {
     echo "\n{$failures} test(s) failed.\n";

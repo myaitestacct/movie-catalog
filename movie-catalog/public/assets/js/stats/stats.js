@@ -844,6 +844,7 @@ function getMovieStateSignature() {
         dir: state.dir,
         mode: state.searchMode,
         fuzzy: state.fuzzy,
+        titleMode: state.titleSearchMode,
         search: Object.entries(state.search).sort(([left], [right]) =>
             left.localeCompare(right)
         )
@@ -861,7 +862,8 @@ async function jumpToMovie(num) {
             sort: state.sort,
             dir: state.dir,
             mode: state.searchMode,
-            fuzzy: state.fuzzy
+            fuzzy: state.fuzzy,
+            titleMode: state.titleSearchMode
         });
 
         Object.entries(state.search).forEach(([column, value]) => {

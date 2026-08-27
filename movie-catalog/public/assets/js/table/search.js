@@ -6,12 +6,13 @@ export function initSearch(columns, searchRow, onSearch) {
         const td = document.createElement('td');
         const input = document.createElement('input');
 
+        input.type = 'search';
         input.dataset.col = col;
         input.value = state.search[col] || '';
+        input.setAttribute('aria-label', `Filter by ${col}`);
 
-        // Match initial visibility
         const visible =
-                state.columnVisibility[col] ?? ALWAYS_VISIBLE.includes(col);
+            state.columnVisibility[col] ?? ALWAYS_VISIBLE.includes(col);
         td.style.display = visible ? '' : 'none';
 
         input.addEventListener('input', () => {
@@ -19,7 +20,7 @@ export function initSearch(columns, searchRow, onSearch) {
             state.debounce = setTimeout(() => {
                 state.search[col] = input.value.trim();
                 state.page = 1;
-                onSearch();
+                onSearch?.();
             }, 500);
         });
 

@@ -83,6 +83,8 @@ private const METADATA_FIELDS = [
 
 private PDO $pdo;
 private array $sql;
+private array $config;
+private string $statsCachePath;
 
 public function __construct(PDO $pdo)
 {
@@ -91,10 +93,26 @@ $this->sql = json_decode(
 file_get_contents(__DIR__ . '/../config/sql.json'),
 true
 );
+
+$configPath = __DIR__ . '/../config/config.json';
+$decodedConfig = json_decode(
+(string)file_get_contents($configPath),
+true
+);
+$this->config = is_array($decodedConfig) ? $decodedConfig : [];
+$this->statsCachePath = dirname(__DIR__, 2) . '/var/cache/stats.json';
 }
 
-public function getStats(): array
+public function getStats(bool $useCache = true): array
 {
+if ($useCache && $this->isStatsCacheEnabled()) {
+$cachedStats = $this->readStatsCache();
+
+if ($cachedStats !== null) {
+return $cachedStats;
+}
+}
+
 $stmt = $this->pdo->query($this->sql['stats']);
 $stats = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
@@ -173,7 +191,108 @@ $stmt = $this->pdo->query($this->sql['duplicate_count']);
 $stats['duplicate_count'] = (int)$stmt->fetchColumn();
 $stats['health_score'] = $this->calculateHealthScore($stats);
 
+if ($useCache && $this->isStatsCacheEnabled()) {
+$this->writeStatsCache($stats);
+}
+
 return $stats;
+}
+
+public function clearStatsCache(): void
+{
+if (!isset($this->statsCachePath) || !is_file($this->statsCachePath)) {
+return;
+}
+
+if (!@unlink($this->statsCachePath)) {
+error_log('Unable to clear Movie Catalog stats cache.');
+}
+}
+
+private function isStatsCacheEnabled(): bool
+{
+return filter_var(
+$this->config['stats']['cache_enabled'] ?? false,
+FILTER_VALIDATE_BOOLEAN
+) && $this->getStatsCacheTtl() > 0;
+}
+
+private function getStatsCacheTtl(): int
+{
+return max(0, (int)($this->config['stats']['cache_ttl'] ?? 0));
+}
+
+private function readStatsCache(): ?array
+{
+if (!is_file($this->statsCachePath) || !is_readable($this->statsCachePath)) {
+return null;
+}
+
+$modifiedAt = filemtime($this->statsCachePath);
+$ttl = $this->getStatsCacheTtl();
+
+if (
+$modifiedAt === false ||
+$ttl <= 0 ||
+(time() - $modifiedAt) >= $ttl
+) {
+return null;
+}
+
+try {
+$contents = file_get_contents($this->statsCachePath);
+
+if ($contents === false) {
+return null;
+}
+
+$cachedStats = json_decode(
+$contents,
+true,
+512,
+JSON_THROW_ON_ERROR
+);
+
+return is_array($cachedStats) ? $cachedStats : null;
+} catch (Throwable $error) {
+error_log('Movie Catalog stats cache could not be read: ' . (string)$error);
+return null;
+}
+}
+
+private function writeStatsCache(array $stats): void
+{
+try {
+$cacheDirectory = dirname($this->statsCachePath);
+
+if (!is_dir($cacheDirectory) && !@mkdir($cacheDirectory, 0775, true)) {
+error_log('Unable to create Movie Catalog stats cache directory.');
+return;
+}
+
+if (!is_writable($cacheDirectory)) {
+error_log('Movie Catalog stats cache directory is not writable.');
+return;
+}
+
+$contents = json_encode($stats, JSON_THROW_ON_ERROR);
+$tempPath = @tempnam($cacheDirectory, 'stats-');
+
+if ($tempPath === false) {
+error_log('Unable to create a temporary Movie Catalog stats cache file.');
+return;
+}
+
+$written = @file_put_contents($tempPath, $contents, LOCK_EX);
+$renamed = $written !== false && @rename($tempPath, $this->statsCachePath);
+
+if (!$renamed) {
+@unlink($tempPath);
+error_log('Unable to write Movie Catalog stats cache.');
+}
+} catch (Throwable $error) {
+error_log('Movie Catalog stats cache could not be written: ' . (string)$error);
+}
 }
 
 private function getReleaseYearAnalytics(int $totalMovies): array

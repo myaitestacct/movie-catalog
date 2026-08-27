@@ -1,6 +1,6 @@
 .table-wrapper {
     width: 100%;
-    overflow-x: auto;
+    overflow-x: hidden;
     overflow-y: auto;
     padding-bottom: 25px;
     max-height: calc(115vh - 150px);
@@ -9,18 +9,28 @@
 table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: auto;
+    table-layout: fixed;
     background: var(--table-bg);
     max-width: 100%;
+}
+#movies {
+    width: 100%;
+    table-layout: auto;
 }
 th, td {
     border-bottom: 1px solid var(--border-light);
     font-size: 13px;
     text-align: left;
-    min-width: 60px;
+    min-width: 0;
+    max-width: 0;
+    overflow-wrap: anywhere;
     box-sizing: border-box;
 }
-th { cursor: pointer; white-space: nowrap; }
+th {
+    cursor: pointer;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
 th:hover { background: #57606f; }
 tbody tr:hover { background: var(--table-hover); }
 .badge {
@@ -81,7 +91,8 @@ thead th {
     line-height: 1.2;
     padding: 2px 6px;
     font-size: 12px;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 #search-row td {
@@ -130,6 +141,7 @@ td:not(.hidden-col), th:not(.hidden-col) {
     text-decoration: none;
     cursor: pointer;
     font-weight: 500;
+    overflow-wrap: anywhere;
 }
 .movie-title-link:hover { color: var(--primary); text-decoration: underline; }
 .copy-btn {
@@ -147,7 +159,24 @@ td:not(.hidden-col), th:not(.hidden-col) {
 .copy-btn:hover { background: rgba(255,255,255,0.15); }
 .copy-btn.copied { color: #2ecc71 !important; background: var(--success); }
 .copy-btn.copied::after { content: ' ✓'; font-size: 11px; }
-.file-name { margin-right: 6px; word-break: break-all; }
+.file-name {
+  display: inline-block;
+  max-width: calc(100% - 24px);
+  margin-right: 4px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  vertical-align: middle;
+}
+#movies .rating-badge {
+  padding: 3px 5px;
+  font-size: 0.72rem;
+  white-space: normal;
+}
+#movies .copy-btn.icon-btn {
+  padding: 2px;
+  font-size: 0.65rem;
+}
 .copy-btn.icon-btn {
   background: none;
   border: none;
@@ -174,6 +203,34 @@ mark {
   cursor: pointer;
 }
 .search-mode.or { background: #ffe066; border-color: #f1c40f; }
+.title-search-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px;
+  border: 1px solid var(--button-border);
+  border-radius: 6px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  font-weight: 600;
+}
+.title-search-mode select {
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--table-bg);
+  color: var(--text-color);
+  font: inherit;
+  cursor: pointer;
+}
+.title-search-mode select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+#clear-filters:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 tbody tr.row-hover { background: rgba(255, 69, 0, 0.1); transition: background 0.2s ease; }
 .movie-modal-content { transition: transform 0.3s ease, opacity 0.3s ease; }
 .num-value { margin-right: 6px; white-space: nowrap; }
@@ -186,7 +243,9 @@ tbody tr.row-hover { background: rgba(255, 69, 0, 0.1); transition: background 0
   padding: 4px 12px;
   border-radius: 6px;
   font-size: 0.8rem;
-  white-space: nowrap;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
   text-decoration: none;
   display: inline-flex;
   align-items: center;

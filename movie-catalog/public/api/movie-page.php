@@ -33,6 +33,10 @@ try {
     $mode = strtoupper($_GET['mode'] ?? 'AND');
     $mode = $mode === 'OR' ? 'OR' : 'AND';
     $fuzzy = filter_var($_GET['fuzzy'] ?? false, FILTER_VALIDATE_BOOLEAN);
+    $titleSearchMode = $_GET['titleMode'] ?? null;
+    $titleSearchMode = is_string($titleSearchMode)
+        ? strtoupper($titleSearchMode)
+        : null;
     $filters = $_GET['filters'] ?? [];
 
     // Compute page for given NUM
@@ -43,7 +47,8 @@ try {
         $dir,
         $filters,
         $mode,
-        $fuzzy
+        $fuzzy,
+        $titleSearchMode
     );
 
     echo json_encode([

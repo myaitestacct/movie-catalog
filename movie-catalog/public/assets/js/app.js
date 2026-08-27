@@ -1,6 +1,6 @@
 // app.js
 import { fetchMovies } from './core/api.js';
-import { state } from './core/state.js';
+import { state, TITLE_SEARCH_MODES } from './core/state.js';
 import { renderTable } from './table/table.js';
 import { initColumnToggles } from './table/columns.js';
 import { initSearch } from './table/search.js';
@@ -10,6 +10,17 @@ import { initStats, refreshStats } from './stats/stats.js';
 import { clearError, showError } from './utils/feedback.js';
 
 let table, searchRow, pagination, columns, statsPanel;
+
+function hasActiveSearchFilters() {
+  return Object.values(state.search).some(
+    value => String(value ?? '').trim() !== ''
+  );
+}
+
+function syncClearFiltersButton(button) {
+  if (!button) return;
+  button.disabled = !hasActiveSearchFilters();
+}
 
 /* ==============================
    EXPORTED: loadMovies
@@ -26,7 +37,8 @@ export async function loadMovies() {
       limit: state.limit,
       sort: state.sort,
       dir: state.dir,
-      mode: state.searchMode
+      mode: state.searchMode,
+      titleMode: state.titleSearchMode
     });
 
     Object.entries(state.search).forEach(([k, v]) => {
@@ -79,7 +91,28 @@ export async function loadMovies() {
   if (toggleContainer) initColumnToggles(table, toggleContainer);
 
   // 2️⃣ Search
-  initSearch(columns, searchRow, loadMovies);
+  const clearFiltersButton =
+    document.getElementById('clear-filters');
+
+  if (clearFiltersButton) {
+    clearFiltersButton.onclick = () => {
+      clearTimeout(state.debounce);
+      state.search = {};
+      searchRow.querySelectorAll('input').forEach(input => {
+        input.value = '';
+      });
+      state.page = 1;
+      syncClearFiltersButton(clearFiltersButton);
+      loadMovies();
+    };
+
+    syncClearFiltersButton(clearFiltersButton);
+  }
+
+  initSearch(columns, searchRow, () => {
+    syncClearFiltersButton(clearFiltersButton);
+    loadMovies();
+  });
 
   // 2.5️⃣ Search mode toggle
   const searchModeBtn = document.getElementById('search-mode');
@@ -95,17 +128,22 @@ export async function loadMovies() {
     };
   }
 
-  // 2.6️⃣ Fuzzy search toggle
-  const fuzzyBtn = document.getElementById('fuzzy-toggle');
-  if (fuzzyBtn) {
-    fuzzyBtn.textContent = `Fuzzy: ${state.fuzzy ? 'ON' : 'OFF'}`;
+  // 2.6️⃣ Explicit title-search mode
+  const titleSearchMode = document.getElementById('title-search-mode');
+  if (titleSearchMode) {
+    titleSearchMode.value = TITLE_SEARCH_MODES.includes(
+      state.titleSearchMode
+    )
+      ? state.titleSearchMode
+      : 'FUZZY';
 
-    fuzzyBtn.onclick = () => {
-      state.fuzzy = !state.fuzzy;
-      fuzzyBtn.textContent = `Fuzzy: ${state.fuzzy ? 'ON' : 'OFF'}`;
+    titleSearchMode.addEventListener('change', () => {
+      if (!TITLE_SEARCH_MODES.includes(titleSearchMode.value)) return;
+
+      state.titleSearchMode = titleSearchMode.value;
       state.page = 1;
       loadMovies();
-    };
+    });
   }
 
 /* ==============================

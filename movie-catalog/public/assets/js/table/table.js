@@ -1,5 +1,9 @@
 // table.js
-import { state, ALWAYS_VISIBLE } from '../core/state.js';
+import {
+  state,
+  ALWAYS_VISIBLE,
+  TITLE_SEARCH_MODES
+} from '../core/state.js';
 import { copyToClipboard } from '../utils/clipboard.js';
 import { configureExternalLink } from '../utils/url.js';
 import {
@@ -17,7 +21,8 @@ function isExactTitleMatch(movie, exactTitle) {
   return movieTitle.toLowerCase() === exactTitle.toLowerCase();
 }
 
-function createGroupHeader(type, count, exactTitle, columns, fuzzy) {
+function createGroupHeader(type, count, exactTitle, columns, titleSearchMode) {
+  const fuzzy = titleSearchMode === 'FUZZY';
   const tr = document.createElement('tr');
   tr.className = `group-header ${type}-header`;
   tr.dataset.testid = `${type}-header`;
@@ -38,14 +43,17 @@ function createGroupHeader(type, count, exactTitle, columns, fuzzy) {
   if (type === 'exact') {
     titleSpan.textContent = `Exact Matches (${count}) for "${exactTitle}"`;
   } else {
-    titleSpan.textContent = fuzzy
-      ? `Fuzzy / Contains Matches (${count})`
-      : `Other Matches (${count})`;
+    titleSpan.textContent = titleSearchMode === 'FUZZY'
+      ? `Fuzzy Matches (${count})`
+      : titleSearchMode === 'CONTAINS'
+        ? `Contains Matches (${count})`
+        : `Other Matches (${count})`;
   }
 
   const badge = document.createElement('span');
   badge.className = `group-header-badge ${type}-badge`;
-  badge.textContent = type === 'exact' ? 'EXACT' : (fuzzy ? 'FUZZY' : 'OTHER');
+  //badge.textContent =
+    //type === 'exact' ? ' EXACT' : (fuzzy ? ' FUZZY' : ' OTHER');
 
   wrapper.append(icon, titleSpan, badge);
   td.appendChild(wrapper);
@@ -53,7 +61,66 @@ function createGroupHeader(type, count, exactTitle, columns, fuzzy) {
   return tr;
 }
 
-function renderMovieRow(movie, rows, columns, termsByColumn, fuzzy) {
+function renderSearchGroupInfo(
+  infoBanner,
+  exactCount,
+  otherCount,
+  exactTitle,
+  titleSearchMode
+) {
+  const exactMessage = document.createElement('span');
+  exactMessage.className = 'info-exact';
+  exactMessage.textContent =
+    `✅ ${exactCount} exact match${exactCount === 1 ? '' : 'es'} for "${exactTitle}"`;
+
+  const separator = document.createElement('span');
+  separator.className = 'info-sep';
+  separator.textContent = '|';
+
+  const otherMessage = document.createElement('span');
+  otherMessage.className = 'info-fuzzy';
+
+  const modeLabel = titleSearchMode === 'FUZZY'
+    ? 'fuzzy'
+    : titleSearchMode === 'CONTAINS'
+      ? 'contains'
+      : 'other';
+
+  if (otherCount > 0) {
+    otherMessage.textContent =
+      `🔍 ${otherCount} ${modeLabel} match${otherCount === 1 ? '' : 'es'}`;
+  } else {
+    otherMessage.textContent = 'No additional matches';
+  }
+
+  const hint = document.createElement('span');
+  hint.className = 'info-hint';
+  hint.textContent = '– exact matches are shown first';
+
+  const noMatchMessage = document.createElement('span');
+  noMatchMessage.className = 'info-empty';
+  noMatchMessage.textContent = `No matches for "${exactTitle}"`;
+
+  infoBanner.className = 'search-group-info';
+
+  const messages = [];
+  if (exactCount > 0) {
+    messages.push(exactMessage);
+  }
+  if (otherCount > 0) {
+    if (messages.length > 0) messages.push(separator);
+    messages.push(otherMessage, hint);
+  } else if (exactCount > 0) {
+    messages.push(otherMessage);
+  }
+  if (messages.length === 0) {
+    messages.push(noMatchMessage);
+  }
+
+  infoBanner.replaceChildren(...messages);
+}
+
+function renderMovieRow(movie, rows, columns, termsByColumn, fuzzy, titleSearchMode) {
   const tr = document.createElement('tr');
   tr.dataset.num = movie.NUM;
 
@@ -64,6 +131,9 @@ function renderMovieRow(movie, rows, columns, termsByColumn, fuzzy) {
   tr.addEventListener('mouseleave', () => tr.classList.remove('row-hover'));
 
   columns.forEach(col => {
+    const highlightFuzzy = col === 'FORMATTEDTITLE'
+      ? titleSearchMode === 'FUZZY'
+      : fuzzy;
     const td = document.createElement('td');
     const visible = state.columnVisibility[col] ?? ALWAYS_VISIBLE.includes(col);
     td.style.display = visible ? '' : 'none';
@@ -74,8 +144,8 @@ function renderMovieRow(movie, rows, columns, termsByColumn, fuzzy) {
     if (col === 'NUM') {
       const span = document.createElement('span');
       span.className = 'num-value';
-      if (shouldHighlight(textValue, searchTerms, 'OR', fuzzy)) {
-        span.innerHTML = highlightMatch(textValue, searchTerms, fuzzy);
+      if (shouldHighlight(textValue, searchTerms, 'OR', highlightFuzzy)) {
+        span.innerHTML = highlightMatch(textValue, searchTerms, highlightFuzzy);
       } else {
         span.textContent = textValue;
       }
@@ -93,8 +163,8 @@ function renderMovieRow(movie, rows, columns, termsByColumn, fuzzy) {
       const a = document.createElement('a');
       a.href = '#';
       a.className = 'movie-title-link';
-      if (shouldHighlight(value, searchTerms, 'OR', fuzzy)) {
-        a.innerHTML = highlightMatch(value, searchTerms, fuzzy);
+      if (shouldHighlight(value, searchTerms, 'OR', highlightFuzzy)) {
+        a.innerHTML = highlightMatch(value, searchTerms, highlightFuzzy);
       } else {
         a.textContent = value;
       }
@@ -118,8 +188,8 @@ function renderMovieRow(movie, rows, columns, termsByColumn, fuzzy) {
         const hasExternalRating = configureExternalLink(a, movie.URL);
         a.className = 'rating-badge';
         a.title = hasExternalRating ? 'Open external rating' : 'External rating link unavailable';
-        if (shouldHighlight(textValue, searchTerms, 'OR', fuzzy)) {
-          a.innerHTML = highlightMatch(textValue, searchTerms, fuzzy);
+        if (shouldHighlight(textValue, searchTerms, 'OR', highlightFuzzy)) {
+          a.innerHTML = highlightMatch(textValue, searchTerms, highlightFuzzy);
         } else {
           a.textContent = textValue;
         }
@@ -130,8 +200,8 @@ function renderMovieRow(movie, rows, columns, termsByColumn, fuzzy) {
       const span = document.createElement('span');
       span.className = 'file-name';
       const fileName = movie.FILE ?? '';
-      if (shouldHighlight(fileName, searchTerms, 'OR', fuzzy)) {
-        span.innerHTML = highlightMatch(fileName, searchTerms, fuzzy);
+      if (shouldHighlight(fileName, searchTerms, 'OR', highlightFuzzy)) {
+        span.innerHTML = highlightMatch(fileName, searchTerms, highlightFuzzy);
       } else {
         span.textContent = fileName;
       }
@@ -146,8 +216,8 @@ function renderMovieRow(movie, rows, columns, termsByColumn, fuzzy) {
       };
       td.append(span, btn);
     } else {
-      if (shouldHighlight(value, searchTerms, 'OR', fuzzy)) {
-        td.innerHTML = highlightMatch(value, searchTerms, fuzzy);
+      if (shouldHighlight(value, searchTerms, 'OR', highlightFuzzy)) {
+        td.innerHTML = highlightMatch(value, searchTerms, highlightFuzzy);
       } else {
         td.textContent = value;
       }
@@ -166,6 +236,11 @@ export function renderTable(table, rows, columns) {
     columns.map(column => [column, collectColumnSearchTerms(state.search, column)])
   );
   const fuzzy = !!state.fuzzy;
+  const titleSearchMode = TITLE_SEARCH_MODES.includes(
+    state.titleSearchMode
+  )
+    ? state.titleSearchMode
+    : (fuzzy ? 'FUZZY' : 'CONTAINS');
 
   const rawTitleSearch = state.search.FORMATTEDTITLE || '';
   const { title: exactTitle } = parseTitleSearch(rawTitleSearch);
@@ -174,50 +249,53 @@ export function renderTable(table, rows, columns) {
   let fuzzyRows = [];
   let useGroupedRendering = false;
 
-  if (exactTitle && rows.length > 1) {
+  if (exactTitle) {
     rows.forEach(movie => {
       if (isExactTitleMatch(movie, exactTitle)) exactRows.push(movie);
       else fuzzyRows.push(movie);
     });
-    if (exactRows.length > 0 && fuzzyRows.length > 0) {
-      useGroupedRendering = true;
-    }
+
+    // Keep an exact result visibly identified even when the fuzzy search
+    // produces no additional rows, such as a long, specific title.
+    useGroupedRendering = exactRows.length > 0;
   }
 
   const infoBanner = document.getElementById('search-group-info');
   if (infoBanner) {
-    if (useGroupedRendering) {
-      infoBanner.className = 'search-group-info';
-      infoBanner.innerHTML = `
-        <span class="info-exact">✅ ${exactRows.length} exact match${exactRows.length===1?'':'es'} for "${exactTitle}"</span>
-        <span class="info-sep">|</span>
-        <span class="info-fuzzy">🔍 ${fuzzyRows.length} ${fuzzy ? 'fuzzy/contains' : 'other'} match${fuzzyRows.length===1?'':'es'}</span>
-        <span class="info-hint">– exact matches are highlighted green and shown first</span>
-      `;
+    if (exactTitle) {
+      renderSearchGroupInfo(
+        infoBanner,
+        exactRows.length,
+        fuzzyRows.length,
+        exactTitle,
+        titleSearchMode
+      );
     } else {
       infoBanner.className = 'search-group-info hidden';
-      infoBanner.innerHTML = '';
+      infoBanner.replaceChildren();
     }
   }
 
   if (useGroupedRendering) {
-    tbody.appendChild(createGroupHeader('exact', exactRows.length, exactTitle, columns, fuzzy));
+    tbody.appendChild(createGroupHeader('exact', exactRows.length, exactTitle, columns, titleSearchMode));
     exactRows.forEach(movie => {
-      const tr = renderMovieRow(movie, rows, columns, termsByColumn, fuzzy);
+      const tr = renderMovieRow(movie, rows, columns, termsByColumn, fuzzy, titleSearchMode);
       tr.classList.add('exact-match');
       tr.dataset.matchType = 'exact';
       tbody.appendChild(tr);
     });
-    tbody.appendChild(createGroupHeader('fuzzy', fuzzyRows.length, exactTitle, columns, fuzzy));
-    fuzzyRows.forEach(movie => {
-      const tr = renderMovieRow(movie, rows, columns, termsByColumn, fuzzy);
-      tr.classList.add('fuzzy-match');
-      tr.dataset.matchType = 'fuzzy';
-      tbody.appendChild(tr);
-    });
+    if (fuzzyRows.length > 0) {
+      tbody.appendChild(createGroupHeader('fuzzy', fuzzyRows.length, exactTitle, columns, titleSearchMode));
+      fuzzyRows.forEach(movie => {
+        const tr = renderMovieRow(movie, rows, columns, termsByColumn, fuzzy, titleSearchMode);
+        tr.classList.add('fuzzy-match');
+        tr.dataset.matchType = 'fuzzy';
+        tbody.appendChild(tr);
+      });
+    }
   } else {
     rows.forEach(movie => {
-      const tr = renderMovieRow(movie, rows, columns, termsByColumn, fuzzy);
+      const tr = renderMovieRow(movie, rows, columns, termsByColumn, fuzzy, titleSearchMode);
       if (exactTitle) {
         if (isExactTitleMatch(movie, exactTitle)) {
           tr.classList.add('exact-match');
