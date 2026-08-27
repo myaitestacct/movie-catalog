@@ -1,17 +1,38 @@
 <div class="column-toggles">
-    <button type="button" id="theme-toggle">🌙</button>
-    <button type="button" id="search-mode" class="search-mode">AND</button>
+    <button
+        type="button"
+        id="theme-toggle"
+    >
+        🌙
+    </button>
 
-    <label class="title-search-mode" for="title-search-mode">
+    <button
+        type="button"
+        id="search-mode"
+        class="search-mode"
+    >
+        AND
+    </button>
+
+    <label
+        class="title-search-mode"
+        for="title-search-mode"
+    >
         <span>Title:</span>
 
         <select
             id="title-search-mode"
             aria-label="Title search mode"
         >
-            <option value="EXACT">Exact</option>
-            <option value="CONTAINS">Contains</option>
-            <option value="FUZZY">Fuzzy</option>
+            <option value="EXACT">
+                Exact
+            </option>
+            <option value="CONTAINS">
+                Contains
+            </option>
+            <option value="FUZZY">
+                Fuzzy
+            </option>
         </select>
     </label>
 
@@ -106,33 +127,79 @@
     <table id="movies">
         <thead>
         <tr>
-            <th data-col="NUM">No</th>
-            <th data-col="FORMATTEDTITLE">Title</th>
-            <th data-col="YEAR">Year</th>
-            <th data-col="RATING">Rating</th>
-            <th data-col="FILESIZE">Size</th>
-            <th data-col="CERTIFICATION" style="display:none;">
+            <th data-col="NUM">
+                No
+            </th>
+
+            <th data-col="FORMATTEDTITLE">
+                Title
+            </th>
+
+            <th data-col="YEAR">
+                Year
+            </th>
+
+            <th data-col="RATING">
+                Rating
+            </th>
+
+            <th data-col="FILESIZE">
+                Size
+            </th>
+
+            <th
+                data-col="CERTIFICATION"
+                style="display:none;"
+            >
                 Cert
             </th>
-            <th data-col="LENGTH" style="display:none;">
+
+            <th
+                data-col="LENGTH"
+                style="display:none;"
+            >
                 Length
             </th>
-            <th data-col="LANGUAGES" style="display:none;">
+
+            <th
+                data-col="LANGUAGES"
+                style="display:none;"
+            >
                 Language
             </th>
-            <th data-col="CATEGORY" style="display:none;">
+
+            <th
+                data-col="CATEGORY"
+                style="display:none;"
+            >
                 Genre
             </th>
-            <th data-col="RESOLUTION" style="display:none;">
+
+            <th
+                data-col="RESOLUTION"
+                style="display:none;"
+            >
                 Resolution
             </th>
-            <th data-col="AUDIOFORMAT" style="display:none;">
+
+            <th
+                data-col="AUDIOFORMAT"
+                style="display:none;"
+            >
                 Audio
             </th>
-            <th data-col="FILEPATH" style="display:none;">
+
+            <th
+                data-col="FILEPATH"
+                style="display:none;"
+            >
                 File
             </th>
-            <th data-col="PATH" style="display:none;">
+
+            <th
+                data-col="PATH"
+                style="display:none;"
+            >
                 Path
             </th>
         </tr>
