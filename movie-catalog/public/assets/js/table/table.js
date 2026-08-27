@@ -98,7 +98,7 @@ function renderSearchGroupInfo(
     otherMessage.textContent =
       `🔍 ${otherCount} ${modeLabel} match${otherCount === 1 ? '' : 'es'}`;
   } else {
-    otherMessage.textContent = 'No additional matches';
+    otherMessage.textContent = '. No additional matches';
   }
 
   const hint = document.createElement('span');
