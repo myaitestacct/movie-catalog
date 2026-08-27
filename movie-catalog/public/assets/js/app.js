@@ -9,8 +9,14 @@ import { initColumnToggles } from './table/columns.js';
 import { initSearch } from './table/search.js';
 import { initSorting } from './table/sorting.js';
 import { renderPagination } from './table/pagination.js';
-import { initStats, refreshStats } from './stats/stats.js';
-import { clearError, showError } from './utils/feedback.js';
+import {
+  initStats,
+  refreshStats
+} from './stats/stats.js';
+import {
+  clearError,
+  showError
+} from './utils/feedback.js';
 
 let table;
 let searchRow;
@@ -20,14 +26,16 @@ let statsPanel;
 
 function hasActiveSearchFilters() {
   return Object.values(state.search).some(
-    value => String(value ?? '').trim() !== ''
+    value =>
+      String(value ?? '').trim() !== ''
   );
 }
 
 function syncClearFiltersButton(button) {
   if (!button) return;
 
-  button.disabled = !hasActiveSearchFilters();
+  button.disabled =
+    !hasActiveSearchFilters();
 }
 
 /* ==============================
@@ -37,7 +45,9 @@ export async function loadMovies() {
   table.classList.remove('show');
   table.classList.add('table-fade');
 
-  await new Promise(resolve => setTimeout(resolve, 150));
+  await new Promise(resolve =>
+    setTimeout(resolve, 150)
+  );
 
   try {
     const params = new URLSearchParams({
@@ -49,17 +59,20 @@ export async function loadMovies() {
       titleMode: state.titleSearchMode
     });
 
-    Object.entries(state.search).forEach(([key, value]) => {
-      if (value) {
-        params.append(key, value);
+    Object.entries(state.search).forEach(
+      ([key, value]) => {
+        if (value) {
+          params.append(key, value);
+        }
       }
-    });
+    );
 
     if (state.fuzzy) {
       params.append('fuzzy', 'true');
     }
 
-    const data = await fetchMovies(params);
+    const data =
+      await fetchMovies(params);
 
     clearError('movies');
 
@@ -78,15 +91,21 @@ export async function loadMovies() {
     );
 
     if (
-      statsPanel?.classList.contains('show')
+      statsPanel?.classList.contains(
+        'show'
+      )
     ) {
       refreshStats();
     }
   } catch (error) {
-    console.error('Movie load failed:', error);
+    console.error(
+      'Movie load failed:',
+      error
+    );
 
     showError(
-      error.message || 'Unable to load movies',
+      error.message ||
+        'Unable to load movies',
       {
         scope: 'movies',
         retry: loadMovies
@@ -103,22 +122,43 @@ export async function loadMovies() {
    INIT
 ============================== */
 (async function init() {
-  table = document.getElementById('movies');
-  searchRow = document.getElementById('search-row');
-  pagination = document.getElementById('pagination');
-  statsPanel = document.getElementById('stats-panel');
+  table =
+    document.getElementById('movies');
 
-  if (!table || !searchRow || !pagination) {
+  searchRow =
+    document.getElementById(
+      'search-row'
+    );
+
+  pagination =
+    document.getElementById(
+      'pagination'
+    );
+
+  statsPanel =
+    document.getElementById(
+      'stats-panel'
+    );
+
+  if (
+    !table ||
+    !searchRow ||
+    !pagination
+  ) {
     return;
   }
 
   columns = [
-    ...table.querySelectorAll('thead th')
+    ...table.querySelectorAll(
+      'thead th'
+    )
   ].map(th => th.dataset.col);
 
   // 1️⃣ Column toggles
   const toggleContainer =
-    document.querySelector('.column-toggles');
+    document.querySelector(
+      '.column-toggles'
+    );
 
   if (toggleContainer) {
     initColumnToggles(
@@ -129,7 +169,9 @@ export async function loadMovies() {
 
   // 2️⃣ Search
   const clearFiltersButton =
-    document.getElementById('clear-filters');
+    document.getElementById(
+      'clear-filters'
+    );
 
   if (clearFiltersButton) {
     clearFiltersButton.onclick = () => {
@@ -141,12 +183,6 @@ export async function loadMovies() {
         .querySelectorAll('input')
         .forEach(input => {
           input.value = '';
-        });
-
-      searchRow
-        .querySelectorAll('.clear-search')
-        .forEach(button => {
-          button.hidden = true;
         });
 
       state.page = 1;
@@ -177,7 +213,9 @@ export async function loadMovies() {
 
   // 2.5️⃣ Search mode toggle
   const searchModeBtn =
-    document.getElementById('search-mode');
+    document.getElementById(
+      'search-mode'
+    );
 
   if (searchModeBtn) {
     searchModeBtn.textContent =
@@ -241,7 +279,9 @@ export async function loadMovies() {
   ============================== */
 
   const themeToggle =
-    document.getElementById('theme-toggle');
+    document.getElementById(
+      'theme-toggle'
+    );
 
   if (themeToggle) {
     const storedTheme =
@@ -270,17 +310,31 @@ export async function loadMovies() {
         document.documentElement;
 
       if (
-        root.classList.contains('theme-dark')
+        root.classList.contains(
+          'theme-dark'
+        )
       ) {
-        root.classList.remove('theme-dark');
-        root.classList.add('theme-light');
+        root.classList.remove(
+          'theme-dark'
+        );
+
+        root.classList.add(
+          'theme-light'
+        );
+
         localStorage.setItem(
           'theme',
           'light'
         );
       } else {
-        root.classList.remove('theme-light');
-        root.classList.add('theme-dark');
+        root.classList.remove(
+          'theme-light'
+        );
+
+        root.classList.add(
+          'theme-dark'
+        );
+
         localStorage.setItem(
           'theme',
           'dark'
@@ -292,11 +346,16 @@ export async function loadMovies() {
   }
 
   // 3️⃣ Sorting
-  initSorting(table, loadMovies);
+  initSorting(
+    table,
+    loadMovies
+  );
 
   // 4️⃣ Stats
   const statsToggle =
-    document.getElementById('stats-toggle');
+    document.getElementById(
+      'stats-toggle'
+    );
 
   if (statsToggle && statsPanel) {
     initStats(
@@ -305,7 +364,9 @@ export async function loadMovies() {
     );
 
     if (
-      statsPanel.classList.contains('show')
+      statsPanel.classList.contains(
+        'show'
+      )
     ) {
       refreshStats();
     }
