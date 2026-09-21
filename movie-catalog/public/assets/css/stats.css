@@ -16,6 +16,9 @@
     --text-main: #222;
     --text-muted: #666;
     --border-panel: #eee;
+    --stats-link: #0b5ed7;
+    --stats-link-hover: #084298;
+    --stats-link-visited: #6f42c1;
     --health-good: #157347;
     --health-warning: #8a5a00;
     --health-critical: #bb2d3b;
@@ -56,7 +59,7 @@
 }
 
 .stats-ribbon {
-    right: 20px;
+    right: 27px;
     border-radius: 0 0 var(--radius-sm) var(--radius-sm);
 }
 
@@ -1055,6 +1058,43 @@
 }
 
 /* ==========================
+   Modal Links (movie IDs, IMDb)
+   Default browser blue is unreadable on dark
+   backgrounds, so links use theme-aware colors.
+========================== */
+.stats-modal a {
+    color: var(--stats-link);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    border-radius: 2px;
+}
+
+.stats-modal a:visited {
+    color: var(--stats-link-visited);
+}
+
+/* Jump-to-row links navigate within the page, so they
+   keep the standard link color even after being used. */
+.stats-modal a.jump-to-row:visited {
+    color: var(--stats-link);
+}
+
+.stats-modal a:hover {
+    color: var(--stats-link-hover);
+}
+
+.stats-modal a:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.stats-modal a[aria-disabled='true'] {
+    color: var(--text-muted);
+    text-decoration: none;
+    cursor: default;
+}
+
+/* ==========================
    Animations
 ========================== */
 @keyframes fadeIn {
@@ -1089,6 +1129,9 @@
     --health-good: #4dd187;
     --health-warning: #ffc857;
     --health-critical: #ff6b78;
+    --stats-link: #8ab4ff;
+    --stats-link-hover: #b6d0ff;
+    --stats-link-visited: #c4b5fd;
 }
 
 /* Follow system dark mode until the user explicitly selects light mode. */
@@ -1107,6 +1150,9 @@
         --health-good: #4dd187;
         --health-warning: #ffc857;
         --health-critical: #ff6b78;
+		--stats-link: #8ab4ff;
+		--stats-link-hover: #b6d0ff;
+		--stats-link-visited: #c4b5fd;
     }
 }
 .table-fade {
