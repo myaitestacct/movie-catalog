@@ -10,7 +10,8 @@
     "test:browser:headed": "playwright test --headed",
     "build": "node build.mjs",
     "build:watch": "node build.mjs --watch",
-    "dev": "npm run build && npm run test:js"
+    "dev": "node build.mjs --watch --serve",
+    "dev:demo": "node tests/browser/support/mock-server.mjs"
   },
   "engines": {
     "node": ">=20",

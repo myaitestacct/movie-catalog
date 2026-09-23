@@ -66,7 +66,6 @@ $repositoryReflection = new ReflectionClass(MovieRepository::class);
 $repository = $repositoryReflection->newInstanceWithoutConstructor();
 
 $parseTitleFilter = $repositoryReflection->getMethod('parseTitleFilter');
-$parseTitleFilter->setAccessible(true);
 
 $titleCases = [
     'Sing (2016)' => ['Sing', '2016'],
@@ -89,7 +88,6 @@ foreach ($titleCases as $input => $expected) {
 }
 
 $buildLikePattern = $repositoryReflection->getMethod('buildLikePattern');
-$buildLikePattern->setAccessible(true);
 
 assertSameValue(
     '%Alien%',
@@ -109,28 +107,87 @@ assertSameValue(
     'LIKE pattern escapes wildcard and escape characters'
 );
 
+// File is the displayed basename, not the hidden full FILEPATH. These same
+// builders are used by getMovies(), countMovies(), and getPageForMovie().
+$buildWhereClause = $repositoryReflection->getMethod('buildWhereClause');
+$buildOrderByClause = $repositoryReflection->getMethod('buildOrderByClause');
+$fileExpression = "SUBSTRING_INDEX(REPLACE(COALESCE(`FILEPATH`, ''), CHAR(92), '/'), '/', -1)";
+
+foreach ([true, false] as $fuzzy) {
+    foreach (['EXACT', 'CONTAINS', 'FUZZY'] as $titleMode) {
+        [$where, $params] = $buildWhereClause->invoke(
+            $repository, ['FILEPATH' => 'missing'], 'AND', $fuzzy, $titleMode
+        );
+        assertSameValue(
+            " WHERE (LOWER($fileExpression) LIKE LOWER(:FILEPATH) ESCAPE '=')",
+            $where,
+            'File searches the basename case-insensitively for ' . $titleMode
+        );
+        assertSameValue(
+            ['FILEPATH' => '%missing%'],
+            $params,
+            'File always uses a contiguous contains pattern, independent of fuzzy flags'
+        );
+    }
+}
+
+[, $fileWildcardParams] = $buildWhereClause->invoke(
+    $repository, ['FILEPATH' => '100%_cut='], 'AND', true, 'FUZZY'
+);
+assertSameValue(
+    ['FILEPATH' => '%100=%=_cut==%'],
+    $fileWildcardParams,
+    'File filter treats percent, underscore, and equals as literal characters'
+);
+
+$pathExpression = $repositoryReflection->getMethod('pathSqlExpression')->invoke($repository);
+[$combinedWhere, $combinedParams] = $buildWhereClause->invoke(
+    $repository, ['FILEPATH' => 'missing', 'PATH' => 'archive'], 'OR', true, 'FUZZY'
+);
+assertSameValue(
+    " WHERE (LOWER($fileExpression) LIKE LOWER(:FILEPATH) ESCAPE '=' OR " .
+    "LOWER($pathExpression) LIKE LOWER(:PATH) ESCAPE '=')",
+    $combinedWhere,
+    'OR combines the independent File and folder Path predicates'
+);
+assertSameValue(
+    ['FILEPATH' => '%missing%', 'PATH' => '%archive%'],
+    $combinedParams,
+    'Folder Path also uses literal contains matching'
+);
+
+[$fileOrder] = $buildOrderByClause->invoke($repository, [], 'FILEPATH', 'DESC', true, 'FUZZY');
+assertSameValue(
+    "$fileExpression DESC, `NUM` ASC",
+    $fileOrder,
+    'File sorting and page lookup order by the displayed basename with a stable tiebreaker'
+);
+
+[, $titleParams] = $buildWhereClause->invoke(
+    $repository, ['FORMATTEDTITLE' => 'missing', 'FILEPATH' => 'missing'], 'AND', true, 'FUZZY'
+);
+assertSameValue(
+    ['title' => '%m%i%s%s%i%n%g%', 'FILEPATH' => '%missing%'],
+    $titleParams,
+    'Title retains ordered-character fuzzy search without affecting File'
+);
+
 $statsReflection = new ReflectionClass(StatsController::class);
 $statsController = $statsReflection->newInstanceWithoutConstructor();
 $calculateHealthScore = $statsReflection->getMethod('calculateHealthScore');
-$calculateHealthScore->setAccessible(true);
 $buildReleaseYearAnalytics = $statsReflection->getMethod(
     'buildReleaseYearAnalytics'
 );
-$buildReleaseYearAnalytics->setAccessible(true);
 $buildGenreAnalytics = $statsReflection->getMethod('buildGenreAnalytics');
-$buildGenreAnalytics->setAccessible(true);
 $buildRatingRuntimeAnalytics = $statsReflection->getMethod(
     'buildRatingRuntimeAnalytics'
 );
-$buildRatingRuntimeAnalytics->setAccessible(true);
 $buildStorageAnalytics = $statsReflection->getMethod(
     'buildStorageAnalytics'
 );
-$buildStorageAnalytics->setAccessible(true);
 $buildDelimitedValueAnalytics = $statsReflection->getMethod(
     'buildDelimitedValueAnalytics'
 );
-$buildDelimitedValueAnalytics->setAccessible(true);
 
 assertSameValue(
     [
@@ -351,7 +408,6 @@ assertSameValue(
 
 $cacheController = $statsReflection->newInstanceWithoutConstructor();
 $cacheConfig = $statsReflection->getProperty('config');
-$cacheConfig->setAccessible(true);
 $cacheConfig->setValue($cacheController, [
     'stats' => [
         'cache_enabled' => true,
@@ -361,15 +417,11 @@ $cacheConfig->setValue($cacheController, [
 
 $cachePath = sys_get_temp_dir() . '/movie-catalog-cache-' . bin2hex(random_bytes(8)) . '/stats.json';
 $cachePathProperty = $statsReflection->getProperty('statsCachePath');
-$cachePathProperty->setAccessible(true);
 $cachePathProperty->setValue($cacheController, $cachePath);
 
 $writeStatsCache = $statsReflection->getMethod('writeStatsCache');
-$writeStatsCache->setAccessible(true);
 $readStatsCache = $statsReflection->getMethod('readStatsCache');
-$readStatsCache->setAccessible(true);
 $clearStatsCache = $statsReflection->getMethod('clearStatsCache');
-$clearStatsCache->setAccessible(true);
 
 $cachedStats = [
     'total_movies' => 42,

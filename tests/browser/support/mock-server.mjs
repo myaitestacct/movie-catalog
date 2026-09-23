@@ -19,7 +19,7 @@ const viewsRoot =
   path.join(applicationRoot, 'src/views');
 
 const host =
-  process.env.HOST || '127.0.0.1';
+  process.env.HOST || '0.0.0.0';
 
 const port =
   Number(process.env.PORT || 4173);
@@ -57,7 +57,7 @@ function createMovie(number, overrides = {}) {
       '-'
     )}.mkv`;
 
-  return {
+  const movie = {
     NUM: String(number),
     FORMATTEDTITLE: title,
     ORIGINALTITLE:
@@ -112,6 +112,14 @@ function createMovie(number, overrides = {}) {
         '-'
       )}.jpg`,
     ...overrides
+  };
+
+  const filepath = String(movie.FILEPATH ?? '');
+  const separator = Math.max(filepath.lastIndexOf('/'), filepath.lastIndexOf('\\'));
+  return {
+    ...movie,
+    FILE: filepath.slice(separator + 1),
+    PATH: separator < 0 ? '' : filepath.slice(0, separator)
   };
 }
 
@@ -198,6 +206,15 @@ movies[5] = createMovie(6, {
     'A young blade runner uncovers a long-buried secret.',
   PICTURENAME: 'blade-runner-2049.jpg'
 });
+
+// Cover literal filename matches, fuzzy-only matches, hidden folder matches,
+// Windows/Unix paths, and SQL LIKE wildcard characters.
+movies[10] = createMovie(11, { FILEPATH: 'MISSING' });
+movies[16] = createMovie(17, { FILEPATH: 'D:\\Movies\\Mission.Spring.mkv' });
+movies[17] = createMovie(18, { FILEPATH: '/archive/missing/ordinary.mkv' });
+movies[18] = createMovie(19, { FILEPATH: 'D:\\Movies\\Missing.Pieces.mkv' });
+movies[19] = createMovie(20, { FILEPATH: '/archive/100%_=.mkv' });
+movies[50] = createMovie(51, { FILEPATH: '/archive/movie-051-Get.Better.Copy.mkv' });
 
 const metadataFields = [
   ['description', 'Description', 3],
@@ -672,7 +689,7 @@ function fuzzyMatch(
   return true;
 }
 
-function movieResponse(url) {
+function movieResponse(url, { allRows = false } = {}) {
   const reservedParameters =
     new Set([
       'page',
@@ -730,7 +747,7 @@ function movieResponse(url) {
       rawFilters.map(
         ([column, term]) => {
           const movieVal =
-            String(movie[column] ?? '');
+            String(movie[column === 'FILEPATH' ? 'FILE' : column] ?? '');
 
           if (column === 'FORMATTEDTITLE') {
             const {
@@ -770,7 +787,11 @@ function movieResponse(url) {
             return titleMatch && yearMatch;
           }
 
-          if (isFuzzy) {
+          if (['NUM', 'YEAR', 'LENGTH', 'FILESIZE'].includes(column)) {
+            return Number(movieVal) === Number.parseInt(term, 10);
+          }
+
+          if (isFuzzy && !['FILEPATH', 'PATH'].includes(column)) {
             return fuzzyMatch(movieVal, term);
           }
 
@@ -854,11 +875,12 @@ function movieResponse(url) {
           }
         }
 
-        return compareValues(
-          left[sort],
-          right[sort]
-        ) * direction;
+        const column = sort === 'FILEPATH' ? 'FILE' : sort;
+        return compareValues(left[column], right[column]) * direction ||
+          compareValues(left.NUM, right.NUM);
       });
+
+  if (allRows) return filtered;
 
   const requestedLimit =
     Number(
@@ -869,7 +891,7 @@ function movieResponse(url) {
     Math.max(
       1,
       Math.min(
-        100,
+        200,
         Math.trunc(requestedLimit)
       )
     );
@@ -1124,32 +1146,31 @@ async function handleApi(
     case '/api/better-copy.php':
       sendJson(
         response,
-        [movies[15]].map(issueRow)
+        [movies[50]].map(issueRow)
       );
       return;
 
     case '/api/movie-page.php': {
-      const num =
-        url.searchParams.get('num');
-
-      const index =
-        movies.findIndex(
-          movie => movie.NUM === num
-        );
-
-      sendJson(
-        response,
-        index === -1
-          ? {
-              found: false
-            }
-          : {
-              found: true,
-              page:
-                Math.floor(index / 50) + 1
-            }
-      );
-
+      const num = url.searchParams.get('num');
+      const query = new URL('/api/movies.php', url);
+      for (const key of ['sort', 'dir', 'mode', 'fuzzy', 'titleMode']) {
+        if (url.searchParams.has(key)) {
+          query.searchParams.set(key, url.searchParams.get(key));
+        }
+      }
+      for (const [key, value] of url.searchParams) {
+        const match = key.match(/^filters\[([A-Z]+)\]$/);
+        if (match) query.searchParams.set(match[1], value);
+      }
+      const filtered = movieResponse(query, { allRows: true });
+      const index = filtered.findIndex(movie => movie.NUM === num);
+      const perPage = Math.max(1, Math.min(200,
+        Number.parseInt(url.searchParams.get('perPage') || '50', 10) || 1
+      ));
+      sendJson(response, {
+        found: index >= 0,
+        page: index < 0 ? null : Math.floor(index / perPage) + 1
+      });
       return;
     }
 

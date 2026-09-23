@@ -8,6 +8,10 @@ movie-catalog/src/config/database.local.json
 movie-catalog/var/cache/*.json
 movie-catalog/var/cache/*.cache
 
+# Generated assets and local poster exports
+movie-catalog/public/assets/dist/
+movie-catalog/public/movies/antexport/
+
 # Node.js test tooling
 node_modules/
 npm-debug.log*

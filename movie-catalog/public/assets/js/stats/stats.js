@@ -28,7 +28,7 @@ import {
     fetchStats
 } from '../core/api.js';
 import { createLatestRequest, isAbortError } from '../core/request.js';
-import { state } from '../core/state.js';
+import { state, getMovieStateSignature } from '../core/state.js';
 import { clearError, showError } from '../utils/feedback.js';
 import { configureExternalLink } from '../utils/url.js';
 import { loadMovies } from '../app.js';
@@ -894,22 +894,6 @@ function renderGetBetterCopyPage() {
    Jump to table row
 ============================= */
 
-function getMovieStateSignature() {
-    return JSON.stringify({
-        page: state.page,
-        limit: state.limit,
-        sort: state.sort,
-        dir: state.dir,
-        mode: state.searchMode,
-        fuzzy: state.fuzzy,
-        titleMode: state.titleSearchMode,
-        search: Object.entries(state.search).sort(
-            ([left], [right]) =>
-                left.localeCompare(right)
-        )
-    });
-}
-
 async function jumpToMovie(num) {
     const request = movieJumpRequests.start();
     const movieStateSignature =
@@ -959,22 +943,31 @@ async function jumpToMovie(num) {
             return;
         }
 
-        const targetPage = data.page;
+        // state.page can already point to a page whose load is still pending
+        // (for example after a second click). Await a current render even then.
+        state.page = data.page;
+        const targetSignature = getMovieStateSignature();
+        const rendered = await loadMovies();
 
-        if (targetPage !== state.page) {
-            state.page = targetPage;
-            const rendered = await loadMovies();
-
-            if (!rendered || !request.isCurrent()) {
-                return;
-            }
+        if (
+            !rendered || !request.isCurrent() ||
+            targetSignature !== getMovieStateSignature()
+        ) {
+            return;
         }
 
         const row = document.querySelector(
-            `tr[data-num="${num}"]`
+            `tr[data-num="${CSS.escape(String(num))}"]`
         );
 
         if (!row) return;
+
+        // Reveal the destination rather than leaving it behind a stats dialog.
+        duplicateModal?.classList.add('hidden');
+        getBetterCopyModal?.classList.add('hidden');
+        closeLibraryIssueModal(false);
+        closePanel();
+        row.querySelector('.movie-title-link')?.focus({ preventScroll: true });
 
         row.scrollIntoView({
             behavior: 'smooth',

@@ -1,5 +1,5 @@
 // app.js
-import { fetchMovies } from './core/api.js';
+import { createMovieLoader } from './core/movie-loader.js';
 import {
   state,
   TITLE_SEARCH_MODES
@@ -41,47 +41,15 @@ function syncClearFiltersButton(button) {
 /* ==============================
    EXPORTED: loadMovies
 ============================== */
-export async function loadMovies() {
-  table.classList.remove('show');
-  table.classList.add('table-fade');
-
-  await new Promise(resolve =>
-    setTimeout(resolve, 150)
-  );
-
-  try {
-    const params = new URLSearchParams({
-      page: state.page,
-      limit: state.limit,
-      sort: state.sort,
-      dir: state.dir,
-      mode: state.searchMode,
-      titleMode: state.titleSearchMode
-    });
-
-    Object.entries(state.search).forEach(
-      ([key, value]) => {
-        if (value) {
-          params.append(key, value);
-        }
-      }
-    );
-
-    if (state.fuzzy) {
-      params.append('fuzzy', 'true');
-    }
-
-    const data =
-      await fetchMovies(params);
-
+const loadMoviePage = createMovieLoader({
+  onStart() {
+    table.classList.remove('show');
+    table.classList.add('table-fade');
+    table.setAttribute('aria-busy', 'true');
+  },
+  render(data) {
     clearError('movies');
-
-    renderTable(
-      table,
-      data.data,
-      columns
-    );
-
+    renderTable(table, data.data, columns);
     renderPagination(
       pagination,
       data.pages,
@@ -90,32 +58,28 @@ export async function loadMovies() {
       loadMovies
     );
 
-    if (
-      statsPanel?.classList.contains(
-        'show'
-      )
-    ) {
+    if (statsPanel?.classList.contains('show')) {
       refreshStats();
     }
-  } catch (error) {
-    console.error(
-      'Movie load failed:',
-      error
-    );
-
-    showError(
-      error.message ||
-        'Unable to load movies',
-      {
-        scope: 'movies',
-        retry: loadMovies
-      }
-    );
-  } finally {
+  },
+  onError(error) {
+    console.error('Movie load failed:', error);
+    showError(error.message || 'Unable to load movies', {
+      scope: 'movies',
+      retry: loadMovies
+    });
+  },
+  onFinish(isCurrent) {
     requestAnimationFrame(() => {
+      if (!isCurrent()) return;
+      table.setAttribute('aria-busy', 'false');
       table.classList.add('show');
     });
   }
+});
+
+export async function loadMovies() {
+  return loadMoviePage();
 }
 
 /* ==============================
@@ -176,6 +140,7 @@ export async function loadMovies() {
   if (clearFiltersButton) {
     clearFiltersButton.onclick = () => {
       clearTimeout(state.debounce);
+      state.debounce = null;
 
       state.search = {};
 
@@ -202,13 +167,8 @@ export async function loadMovies() {
   initSearch(
     columns,
     searchRow,
-    () => {
-      syncClearFiltersButton(
-        clearFiltersButton
-      );
-
-      loadMovies();
-    }
+    loadMovies,
+    () => syncClearFiltersButton(clearFiltersButton)
   );
 
   // 2.5️⃣ Search mode toggle

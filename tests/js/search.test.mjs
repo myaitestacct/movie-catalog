@@ -94,3 +94,49 @@ test(
     );
   }
 );
+
+test('editing two columns within one debounce interval retains both filters', t => {
+  const timers = new Map();
+  let nextTimer = 0;
+  t.mock.method(globalThis, 'setTimeout', callback => {
+    timers.set(++nextTimer, callback);
+    return nextTimer;
+  });
+  t.mock.method(globalThis, 'clearTimeout', id => timers.delete(id));
+
+  state.search = {};
+  state.page = 3;
+  let reloads = 0;
+  let changes = 0;
+  const row = new MockElement('tr');
+  initSearch(['FORMATTEDTITLE', 'YEAR'], row, () => reloads++, () => changes++);
+  const title = row.children[0].children[0];
+  const year = row.children[1].children[0];
+
+  title.value = ' Arrival ';
+  title.listeners.get('input')();
+  year.value = '2016';
+  year.listeners.get('input')();
+
+  assert.deepEqual(state.search, { FORMATTEDTITLE: 'Arrival', YEAR: '2016' });
+  assert.equal(state.page, 1);
+  assert.equal(changes, 2, 'clear-filter controls can update before the debounce');
+  assert.equal(reloads, 0);
+  assert.equal(timers.size, 1);
+  [...timers.values()][0]();
+  assert.equal(reloads, 1);
+  assert.equal(state.debounce, null);
+});
+
+test('clearing a field updates state before a pending response can render', t => {
+  t.mock.method(globalThis, 'setTimeout', () => 1);
+  t.mock.method(globalThis, 'clearTimeout', () => {});
+  state.search = { FILEPATH: 'missing' };
+  const row = new MockElement('tr');
+  initSearch(['FILEPATH'], row, () => {});
+  const input = row.children[0].children[0];
+  input.value = '';
+  input.listeners.get('input')();
+  assert.equal(state.search.FILEPATH, '');
+  assert.match(input.title, /filename only/);
+});

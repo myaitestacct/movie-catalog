@@ -5,7 +5,7 @@ $bundleJs = $publicRoot . '/assets/dist/bundle.js';
 $hasBundleJs = is_file($bundleJs);
 ?>
 <?php if ($hasBundleJs): ?>
-<script type="module" src="assets/dist/bundle.js"></script>
+<script type="module" src="assets/dist/bundle.js?v=<?= filemtime($bundleJs) ?>"></script>
 <?php else: ?>
 <script type="module" src="assets/js/app.js"></script>
 <?php endif; ?>

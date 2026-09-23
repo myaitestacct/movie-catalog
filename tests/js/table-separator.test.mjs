@@ -463,3 +463,24 @@ test('title and year parsing still groups exact and fuzzy matches', () => {
     'fuzzy'
   );
 });
+
+test('File and Path highlighting is literal even when title fuzzy search is enabled', () => {
+  installDocumentMock();
+  const { table, tbody } = makeTable();
+  state.search = { FILEPATH: 'missing', PATH: 'missing' };
+  state.fuzzy = true;
+  state.titleSearchMode = 'FUZZY';
+  state.columnVisibility = { FILEPATH: true, PATH: true };
+
+  // The second row could be returned by OR filtering on another column; do
+  // not misleadingly mark a fuzzy filename match that the server no longer uses.
+  renderTable(table, [
+    { NUM: '1', FILEPATH: 'MISSING', FILE: 'MISSING', PATH: '' },
+    { NUM: '2', FILEPATH: 'C:\\Missing\\Mission.Spring.mkv', FILE: 'Mission.Spring.mkv', PATH: 'C:\\Missing' }
+  ], ['FILEPATH', 'PATH']);
+
+  assert.equal(tbody.children[0].children[0].children[0].innerHTML, '<mark>MISSING</mark>');
+  assert.equal(tbody.children[1].children[0].children[0].innerHTML, '');
+  assert.equal(tbody.children[1].children[0].children[0].textContent, 'Mission.Spring.mkv');
+  assert.equal(tbody.children[1].children[1].innerHTML, 'C:\\<mark>Missing</mark>');
+});
