@@ -1,99 +1,107 @@
 # Regression tests
 
-The regression suite does not connect to the movie database. JavaScript and PHP tests exercise focused modules directly, while Playwright loads the real browser modules and view markup against a deterministic local mock API.
+The default suite does **not** connect to a movie database. Node and PHP tests
+exercise focused modules directly. Playwright loads the real frontend and view
+markup against a deterministic local mock API. See the root [README](../README.md)
+for installation, the database-free demo, and a real PHP/MySQL development setup.
 
-## Requirements
+## Requirements and install
 
-- Node.js 20 or newer
-- PHP 8.3 or newer with PDO enabled
-- Chromium for the browser suite
+- Node.js 20 or newer (22 LTS recommended), with npm.
+- PHP 8.3 or newer with PDO enabled for the PHP helper tests.
+- Chromium and its system dependencies for browser tests.
 
-Install the Node.js dependency and Playwright browser once from the repository root:
+From the repository root:
 
 ```sh
-npm install
+npm ci
 npx playwright install chromium
 ```
 
-On a fresh Linux CI host, Playwright can install Chromium and its operating-system dependencies together:
+On a fresh Linux CI host, install Chromium's operating-system dependencies too:
 
 ```sh
 npx playwright install --with-deps chromium
 ```
 
-## Run all tests
-
-```sh
-npm test
-```
-
-This runs the JavaScript, PHP, and browser suites in that order.
-
-## Run JavaScript tests
-
-```sh
-npm run test:js
-```
-
-The JavaScript suite covers:
-
-- API response parsing, validation, cancellation, and diagnostics
-- safe external URLs and movie-poster behavior
-- title/year parsing, column-aware highlighting, and HTML escaping
-- pagination ranges and grouped issue rows
-- modal numeric values and request freshness
-- dashboard animations and all analytics view models
-- metadata completeness normalization, ordering, and compatibility behavior
-
-## Run PHP tests
-
-```sh
-npm run test:php
-```
-
-Or directly:
-
-```sh
-php tests/php/run.php
-```
-
-The PHP suite covers:
-
-- Windows, Unix, and mixed file-path splitting
-- pagination bounds and offsets
-- title/year parsing and search query construction
-- normal and fuzzy SQL `LIKE` patterns and wildcard escaping
-- analytics aggregation, including independent metadata-field gaps
-
-The PHP suite uses reflection to test private query-building and aggregation helpers without creating a database connection.
-
-## Run browser tests
-
-```sh
-npm run test:browser
-```
-
-To watch the scenarios in a visible browser:
-
-```sh
-npm run test:browser:headed
-```
-
-If Chromium is already installed outside Playwright, point the suite to it explicitly:
+If a compatible Chromium binary is already installed:
 
 ```sh
 PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/path/to/chromium npm run test:browser
 ```
 
-The Playwright suite covers:
+Do not replace lockfile installation with an untracked dependency upgrade to
+work around missing browser binaries. Dependency resolution and browser/system
+library installation are separate steps.
 
-- initial catalog rendering and server-backed pagination
-- debounced title filtering and match highlighting
-- movie-detail modal content, keyboard navigation, focus restoration, and poster paths
-- analytics rendering and keyboard-accessible metadata drill-down
-- theme and optional-column preference persistence
-- API failure messaging and retry recovery
+## Run the suites
 
-`playwright.config.mjs` starts `tests/browser/support/mock-server.mjs` automatically. The server composes the current PHP view fragments into a page, serves the real CSS and JavaScript from `movie-catalog/public`, and supplies deterministic API fixtures. Browser tests therefore remain repeatable and do not require PHP, credentials, or a live movie database.
+```sh
+npm test                       # JS, PHP, then browser tests; stops on failure
+npm run test:js                 # Node's built-in test runner
+npm run test:php                # php tests/php/run.php
+npm run test:browser            # Headless Chromium
+npm run test:browser:headed     # Visible browser, requires a graphical session
+npm run build                  # Validate production bundles separately
+```
 
-Playwright writes failure artifacts under `test-results/`; HTML reports use `playwright-report/`. Both directories are ignored by Git.
+On constrained machines use `npm run test:browser -- --workers=2`.
+
+### JavaScript regression coverage
+
+- API parsing, validation, cancellation signals, and safe external URLs.
+- Title/year parsing, ordered-character fuzzy matching, and HTML escaping.
+- Column visibility, pagination, poster fallback, and movie-modal controls.
+- Movie-loader query snapshots and request freshness: late successes/failures,
+  aborts, superseded animation delays, state changes during debounce, and retries.
+- Explicit `true`/`false` load completion for analytics page jumps.
+- Multi-column edits inside one debounce interval without losing a filter.
+- Literal File/Path highlighting even when title fuzzy search is enabled.
+- Dashboard animations, issue grouping, and selected analytics view models.
+
+Movie-loader tests use deferred promises, including a transport that deliberately
+ignores abort. They verify freshness independently of network cancellation.
+
+### PHP regression coverage
+
+- Windows, Unix, and mixed path splitting.
+- Pagination bounds and offsets.
+- Trailing title/year parsing and escaped SQL `LIKE` patterns.
+- File filtering uses a basename expression and literal, case-insensitive
+  contains matching, independent of both fuzzy flags and title modes.
+- File sorting uses that basename with a stable movie-number tiebreaker.
+- Path filtering, AND/OR query composition, and literal `%`, `_`, `=` characters.
+- Title fuzzy search remains independent of File search.
+- Analytics aggregation, health scoring, and disk-cache write/read/clear behavior.
+
+The suite uses reflection to exercise private query-building and aggregation
+helpers without constructing a database connection. It checks the **generated
+SQL and parameters**, not SQL execution or database-specific collation behavior.
+For a real API smoke test, follow the root README's disposable MySQL/MariaDB
+setup and File-filter examples. Browser mock tests are not a substitute for this.
+
+### Browser regression coverage
+
+- Initial rendering, pagination, title modes, highlighting, and clearing filters.
+- Multi-field debounce behavior and out-of-order response protection.
+- Movie-detail content, poster paths, keyboard navigation, wrap confirmation,
+  background isolation, and focus restoration.
+- Analytics and issue drill-down; cross-page jumps reveal and highlight the movie.
+- File filter examples: the `MISSING` marker, real substring matches, fuzzy-only
+  filenames, hidden folder matches, wildcard characters, and OR semantics.
+- Theme/column preferences and error/retry recovery.
+
+`playwright.config.mjs` automatically starts
+`tests/browser/support/mock-server.mjs`. It serves the current view fragments,
+CSS, and JavaScript with synthetic movies, statistics, and placeholder posters.
+Its movie-page fixture applies the same mock filtering/sorting as movie listing.
+No PHP, credentials, or live database are needed for browser tests.
+
+The mock server follows the PHP layout's asset selection: built bundles are used
+when present, otherwise source files are used. Run browser tests on a fresh
+checkout for source coverage, and again after `npm run build` for bundle coverage.
+Always rebuild existing bundles after frontend edits, or run `npm run build:watch`.
+
+Failure artifacts are written to `test-results/`; Playwright HTML reports, when
+selected, use `playwright-report/`. Both directories and generated bundles are
+ignored by Git.

@@ -193,6 +193,13 @@ class MovieRepository
             : 'CONTAINS';
     }
 
+    private function fileSqlExpression(): string
+    {
+        // FILEPATH is the API column name, but the File cell shows the basename.
+        // Normalize both separators just as FileHelper::splitPath() does.
+        return "SUBSTRING_INDEX(REPLACE(COALESCE(`FILEPATH`, ''), CHAR(92), '/'), '/', -1)";
+    }
+
     private function pathSqlExpression(): string
     {
         $filepath =
@@ -214,9 +221,11 @@ class MovieRepository
     private function sortSqlExpression(
         string $sort
     ): string {
-        return $sort === 'PATH'
-            ? $this->pathSqlExpression()
-            : "`$sort`";
+        return match ($sort) {
+            'FILEPATH' => $this->fileSqlExpression(),
+            'PATH' => $this->pathSqlExpression(),
+            default => "`$sort`"
+        };
     }
 
     private function buildOrderByClause(
@@ -408,17 +417,16 @@ class MovieRepository
                 continue;
             }
 
-            if ($col === 'PATH') {
+            if ($col === 'FILEPATH' || $col === 'PATH') {
+                $expression = $col === 'FILEPATH'
+                    ? $this->fileSqlExpression()
+                    : $this->pathSqlExpression();
+
+                // File and Path always use literal, case-insensitive contains
+                // matching, independent of the legacy global fuzzy flag.
                 $conditions[] =
-                    $this->pathSqlExpression() .
-                    " LIKE :PATH ESCAPE '='";
-
-                $params['PATH'] =
-                    $this->buildLikePattern(
-                        (string)$val,
-                        $fuzzy
-                    );
-
+                    "LOWER($expression) LIKE LOWER(:$col) ESCAPE '='";
+                $params[$col] = $this->buildLikePattern((string)$val, false);
                 continue;
             }
 

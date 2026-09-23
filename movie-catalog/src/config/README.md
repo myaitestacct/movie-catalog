@@ -1,5 +1,8 @@
 # Database configuration
 
+For a complete local setup, including a disposable database schema and fixtures,
+see the [repository README](../../../README.md).
+
 Database credentials are intentionally excluded from `config.json` and from Git.
 
 ## Option 1: Environment variables (recommended)
@@ -13,7 +16,8 @@ Set these variables in the PHP/Apache environment:
 - `MOVIE_DB_PASSWORD` (required, but it may be explicitly empty for local development)
 - `MOVIE_DB_CHARSET` (optional; defaults to `utf8mb4`)
 
-Restart Apache after changing its environment.
+Restart the PHP development server or Apache/FPM after changing its environment.
+The application does not load `.env` files automatically.
 
 ## Option 2: Ignored local JSON file
 

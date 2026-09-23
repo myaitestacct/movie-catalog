@@ -98,7 +98,7 @@ function renderSearchGroupInfo(
     otherMessage.textContent =
       `🔍 ${otherCount} ${modeLabel} match${otherCount === 1 ? '' : 'es'}`;
   } else {
-    otherMessage.textContent = '. No additional matches';
+    otherMessage.textContent = 'No additional matches';
   }
 
   const hint = document.createElement('span');
@@ -165,7 +165,7 @@ function renderMovieRow(
   columns.forEach(col => {
     const highlightFuzzy = col === 'FORMATTEDTITLE'
       ? titleSearchMode === 'FUZZY'
-      : fuzzy;
+      : !['FILEPATH', 'PATH'].includes(col) && fuzzy;
 
     const td = document.createElement('td');
     const visible =
