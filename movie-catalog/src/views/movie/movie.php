@@ -65,7 +65,7 @@
                 Clear filters
             </button>
         </div>
-
+	
         <div
             class="tool-group columns-group"
             role="group"
@@ -145,7 +145,6 @@
                 Path
             </button>
         </div>
-
         <button
             type="button"
             id="theme-toggle"
@@ -155,12 +154,15 @@
         >
             <i class="fa-solid fa-moon" aria-hidden="true"></i>
         </button>
+        <div
+            id="filter-pills"
+            aria-live="polite"
+        ></div>	
+	    <div
+            id="search-group-info"
+            class="search-group-info hidden"
+        ></div>
     </div>
-
-    <div
-        id="filter-pills"
-        aria-live="polite"
-    ></div>
 
     <div class="table-legend">
         <span class="legend-chip">
@@ -219,11 +221,6 @@
             <span class="stats-ribbon-label">Analytics</span>
         </button>
     </div>
-
-    <div
-        id="search-group-info"
-        class="search-group-info hidden"
-    ></div>
 </div>
 
 <div class="content-area">
