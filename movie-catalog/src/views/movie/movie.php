@@ -66,7 +66,11 @@
             </button>
         </div>
 
-        <div class="tool-group" role="group" aria-label="Optional columns">
+        <div
+            class="tool-group columns-group"
+            role="group"
+            aria-label="Optional columns"
+        >
             <span class="tool-group-label" aria-hidden="true">Columns</span>
 
             <button
@@ -144,13 +148,12 @@
 
         <button
             type="button"
-            id="stats-toggle"
-            class="stats-ribbon"
-            aria-controls="stats-panel"
-            aria-expanded="false"
+            id="theme-toggle"
+            aria-pressed="false"
+            aria-label="Switch to dark theme"
+            title="Switch to dark theme"
         >
-            <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
-            Analytics
+            <i class="fa-solid fa-moon" aria-hidden="true"></i>
         </button>
     </div>
 
@@ -206,12 +209,14 @@
 
         <button
             type="button"
-            id="theme-toggle"
-            aria-pressed="false"
-            aria-label="Switch to dark theme"
-            title="Switch to dark theme"
+            id="stats-toggle"
+            class="stats-ribbon"
+            aria-controls="stats-panel"
+            aria-expanded="false"
+            aria-label="Analytics"
         >
-            <i class="fa-solid fa-moon" aria-hidden="true"></i>
+            <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
+            <span class="stats-ribbon-label">Analytics</span>
         </button>
     </div>
 

@@ -30,7 +30,9 @@
 
 /* ==========================
    Toolbar Analytics button
-   (sits in the toolbar row, right of "Hide All")
+   In the toolbar row, right of "Hide All": a floating pill that
+   shows the icon only and expands to reveal "Analytics" on
+   hover/focus (so it never pushes the row into a wrap).
 ========================== */
 
 .stats-toggle,
@@ -38,8 +40,8 @@
     flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 7px 14px;
+    gap: 0;
+    padding: 7px 11px;
     background: linear-gradient(135deg, var(--primary), #7c3aed);
     color: var(--primary-contrast);
     border: none;
@@ -50,6 +52,26 @@
     cursor: pointer;
     box-shadow: var(--shadow-md);
     transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+/* Label collapsed by default; expands on hover / keyboard focus */
+.stats-ribbon-label {
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    margin-left: 0;
+    transition:
+        max-width 0.18s ease,
+        margin-left 0.18s ease,
+        opacity 0.15s ease;
+}
+
+.stats-ribbon:hover .stats-ribbon-label,
+.stats-ribbon:focus-visible .stats-ribbon-label {
+    max-width: 96px;
+    margin-left: 8px;
+    opacity: 1;
 }
 
 .stats-ribbon:hover {
