@@ -573,11 +573,11 @@ tr.empty-state td {
    Active filter pills
 ========================== */
 #filter-pills {
-    display: flex;
+    display: inline-flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 6px;
-    margin: 0 0 8px;
+    margin: 0;
     font-size: 12px;
 }
 
