@@ -133,12 +133,63 @@ export function createModalDOM() {
     posterZoom.tabIndex = -1;
     posterZoom.setAttribute('role', 'dialog');
     posterZoom.setAttribute('aria-modal', 'true');
-    posterZoom.setAttribute('aria-label', 'Enlarged movie poster');
+    posterZoom.setAttribute('aria-label', 'Full-size movie poster viewer');
     posterZoom.setAttribute('aria-hidden', 'true');
+
+    // Toolbar with zoom controls
+    const zoomToolbar = createEl('div', 'poster-zoom-toolbar');
+
+    const zoomOutBtn = createEl('button', 'zoom-tool-btn', '');
+    zoomOutBtn.type = 'button';
+    zoomOutBtn.title = 'Zoom out (-)';
+    zoomOutBtn.setAttribute('aria-label', 'Zoom out');
+    zoomOutBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass-minus" aria-hidden="true"></i>';
+
+    const zoomInBtn = createEl('button', 'zoom-tool-btn', '');
+    zoomInBtn.type = 'button';
+    zoomInBtn.title = 'Zoom in (+)';
+    zoomInBtn.setAttribute('aria-label', 'Zoom in');
+    zoomInBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i>';
+
+    const zoomResetBtn = createEl('button', 'zoom-tool-btn zoom-reset', '');
+    zoomResetBtn.type = 'button';
+    zoomResetBtn.title = 'Fit to window (0)';
+    zoomResetBtn.setAttribute('aria-label', 'Reset zoom to fit');
+    zoomResetBtn.innerHTML = '<i class="fa-solid fa-expand" aria-hidden="true"></i>';
+
+    const zoomActualBtn = createEl('button', 'zoom-tool-btn', '');
+    zoomActualBtn.type = 'button';
+    zoomActualBtn.title = 'Actual size 1:1 (1)';
+    zoomActualBtn.setAttribute('aria-label', 'Show actual size');
+    zoomActualBtn.innerHTML = '<i class="fa-solid fa-1" aria-hidden="true"></i>';
+
+    const zoomSpacer = createEl('span', 'zoom-toolbar-spacer');
+
+    const zoomCloseBtn = createEl('button', 'zoom-tool-btn zoom-close', '');
+    zoomCloseBtn.type = 'button';
+    zoomCloseBtn.title = 'Close (Esc)';
+    zoomCloseBtn.setAttribute('aria-label', 'Close full-size viewer');
+    zoomCloseBtn.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
+
+    zoomToolbar.append(zoomOutBtn, zoomInBtn, zoomResetBtn, zoomActualBtn, zoomSpacer, zoomCloseBtn);
+
+    const zoomStage = createEl('div', 'poster-zoom-stage');
     const posterZoomImg = createEl('img');
     posterZoomImg.alt = 'Enlarged movie poster';
-    posterZoom.appendChild(posterZoomImg);
+    posterZoomImg.draggable = false;
+    zoomStage.appendChild(posterZoomImg);
+
+    const zoomHint = createEl('div', 'poster-zoom-hint');
+    zoomHint.innerHTML = '<span><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Scroll to zoom</span>'
+        + '<span><i class="fa-solid fa-hand" aria-hidden="true"></i> Drag to pan</span>'
+        + '<span><i class="fa-solid fa-mouse-pointer" aria-hidden="true"></i> Double-click to toggle 1:1</span>';
+
+    posterZoom.append(zoomToolbar, zoomStage, zoomHint);
     document.body.appendChild(posterZoom);
 
-    return { modal, content, poster, posterZoom, posterZoomImg, prevBtn, nextBtn, closeBtn };
+    return {
+        modal, content, poster, posterZoom, zoomStage, posterZoomImg,
+        prevBtn, nextBtn, closeBtn,
+        zoomInBtn, zoomOutBtn, zoomResetBtn, zoomActualBtn, zoomCloseBtn
+    };
 }
