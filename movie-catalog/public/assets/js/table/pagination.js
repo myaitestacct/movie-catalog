@@ -1,6 +1,22 @@
 // pagination.js
 import { state } from '../core/state.js';
 
+export const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
+const PAGE_SIZE_STORAGE_KEY = 'movieCatalogPageSize';
+
+export function loadStoredPageSize() {
+  try {
+    const stored = parseInt(
+      localStorage.getItem(PAGE_SIZE_STORAGE_KEY),
+      10
+    );
+
+    return PAGE_SIZE_OPTIONS.includes(stored) ? stored : null;
+  } catch {
+    return null;
+  }
+}
+
 export function renderPagination(
   container,
   totalPages,
@@ -27,6 +43,7 @@ export function renderPagination(
 
   const info = document.createElement('span');
   info.className = 'info';
+  info.setAttribute?.('role', 'status');
   info.textContent =
     `Showing ${start}-${end} of ${totalResults} results`;
 
@@ -73,6 +90,43 @@ export function renderPagination(
   });
 
   container.appendChild(select);
+
+  container.appendChild(
+    createPageSizeSelect(effectivePageSize, onPageChange)
+  );
+}
+
+function createPageSizeSelect(currentSize, onPageChange) {
+  const select = document.createElement('select');
+  select.className = 'page-size';
+  select.setAttribute?.('aria-label', 'Results per page');
+  select.title = 'Results per page';
+
+  PAGE_SIZE_OPTIONS.forEach(size => {
+    const opt = document.createElement('option');
+    opt.value = String(size);
+    opt.textContent = `${size} / page`;
+    if (size === currentSize) opt.selected = true;
+    select.appendChild(opt);
+  });
+
+  select.addEventListener('change', e => {
+    state.limit = parseInt(e.target.value, 10);
+    state.page = 1;
+
+    try {
+      localStorage.setItem(
+        PAGE_SIZE_STORAGE_KEY,
+        String(state.limit)
+      );
+    } catch {
+      /* storage unavailable — keep in-memory value */
+    }
+
+    onPageChange?.();
+  });
+
+  return select;
 }
 
 function createBtn(label, page, disabled, onPageChange, isNumber = false) {

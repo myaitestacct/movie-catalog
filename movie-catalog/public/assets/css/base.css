@@ -10,6 +10,11 @@ body {
         color 0.25s ease;
 }
 
+/* Generic visibility helper (search info banner, stats panel, ...) */
+.hidden {
+    display: none !important;
+}
+
 h1 { margin-bottom: 10px; }
 
 .controls {

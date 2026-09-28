@@ -2,7 +2,8 @@
     width: 100%;
     overflow-x: auto;
     overflow-y: auto;
-    padding-bottom: 25px;
+    /* Extra bottom space so the floating pagination bar never covers rows */
+    padding-bottom: 72px;
     max-height: calc(115vh - 150px);
     box-sizing: border-box;
 }
@@ -30,11 +31,23 @@ th {
 }
 
 th:hover {
-    background: #57606f;
+    background: var(--header-hover-bg);
 }
 
-tbody tr:hover {
-    background: var(--table-hover);
+/* Zebra striping — skipped for group/separator rows */
+tbody tr:nth-child(even) td:not([colspan]) {
+    background-color: var(--row-zebra);
+}
+
+/* Single unified hover system (CSS only) */
+tbody tr:hover td:not([colspan]) {
+    background-color: var(--row-hover);
+}
+
+/* Keep status tints stable under hover; the accent bar carries the meaning */
+
+tbody tr {
+    transition: background-color 0.15s ease;
 }
 
 .badge {
@@ -46,14 +59,34 @@ tbody tr:hover {
     transition: background 0.2s ease;
 }
 
-tr.missing-file {
-    background-color: #3c2222 !important;
-    color: var(--danger);
-    font-weight: bold;
+/* Status rows — theme-aware tints + left accent bar instead of full paint.
+   #movies prefix keeps them above zebra/hover/match-tint rules. */
+#movies tr.missing-file {
+    background-color: var(--row-missing-bg);
+    color: var(--row-missing-text);
+    font-weight: 500;
 }
 
-tr.better-copy {
-    background-color: #7b5151;
+#movies tbody tr.missing-file td:not([colspan]) {
+    background-color: var(--row-missing-bg);
+}
+
+#movies tbody tr.missing-file td:first-child {
+    box-shadow: inset 3px 0 0 var(--row-missing-accent);
+}
+
+#movies tr.better-copy {
+    background-color: var(--row-better-bg);
+    color: var(--row-better-text);
+    font-weight: 500;
+}
+
+#movies tbody tr.better-copy td:not([colspan]) {
+    background-color: var(--row-better-bg);
+}
+
+#movies tbody tr.better-copy td:first-child {
+    box-shadow: inset 3px 0 0 var(--row-better-accent);
 }
 
 .column-toggles {
@@ -199,7 +232,10 @@ th:not(.hidden-col) {
 .copy-btn {
     margin: 0.2rem 0;
     padding: 0.2rem 0.5rem;
-    font-size: 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1;
+    min-width: 24px;
+    min-height: 24px;
     cursor: pointer;
     border-radius: 6px;
     border: none;
@@ -208,7 +244,8 @@ th:not(.hidden-col) {
     color: var(--link-color);
     transition:
         background 0.2s ease,
-        color 0.2s ease;
+        color 0.2s ease,
+        transform 0.15s ease;
 }
 
 .copy-btn:hover {
@@ -216,13 +253,21 @@ th:not(.hidden-col) {
 }
 
 .copy-btn.copied {
-    color: #2ecc71 !important;
+    color: #fff !important;
     background: var(--success);
+    text-decoration: none;
+    animation: copyPop 0.25s ease;
 }
 
 .copy-btn.copied::after {
     content: ' ✓';
     font-size: 11px;
+}
+
+@keyframes copyPop {
+    0% { transform: scale(0.8); }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); }
 }
 
 .file-name {
@@ -262,8 +307,9 @@ mark {
 }
 
 .search-mode.or {
-    background: #ffe066;
-    border-color: #f1c40f;
+    background: var(--mode-or-bg);
+    border-color: var(--mode-or-border);
+    color: var(--mode-or-text);
 }
 
 .title-search-mode {
@@ -291,11 +337,6 @@ mark {
 .title-search-mode select:focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: 1px;
-}
-
-tbody tr.row-hover {
-    background: rgba(255, 69, 0, 0.1);
-    transition: background 0.2s ease;
 }
 
 .movie-modal-content {
@@ -346,181 +387,512 @@ tbody tr.row-hover {
 }
 
 tr.active-movie-row {
-    background: rgba(255, 69, 0, 0.18) !important;
-    outline: 2px solid rgba(255, 69, 0, 0.35);
+    background: var(--row-active-bg) !important;
+    outline: 2px solid var(--primary);
     outline-offset: -2px;
     transition: background 0.25s ease;
 }
 
-/* Exact vs Fuzzy separator */
-tr.exact-fuzzy-separator {
-    background: transparent !important;
-    pointer-events: none;
+tbody tr.active-movie-row td:not([colspan]) {
+    background-color: var(--row-active-bg);
 }
 
-tr.exact-fuzzy-separator td {
-    padding: 10px 8px !important;
-    text-align: center;
-    font-size: 12px;
-    font-weight: 600;
+/* Keyboard-navigated row */
+tbody tr.kbd-highlight td:not([colspan]) {
+    background-color: var(--row-hover);
+    box-shadow: inset 2px 0 0 var(--primary);
+}
+
+
+
+/* ==========================
+   Sort indicators
+========================== */
+th[aria-sort]::after {
+    content: '⇅';
+    opacity: 0.35;
+    margin-left: 5px;
+    font-size: 10px;
+}
+
+thead th:not([aria-sort]):hover::after {
+    content: '⇅';
+    opacity: 0.35;
+    margin-left: 5px;
+    font-size: 10px;
+}
+
+th[aria-sort="ascending"]::after {
+    content: '▲';
+    opacity: 1;
+    color: var(--primary);
+    font-size: 9px;
+}
+
+th[aria-sort="descending"]::after {
+    content: '▼';
+    opacity: 1;
+    color: var(--primary);
+    font-size: 9px;
+}
+
+/* ==========================
+   Exact / fuzzy result grouping
+========================== */
+tbody tr.exact-match td:not([colspan]) {
+    background-color: var(--row-exact-bg);
+}
+
+tbody tr.fuzzy-match td:not([colspan]) {
+    background-color: var(--row-fuzzy-bg);
+}
+
+tr.group-header td {
+    padding: 0 !important;
+    border-bottom: none !important;
+}
+
+.group-header-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 12px;
+    margin: 6px 0;
+    font-size: 13px;
+    border-left: 3px solid var(--primary);
+    background: color-mix(in srgb, var(--primary), var(--table-bg) 92%);
+    border-radius: 0 8px 8px 0;
+}
+
+.group-header-wrapper.exact-wrapper {
+    border-left-color: var(--success);
+    background: color-mix(in srgb, var(--success), var(--table-bg) 90%);
+}
+
+.group-header-icon {
+    font-size: 14px;
+}
+
+.group-header-title {
+    font-weight: 700;
     color: var(--text-color);
-    border-top:
-        2px dashed
-        color-mix(in srgb, var(--primary), transparent 60%);
-    border-bottom:
-        2px dashed
-        color-mix(in srgb, var(--primary), transparent 60%);
-    background:
-        color-mix(in srgb, var(--bg-light), var(--table-bg) 30%);
-    letter-spacing: 0.3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-tr.exact-fuzzy-separator .separator-content {
+.group-header-badge {
+    margin-left: auto;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    background: var(--table-bg);
+    border: 1px solid var(--border-light);
+    color: var(--text-muted);
+}
+
+/* ==========================
+   Search group info banner
+========================== */
+.search-group-info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin: 0 0 8px;
+    padding: 6px 12px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    background: var(--table-bg);
+    border: 1px solid var(--border-light);
+    border-left: 3px solid var(--primary);
+    border-radius: 8px;
+}
+
+.search-group-info .info-exact {
+    color: var(--success);
+    font-weight: 600;
+}
+
+.search-group-info .info-fuzzy {
+    font-weight: 600;
+}
+
+.search-group-info .info-sep {
+    opacity: 0.4;
+}
+
+.search-group-info .info-empty {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+/* ==========================
+   Empty state
+========================== */
+tr.empty-state td {
+    padding: 48px 16px !important;
+    text-align: center;
+    background: var(--table-bg);
+}
+
+.empty-state-inner {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-muted);
+}
+
+.empty-state-icon {
+    font-size: 34px;
+    opacity: 0.6;
+}
+
+.empty-state-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.empty-state button {
+    margin-top: 4px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--primary);
+    background: var(--primary);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.15s ease;
+}
+
+.empty-state button:hover {
+    filter: brightness(1.1);
+}
+
+/* ==========================
+   Loading skeleton
+========================== */
+.table-wrapper.is-loading::before {
+    content: '';
+    display: block;
+    height: 55vh;
+    border-radius: 8px;
+    background:
+        linear-gradient(
+            90deg,
+            var(--skeleton-base) 0%,
+            var(--skeleton-sheen) 50%,
+            var(--skeleton-base) 100%
+        );
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes skeletonShimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}
+
+/* ==========================
+   Active filter pills
+========================== */
+#filter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 8px;
+    font-size: 12px;
+}
+
+#filter-pills:empty {
+    display: none;
+}
+
+.filter-pill {
+        display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 6px 3px 10px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--primary), var(--table-bg) 85%);
+    border: 1px solid color-mix(in srgb, var(--primary), transparent 60%);
+    color: var(--text-color);
+}
+
+.filter-pill-label {
+    color: var(--text-muted);
+}
+
+.filter-pill-value {
+    font-weight: 600;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.filter-pill button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    width: 100%;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--text-color), transparent 80%);
+    color: var(--text-color);
+    font-size: 11px;
+    line-height: 1;
+    cursor: pointer;
 }
 
-tr.exact-fuzzy-separator .separator-icon {
-    font-size: 13px;
-    opacity: 0.8;
+.filter-pill button:hover {
+    background: var(--danger);
+    color: #fff;
 }
 
-tr.exact-fuzzy-separator .separator-text {
-    font-weight: 700;
-    color: var(--primary);
-    background: var(--table-bg);
-    padding: 2px 10px;
-    border-radius: 12px;
+/* ==========================
+   Row color legend
+========================== */
+.table-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.table-legend:empty {
+    display: none;
+}
+
+.legend-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
     border: 1px solid var(--border-light);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 
-tr.exact-fuzzy-separator .separator-line {
-    flex: 1;
-    height: 1px;
-    background:
-        linear-gradient(
-            to right,
-            transparent,
-            var(--border-light),
-            transparent
-        );
-    opacity: 0.7;
+.legend-swatch.missing {
+    background: var(--row-missing-bg);
+    border-left: 3px solid var(--row-missing-accent);
 }
 
-:root.theme-dark tr.exact-fuzzy-separator td {
-    background:
-        color-mix(in srgb, var(--table-bg), black 10%);
+.legend-swatch.better-copy {
+    background: var(--row-better-bg);
+    border-left: 3px solid var(--row-better-accent);
 }
 
-:root.theme-dark tr.exact-fuzzy-separator .separator-text {
-    background: var(--table-bg);
-    border-color: #444;
+/* ==========================
+   Poster thumbnails (title cell)
+========================== */
+.row-poster {
+    width: 28px;
+    height: 42px;
+    margin-right: 8px;
+    vertical-align: middle;
+    object-fit: cover;
+    border-radius: 4px;
+    background: var(--row-zebra);
+    border: 1px solid var(--border-light);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
-/* Exact vs Fuzzy separator – highly visible */
-tr.exact-fuzzy-separator {
-    background: transparent !important;
-    pointer-events: none;
+.row-poster.loaded {
+    opacity: 1;
 }
 
-tr.exact-fuzzy-separator td {
-    padding: 0 !important;
-    border: none !important;
-    background: transparent !important;
-}
-
-tr.exact-fuzzy-separator .separator-content {
+.title-cell {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-    width: 100%;
-    padding: 12px 8px;
-    margin: 4px 0;
-    background:
-        linear-gradient(
-            90deg,
-            color-mix(in srgb, var(--primary), transparent 85%),
-            color-mix(in srgb, var(--primary), transparent 70%),
-            color-mix(in srgb, var(--primary), transparent 85%)
-        );
-    border-top: 2px solid var(--primary);
-    border-bottom: 2px solid var(--primary);
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-    animation: separatorFadeIn 0.3s ease;
+    gap: 8px;
+    min-width: 200px;
 }
 
-@keyframes separatorFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-4px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-tr.exact-fuzzy-separator .separator-icon {
-    font-size: 14px;
-    filter: drop-shadow(
-        0 1px 2px rgba(0,0,0,0.2)
-    );
-}
-
-tr.exact-fuzzy-separator .separator-text {
-    font-weight: 800;
-    color: var(--primary);
-    background: var(--table-bg);
-    padding: 4px 14px;
-    border-radius: 20px;
-    border: 2px solid var(--primary);
-    box-shadow:
-        0 2px 8px rgba(0,0,0,0.12);
+.title-cell .movie-title-link {
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-tr.exact-fuzzy-separator .separator-line {
-    flex: 1;
-    height: 2px;
-    background:
-        linear-gradient(
-            to right,
-            transparent,
-            var(--primary),
-            transparent
-        );
-    opacity: 0.5;
-    border-radius: 1px;
+/* ==========================
+   Numeric alignment & tabular figures
+========================== */
+td[data-col="FILESIZE"],
+th[data-col="FILESIZE"] {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
-:root.theme-dark tr.exact-fuzzy-separator .separator-content {
-    background:
-        linear-gradient(
-            90deg,
-            color-mix(in srgb, var(--primary), black 80%),
-            color-mix(in srgb, var(--primary), black 60%),
-            color-mix(in srgb, var(--primary), black 80%)
-        );
+td[data-col="YEAR"],
+td[data-col="NUM"] {
+    font-variant-numeric: tabular-nums;
 }
 
-:root.theme-dark tr.exact-fuzzy-separator .separator-text {
+td[data-col="YEAR"] {
+    color: var(--text-muted);
+}
+
+td[data-col="RATING"] {
+    white-space: nowrap;
+}
+
+/* ==========================
+   Rating tiers
+========================== */
+.rating-badge.rating-good {
+    background: var(--rating-good);
+}
+
+.rating-badge.rating-mid {
+    background: var(--rating-mid);
+    color: #1f2401;
+}
+
+.rating-badge.rating-bad {
+    background: var(--rating-bad);
+}
+
+/* ==========================
+   Sticky first column (horizontal scroll)
+========================== */
+#movies thead th:first-child,
+#movies tbody td:first-child:not([colspan]) {
+    position: sticky;
+    left: 0;
+}
+
+#movies thead th:first-child {
+    z-index: 12;
+}
+
+#search-row td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 11;
+    background: var(--header-bg);
+}
+
+#movies tbody td:first-child:not([colspan]) {
+    z-index: 5;
+    background-color: var(--table-bg);
+}
+
+/* Mirror every row state onto the sticky cell so it stays opaque */
+tbody tr:nth-child(even) td:first-child:not([colspan]) {
+    background-color: var(--row-zebra);
+}
+
+tbody tr:hover td:first-child:not([colspan]) {
+    background-color: var(--row-hover);
+}
+
+tbody tr.missing-file td:first-child:not([colspan]) {
+    background-color: var(--row-missing-bg);
+}
+
+tbody tr.better-copy td:first-child:not([colspan]) {
+    background-color: var(--row-better-bg);
+}
+
+tbody tr.active-movie-row td:first-child:not([colspan]) {
+    background-color: var(--row-active-bg);
+}
+
+tbody tr.kbd-highlight td:first-child:not([colspan]) {
+    background-color: var(--row-hover);
+}
+
+tbody tr.exact-match td:first-child:not([colspan]) {
+    background-color: var(--row-exact-bg);
+}
+
+tbody tr.fuzzy-match td:first-child:not([colspan]) {
+    background-color: var(--row-fuzzy-bg);
+}
+
+/* ==========================
+   Focus visibility
+========================== */
+th:focus-visible,
+button:focus-visible,
+select:focus-visible,
+a:focus-visible,
+input:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+}
+
+/* ==========================
+   Reduced motion
+========================== */
+@media (prefers-reduced-motion: reduce) {
+    tbody tr,
+    tbody td,
+    .table-wrapper,
+    .copy-btn,
+    .row-poster {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    tbody tr[data-num] {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}
+
+/* Row entrance animation (stagger via --row-index set in JS) */
+@media (prefers-reduced-motion: no-preference) {
+    tbody tr[data-num] {
+        animation: rowEnter 0.22s ease both;
+        animation-delay: calc(min(var(--row-index, 0), 24) * 8ms);
+    }
+
+    @keyframes rowEnter {
+        from {
+            opacity: 0;
+            transform: translateY(4px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}
+
+/* Legend keyboard hints */
+.table-legend kbd {
+    display: inline-block;
+    min-width: 16px;
+    padding: 1px 5px;
+    border: 1px solid var(--border-light);
+    border-bottom-width: 2px;
+    border-radius: 4px;
     background: var(--table-bg);
-    border-color: var(--primary);
-    color: #fff;
-    box-shadow:
-        0 2px 8px rgba(0,0,0,0.4);
-}
-
-tr.exact-fuzzy-separator td {
-    display: table-cell !important;
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: 11px;
+    line-height: 1.4;
+    text-align: center;
 }
