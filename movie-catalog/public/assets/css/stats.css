@@ -1104,11 +1104,11 @@
 
 .row-highlight {
     animation: flash 2s ease;
-    background: #fff3b0 !important;
+    background: var(--row-flash, #fff3b0) !important;
 }
 
 @keyframes flash {
-    from { background: #ffe066; }
+    from { background: var(--row-flash, #ffe066); }
     to { background: transparent; }
 }
 
@@ -1132,6 +1132,7 @@
     --stats-link: #8ab4ff;
     --stats-link-hover: #b6d0ff;
     --stats-link-visited: #c4b5fd;
+    --row-flash: #5a4a12;
 }
 
 /* Follow system dark mode until the user explicitly selects light mode. */
@@ -1153,6 +1154,7 @@
 		--stats-link: #8ab4ff;
 		--stats-link-hover: #b6d0ff;
 		--stats-link-visited: #c4b5fd;
+        --row-flash: #5a4a12;
     }
 }
 .table-fade {

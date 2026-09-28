@@ -119,6 +119,35 @@
 </div>
 
 <div
+    id="filter-pills"
+    aria-live="polite"
+></div>
+
+<div class="table-legend">
+    <span class="legend-chip">
+        <span
+            class="legend-swatch missing"
+            aria-hidden="true"
+        ></span>
+        Missing file
+    </span>
+
+    <span class="legend-chip">
+        <span
+            class="legend-swatch better-copy"
+            aria-hidden="true"
+        ></span>
+        Better copy available
+    </span>
+
+    <span class="legend-chip">
+        <kbd>/</kbd> search &middot;
+        <kbd>&uarr;</kbd><kbd>&darr;</kbd> browse &middot;
+        <kbd>Enter</kbd> open
+    </span>
+</div>
+
+<div
     id="search-group-info"
     class="search-group-info hidden"
 ></div>

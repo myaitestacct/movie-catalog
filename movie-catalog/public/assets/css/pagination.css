@@ -54,6 +54,18 @@
     cursor: default;
 }
 
+.pagination button.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    font-weight: 700;
+    cursor: default;
+}
+
+.pagination select.page-size {
+    margin-left: 6px;
+}
+
 .pagination select {
     border-radius: 5px;
     border: 1px solid var(--border-light);

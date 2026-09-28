@@ -1,82 +1,196 @@
 :root {
 
+    color-scheme: light;
+
     /* THEME COLORS */
     --primary: #1e90ff;
     --danger: #b30000;
     --success: #28a745;
+    --warning: #e6a23c;
 
     /* LIGHT THEME */
     --bg-light: #f4f6f8;
     --text-color: #222;
+    --text-muted: #6b7280;
 
     --table-bg: #ffffff;
     --table-hover: #f1f2f6;
 
+    /* Row states (semantic, theme-aware) */
+    --row-zebra: #f7f8fa;
+    --row-hover: color-mix(in srgb, var(--primary) 6%, var(--table-bg));
+    --row-active-bg: color-mix(in srgb, var(--primary) 12%, var(--table-bg));
+
+    --row-missing-bg: #fdecec;
+    --row-missing-accent: #d64545;
+    --row-missing-text: #8a1f1f;
+
+    --row-better-bg: #fff7e6;
+    --row-better-accent: #e6a23c;
+    --row-better-text: #7a5200;
+
+    --row-exact-bg: color-mix(in srgb, var(--success) 7%, var(--table-bg));
+    --row-fuzzy-bg: color-mix(in srgb, var(--text-color) 3%, var(--table-bg));
+
+    /* Rating tiers */
+    --rating-good: #2f9e44;
+    --rating-mid: #e8a33d;
+    --rating-bad: #d64545;
+
     --header-bg: #2f3542;
     --header-color: #ffffff;
+    --header-hover-bg: color-mix(in srgb, var(--primary) 30%, var(--header-bg));
 
     --border-light: #ddd;
 
     --highlight: #ffe066;
-    
+    --highlight-text: #222;
+
+    --focus-ring: 0 0 0 2px color-mix(in srgb, var(--primary), white 40%);
+
     --link-color: #1e90ff;
     --title-color: #1e90ff;
 
     --pagination-bg: rgba(255,255,255,0.75);
     --pagination-button-bg: #ffffff;
     --pagination-text: #222;
-    
+
     --button-bg: #ffffff;
     --button-text: #222;
     --button-border: #aaa;
     --button-hover: #f0f0f0;
+
+    /* AND / OR mode pill (fixed-contrast: dark text on yellow in both themes) */
+    --mode-or-bg: #ffe066;
+    --mode-or-border: #f1c40f;
+    --mode-or-text: #1f2401;
+
+    /* Skeleton loading shimmer */
+    --skeleton-base: #eceef2;
+    --skeleton-sheen: rgba(255,255,255,0.65);
 }
 
 /* AUTO DARK MODE (if user has not overridden) */
 @media (prefers-color-scheme: dark) {
     :root:not(.theme-light) {
 
-        --bg-light: #121212;
+        color-scheme: dark;
+
+        --bg-light: #12141a;
         --text-color: #e6e6e6;
+        --text-muted: #9aa1ad;
 
-        --table-bg: #1b1b1b;
-        --table-hover: #262626;
+        --table-bg: #1a1d26;
+        --table-hover: #232734;
 
-        --header-bg: #1f1f1f;
+        --row-zebra: #1e222c;
+        --row-hover: color-mix(in srgb, var(--primary) 10%, #1a1d26);
+        --row-active-bg: color-mix(in srgb, var(--primary) 22%, #1a1d26);
+
+        --row-missing-bg: #2a1518;
+        --row-missing-accent: #ff7b72;
+        --row-missing-text: #ffb4ab;
+
+        --row-better-bg: #2a2113;
+        --row-better-accent: #ffb454;
+        --row-better-text: #ffd699;
+
+        --row-exact-bg: color-mix(in srgb, var(--success) 14%, #1a1d26);
+        --row-fuzzy-bg: color-mix(in srgb, #1a1d26, white 3%);
+
+        --rating-good: #4dd187;
+        --rating-mid: #ffc857;
+        --rating-bad: #ff6b78;
+
+        --header-bg: #1f232e;
         --header-color: #f5f5f5;
 
-        --border-light: #333;
+        --border-light: #2c3140;
 
         --highlight: #ffc107;
+        --highlight-text: #111;
+
+        --pagination-bg: rgba(18,20,26,0.75);
+        --pagination-button-bg: #262b37;
+        --pagination-text: #e6e6e6;
+
+        --button-bg: #262b37;
+        --button-text: #e6e6e6;
+        --button-border: #3a4152;
+        --button-hover: #323949;
+
+        --skeleton-base: #232734;
+        --skeleton-sheen: rgba(255,255,255,0.06);
     }
 }
 
 /* MANUAL DARK MODE */
 :root.theme-dark {
 
-    --bg-light: #121212;
+    color-scheme: dark;
+
+    --bg-light: #12141a;
     --text-color: #e6e6e6;
+    --text-muted: #9aa1ad;
 
-    --table-bg: #1b1b1b;
-    --table-hover: #262626;
+    --table-bg: #1a1d26;
+    --table-hover: #232734;
 
-    --header-bg: #1f1f1f;
+    --row-zebra: #1e222c;
+    --row-hover: color-mix(in srgb, var(--primary) 10%, #1a1d26);
+    --row-active-bg: color-mix(in srgb, var(--primary) 22%, #1a1d26);
+
+    --row-missing-bg: #2a1518;
+    --row-missing-accent: #ff7b72;
+    --row-missing-text: #ffb4ab;
+
+    --row-better-bg: #2a2113;
+    --row-better-accent: #ffb454;
+    --row-better-text: #ffd699;
+
+    --row-exact-bg: color-mix(in srgb, var(--success) 14%, #1a1d26);
+    --row-fuzzy-bg: color-mix(in srgb, #1a1d26, white 3%);
+
+    --rating-good: #4dd187;
+    --rating-mid: #ffc857;
+    --rating-bad: #ff6b78;
+
+    --header-bg: #1f232e;
     --header-color: #f5f5f5;
+    --header-hover-bg: color-mix(in srgb, var(--primary) 30%, #1f232e);
 
-    --border-light: #333;
+    --border-light: #2c3140;
 
     --highlight-text: #111;
     --highlight: #ffc107;
-    
-    --link-color: #f1f3f5;
-    --title-color: #f1f3f5;
 
-    --pagination-bg: rgba(20,20,20,0.75);
-    --pagination-button-bg: #2a2a2a;
+    --link-color: #8ab4ff;
+    --title-color: #8ab4ff;
+
+    --pagination-bg: rgba(18,20,26,0.75);
+    --pagination-button-bg: #262b37;
     --pagination-text: #e6e6e6;
-    
-    --button-bg: #2a2a2a;
+
+    --button-bg: #262b37;
     --button-text: #e6e6e6;
-    --button-border: #444;
-    --button-hover: #3a3a3a;
+    --button-border: #3a4152;
+    --button-hover: #323949;
+
+    --skeleton-base: #232734;
+    --skeleton-sheen: rgba(255,255,255,0.06);
+}
+
+/* Theme-aware scrollbars (color-scheme above already flips native UI) */
+:root {
+    scrollbar-color: #b6bcc7 transparent;
+}
+
+:root.theme-dark {
+    scrollbar-color: #4a5060 transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not(.theme-light) {
+        scrollbar-color: #4a5060 transparent;
+    }
 }

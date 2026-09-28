@@ -13,6 +13,77 @@ import {
   parseTitleSearch
 } from '../utils/highlighttext.js';
 import { Modal } from '../modal/modal.js';
+import { setPoster } from '../modal/modal.utils.js';
+
+const POSTER_BASE_PATH = '/movies/antexport';
+const POSTER_FALLBACK = '/movies/antexport/movies_0000-coming_soon.jpg';
+
+function ratingTier(value) {
+  const rating = parseFloat(value);
+
+  if (Number.isNaN(rating)) return '';
+
+  if (rating >= 7) return 'rating-good';
+
+  if (rating >= 5) return 'rating-mid';
+
+  return 'rating-bad';
+}
+
+function createRowPoster(movie) {
+  const poster = document.createElement('img');
+
+  poster.className = 'row-poster';
+  poster.alt = '';
+  poster.loading = 'lazy';
+  poster.decoding = 'async';
+  poster.width = 28;
+  poster.height = 42;
+
+  poster.addEventListener('load', () => {
+    poster.classList.add('loaded');
+  });
+
+  setPoster(poster, movie.PICTURENAME, POSTER_BASE_PATH, POSTER_FALLBACK);
+
+  return poster;
+}
+
+function createEmptyStateRow(columns) {
+  const tr = document.createElement('tr');
+  tr.className = 'empty-state';
+
+  const td = document.createElement('td');
+  td.colSpan = columns.length;
+
+  const inner = document.createElement('div');
+  inner.className = 'empty-state-inner';
+
+  const icon = document.createElement('div');
+  icon.className = 'empty-state-icon';
+  icon.textContent = '🎬';
+
+  const title = document.createElement('div');
+  title.className = 'empty-state-title';
+  title.textContent = 'No movies match your filters';
+
+  const hint = document.createElement('div');
+  hint.textContent =
+    'Try a different search term, or clear the filters to see everything.';
+
+  const clearButton = document.createElement('button');
+  clearButton.type = 'button';
+  clearButton.textContent = 'Clear all filters';
+  clearButton.onclick = () => {
+    document.getElementById('clear-filters')?.click();
+  };
+
+  inner.append(icon, title, hint, clearButton);
+  td.appendChild(inner);
+  tr.appendChild(td);
+
+  return tr;
+}
 
 function isExactTitleMatch(movie, exactTitle) {
   if (!exactTitle) return false;
@@ -154,14 +225,6 @@ function renderMovieRow(
     tr.classList.add('better-copy');
   }
 
-  tr.addEventListener('mouseenter', () => {
-    tr.classList.add('row-hover');
-  });
-
-  tr.addEventListener('mouseleave', () => {
-    tr.classList.remove('row-hover');
-  });
-
   columns.forEach(col => {
     const highlightFuzzy = col === 'FORMATTEDTITLE'
       ? titleSearchMode === 'FUZZY'
@@ -172,6 +235,7 @@ function renderMovieRow(
       state.columnVisibility[col] ?? ALWAYS_VISIBLE.includes(col);
 
     td.style.display = visible ? '' : 'none';
+    td.dataset.col = col;
 
     const searchTerms = termsByColumn[col] || [];
     const value = movie[col] ?? '';
@@ -209,6 +273,11 @@ function renderMovieRow(
 
       td.append(span, btn);
     } else if (col === 'FORMATTEDTITLE') {
+      const cell = document.createElement('div');
+      cell.className = 'title-cell';
+
+      cell.appendChild(createRowPoster(movie));
+
       const link = document.createElement('a');
       link.href = '#';
       link.className = 'movie-title-link';
@@ -246,7 +315,8 @@ function renderMovieRow(
         Modal.show(movie, index);
       };
 
-      td.appendChild(link);
+      cell.appendChild(link);
+      td.appendChild(cell);
     } else if (col === 'RATING') {
       if (!value) {
         td.textContent = '';
@@ -255,7 +325,7 @@ function renderMovieRow(
         const hasExternalRating =
           configureExternalLink(link, movie.URL);
 
-        link.className = 'rating-badge';
+        link.className = `rating-badge ${ratingTier(value)}`.trim();
         link.title = hasExternalRating
           ? 'Open external rating'
           : 'External rating link unavailable';
@@ -470,5 +540,20 @@ export function renderTable(table, rows, columns) {
 
       tbody.appendChild(tr);
     });
+  }
+
+  if (rows.length === 0) {
+    tbody.appendChild(createEmptyStateRow(columns));
+
+    return;
+  }
+
+  // Stagger indexes for the row entrance animation (no-op where unsupported).
+  if (typeof tbody.querySelectorAll === 'function') {
+    tbody
+      .querySelectorAll('tr[data-num]')
+      .forEach((row, index) => {
+        row.style.setProperty?.('--row-index', index);
+      });
   }
 }
