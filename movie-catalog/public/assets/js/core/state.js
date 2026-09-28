@@ -13,8 +13,8 @@ export const state = {
   columnVisibility: {},
   search: {},
   searchMode: 'AND',
-  titleSearchMode: 'FUZZY',
-  fuzzy: true,
+  titleSearchMode: 'CONTAINS',
+  fuzzy: false,
   debounce: null
 };
 
