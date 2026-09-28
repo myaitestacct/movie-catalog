@@ -162,7 +162,7 @@ function renderFilterPills() {
 
 /* ==============================
    Keyboard shortcuts
-   /  focus first filter input
+   /  focus title filter input
    Esc clear focused filter
    ↑/↓ move row highlight
    Enter open highlighted movie
@@ -200,12 +200,15 @@ function setupKeyboardShortcuts() {
     if (document.querySelector('.movie-modal.open')) return;
 
     if (event.key === '/' && !isTypingTarget(event.target)) {
-      const firstInput = getVisibleSearchInputs()[0];
+      const titleInput = searchRow.querySelector('input[data-col="FORMATTEDTITLE"]');
+      const targetInput = (titleInput && titleInput.closest('td').style.display !== 'none')
+        ? titleInput
+        : getVisibleSearchInputs()[0];
 
-      if (firstInput) {
+      if (targetInput) {
         event.preventDefault();
-        firstInput.focus();
-        firstInput.select();
+        targetInput.focus();
+        targetInput.select();
       }
 
       return;
