@@ -896,3 +896,54 @@ input:focus-visible {
     line-height: 1.4;
     text-align: center;
 }
+
+
+/* ==========================
+   No horizontal scrolling: every column wraps to fit the viewport
+   (only vertical scrolling is allowed in the table wrapper)
+========================== */
+.table-wrapper {
+    overflow-x: hidden;
+}
+
+#movies {
+    width: 100%;
+    max-width: 100%;
+    table-layout: auto;
+}
+
+#movies th,
+#movies td {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    vertical-align: top;
+}
+
+#movies th:not(.hidden-col),
+#movies td:not(.hidden-col) {
+    max-width: none;
+}
+
+#movies .title-cell {
+    min-width: 0;
+}
+
+#movies .title-cell .movie-title-link,
+#movies .group-header-title,
+#movies td[data-col="FILESIZE"],
+#movies td[data-col="RATING"] {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+#movies .title-cell .row-poster {
+    flex: 0 0 auto;
+}
+
+#movies #search-row td input,
+#movies th input.col-search {
+    min-width: 0;
+}
