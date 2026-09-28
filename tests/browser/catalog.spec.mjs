@@ -651,3 +651,18 @@ test.describe('movie catalog', () => {
     }
   );
 });
+
+
+test('slash focuses and selects the title filter without intercepting typing', async ({ page }) => {
+  await openCatalog(page);
+  const title = page.locator('#search-row input[data-col="FORMATTEDTITLE"]');
+  await page.keyboard.press('/');
+  await expect(title).toBeFocused();
+  await title.fill('Arrival');
+  await title.evaluate(el => el.blur());
+  await page.keyboard.press('/');
+  await expect(title).toBeFocused();
+  expect(await title.evaluate(el => el.value.slice(el.selectionStart, el.selectionEnd))).toBe('Arrival');
+  await page.keyboard.press('/');
+  await expect(title).toHaveValue('/');
+});
