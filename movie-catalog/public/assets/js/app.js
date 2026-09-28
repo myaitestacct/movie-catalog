@@ -26,6 +26,8 @@ let searchRow;
 let pagination;
 let columns;
 let statsPanel;
+let filterPills;
+let tableWrapper;
 
 function hasActiveSearchFilters() {
   return Object.values(state.search).some(
