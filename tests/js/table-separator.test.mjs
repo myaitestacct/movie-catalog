@@ -360,6 +360,12 @@ test('search group info describes a title search with no matches', () => {
     tbody.children[0].className,
     'empty-state'
   );
+  // No movie rows, but a single empty-state row with a clear-filters action.
+  assert.equal(tbody.children.length, 1);
+  assert.equal(
+    tbody.children[0].className,
+    'empty-state'
+  );
   assert.equal(
     infoBanner.className,
     'search-group-info'
