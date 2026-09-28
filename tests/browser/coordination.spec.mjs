@@ -107,7 +107,7 @@ test('File matches literal filename text, not fuzzy letters or a hidden folder',
   await openCatalog(page);
   await page.locator('.toggle-col[data-col="FILEPATH"]').click();
   const fileInput = page.locator('#search-row input[data-col="FILEPATH"]');
-  await expect(page.locator('#title-search-mode')).toHaveValue('FUZZY');
+  await expect(page.locator('#title-search-mode')).toHaveValue('CONTAINS');
   await fileInput.fill('missing');
 
   const rows = page.locator('#movies tbody tr[data-num]');
