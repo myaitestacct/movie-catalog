@@ -29,15 +29,13 @@
 }
 
 /* ==========================
-   Floating Ribbon
+   Toolbar Analytics button
+   (sits in the toolbar row, right of "Hide All")
 ========================== */
 
 .stats-toggle,
 .stats-ribbon {
-    position: fixed;
-    top: 70px;
-    right: 16px;
-    z-index: 1200;
+    flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -52,10 +50,6 @@
     cursor: pointer;
     box-shadow: var(--shadow-md);
     transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
-}
-
-.stats-ribbon {
-    border-radius: 999px;
 }
 
 .stats-ribbon:hover {

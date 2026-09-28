@@ -141,6 +141,17 @@
                 Path
             </button>
         </div>
+
+        <button
+            type="button"
+            id="stats-toggle"
+            class="stats-ribbon"
+            aria-controls="stats-panel"
+            aria-expanded="false"
+        >
+            <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
+            Analytics
+        </button>
     </div>
 
     <div
@@ -170,6 +181,38 @@
             <kbd>&uarr;</kbd><kbd>&darr;</kbd> browse &middot;
             <kbd>Enter</kbd> open
         </span>
+
+        <span
+            class="app-summary"
+            role="status"
+            aria-label="Library summary"
+        >
+            <span class="app-summary-chip" id="summary-movies-chip">
+                <i class="fa-solid fa-film" aria-hidden="true"></i>
+                <b id="summary-movies">&ndash;</b>
+                <small>titles</small>
+            </span>
+            <span class="app-summary-chip" id="summary-size-chip" hidden>
+                <i class="fa-solid fa-database" aria-hidden="true"></i>
+                <b id="summary-size">&ndash;</b>
+                <small>stored</small>
+            </span>
+            <span class="app-summary-chip" id="summary-health-chip" hidden>
+                <i class="fa-solid fa-heart-pulse" aria-hidden="true"></i>
+                <b id="summary-health">&ndash;</b>
+                <small>health</small>
+            </span>
+        </span>
+
+        <button
+            type="button"
+            id="theme-toggle"
+            aria-pressed="false"
+            aria-label="Switch to dark theme"
+            title="Switch to dark theme"
+        >
+            <i class="fa-solid fa-moon" aria-hidden="true"></i>
+        </button>
     </div>
 
     <div

@@ -64,7 +64,16 @@ export function initColumnToggles(table, toggleContainer) {
         updateToggleAllButton();
     });
 
-    toggleContainer.appendChild(toggleAllButton);
+    // Keep "Analytics" as the right-most toolbar control:
+    // insert "Hide All" before it when present.
+    const statsButton = toggleContainer.querySelector('#stats-toggle');
+
+    if (statsButton) {
+        toggleContainer.insertBefore(toggleAllButton, statsButton);
+    } else {
+        toggleContainer.appendChild(toggleAllButton);
+    }
+
     updateToggleAllButton();
 
     function setColumnVisibility(column, visible) {

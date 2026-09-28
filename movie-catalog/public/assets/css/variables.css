@@ -65,10 +65,8 @@
     --rating-mid: #e8a33d;
     --rating-bad: #d64545;
 
-    /* App bar + sticky table head */
-    --appbar-bg: #ffffff;
+    /* Sticky table head hairline */
     --appbar-border: #e5e8ef;
-    --appbar-color: var(--text-color);
 
     --header-bg: #f7f8fa;
     --header-color: #454b5e;
@@ -172,9 +170,7 @@
         --rating-mid: #ffc857;
         --rating-bad: #ff6b78;
 
-        --appbar-bg: #151821;
         --appbar-border: #262b38;
-        --appbar-color: var(--text-color);
 
         --header-bg: #1b1f2a;
         --header-color: #b9c0d2;
@@ -271,9 +267,7 @@
     --rating-mid: #ffc857;
     --rating-bad: #ff6b78;
 
-    --appbar-bg: #151821;
     --appbar-border: #262b38;
-    --appbar-color: var(--text-color);
 
     --header-bg: #1b1f2a;
     --header-color: #b9c0d2;

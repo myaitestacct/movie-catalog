@@ -1,14 +1,3 @@
-<button
-type="button"
-id="stats-toggle"
-class="stats-ribbon"
-aria-controls="stats-panel"
-aria-expanded="false"
->
-<i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
-Analytics
-</button>
-
 <div
 id="stats-backdrop"
 class="stats-backdrop"
