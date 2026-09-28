@@ -14,12 +14,14 @@ export function createModalDOM() {
     /* ===== Header ===== */
     const header = createEl('div', 'modal-header');
 
-    const prevBtn = createEl('button', 'modal-nav', '◀');
+    const prevBtn = createEl('button', 'modal-nav', '');
+    prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left" aria-hidden="true"></i>';
     prevBtn.type = 'button';
     prevBtn.title = 'Previous';
     prevBtn.setAttribute('aria-label', 'Previous movie');
 
-    const nextBtn = createEl('button', 'modal-nav', '▶');
+    const nextBtn = createEl('button', 'modal-nav', '');
+    nextBtn.innerHTML = '<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>';
     nextBtn.type = 'button';
     nextBtn.title = 'Next';
     nextBtn.setAttribute('aria-label', 'Next movie');
@@ -30,7 +32,8 @@ export function createModalDOM() {
     const rating = createEl('a', 'modal-rating');
     rating.id = 'modalRating';
 
-    const closeBtn = createEl('button', 'modal-close', '×');
+    const closeBtn = createEl('button', 'modal-close', '');
+    closeBtn.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
     closeBtn.type = 'button';
     closeBtn.setAttribute('aria-label', 'Close movie details');
 
@@ -53,6 +56,7 @@ export function createModalDOM() {
     const details = createEl('div', 'details-section');
     const desc = createEl('p');
     desc.id = 'modalDescription';
+    desc.classList.add('modal-description');
     details.append(desc, createEl('hr'));
 
     const infoGrid = createEl('div', 'info-grid');
@@ -86,7 +90,8 @@ export function createModalDOM() {
     const numValue = createEl('div', 'v');
     numValue.id = 'modalNum';
     const numSpan = createEl('span', 'num-value', ''); // empty, will fill later
-    const numBtn = createEl('button', 'copy-btn icon-btn', '📋');
+    const numBtn = createEl('button', 'copy-btn icon-btn', '');
+    numBtn.innerHTML = '<i class="fa-solid fa-copy" aria-hidden="true"></i>';
     numBtn.type = 'button';
     numBtn.title = 'Copy Num';
     numValue.append(numSpan, numBtn);
@@ -106,8 +111,8 @@ export function createModalDOM() {
 
     const fileSpan = createEl('span', 'file-name');
     const fileBtn = createEl('button', 'copy-btn icon-btn');
+    fileBtn.innerHTML = '<i class="fa-solid fa-copy" aria-hidden="true"></i>';
     fileBtn.type = 'button';
-    fileBtn.textContent = '📋';
     fileBtn.title = 'Copy File Name';
 
     fileVal.append(fileSpan, fileBtn);

@@ -1,12 +1,4 @@
-.table-wrapper {
-    width: 100%;
-    overflow-x: auto;
-    overflow-y: auto;
-    /* Extra bottom space so the floating pagination bar never covers rows */
-    padding-bottom: 72px;
-    max-height: calc(115vh - 150px);
-    box-sizing: border-box;
-}
+/* The scroll pane itself (size, borders, radius) is defined in base.css */
 
 table {
     width: 100%;
@@ -89,52 +81,12 @@ tbody tr {
     box-shadow: inset 3px 0 0 var(--row-better-accent);
 }
 
-.column-toggles {
-    margin-bottom: 10px;
-    font-size: 13px;
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
 .column-toggles i {
-    cursor: pointer;
     font-size: 14px;
 }
 
 .column-toggles i.active {
     color: var(--primary);
-}
-
-.column-toggles button {
-    padding: 4px 8px;
-    border-radius: 5px;
-    border: 1px solid var(--button-border);
-    background: var(--button-bg);
-    color: var(--button-text);
-    cursor: pointer;
-    transition:
-        background 0.2s ease,
-        color 0.2s ease,
-        border 0.2s ease;
-}
-
-.column-toggles button:hover {
-    background: var(--button-hover);
-}
-
-.column-toggles button.toggle-col.active {
-    background: var(--primary);
-    color: #fff;
-    border-color: var(--primary);
-    box-shadow:
-        0 0 0 2px
-        color-mix(in srgb, var(--primary), white 30%);
-}
-
-.column-toggles button.toggle-col i {
-    margin-right: 5px;
 }
 
 th input.col-search,
@@ -152,22 +104,26 @@ thead th {
     background: var(--header-bg);
     color: var(--header-color);
     z-index: 10;
-    height: 28px;
+    height: 34px;
     line-height: 1.2;
-    padding: 2px 6px;
-    font-size: 12px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
     white-space: nowrap;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    box-shadow: var(--header-shadow);
 }
 
 #search-row td {
     position: sticky;
-    top: 28px;
+    top: 34px;
     background: var(--header-bg);
     color: var(--header-color);
     z-index: 11;
-    padding: 2px 4px;
-    height: 24px;
+    padding: 4px;
+    height: 30px;
+    box-shadow: 0 1px 0 var(--border-light);
 }
 
 #search-row td input {
@@ -239,8 +195,7 @@ th:not(.hidden-col) {
     cursor: pointer;
     border-radius: 6px;
     border: none;
-    background: rgba(119,119,255,0.2);
-    text-decoration: underline;
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
     color: var(--link-color);
     transition:
         background 0.2s ease,
@@ -297,13 +252,22 @@ mark {
 }
 
 .search-mode {
-    padding: 4px 10px;
+    padding: 5px 10px;
     font-weight: 600;
-    border-radius: 6px;
-    border: 1px solid var(--button-border);
-    background: var(--button-bg);
+    font-size: 12px;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    background: transparent;
     color: var(--button-text);
     cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.search-mode:hover {
+    background: var(--button-hover);
 }
 
 .search-mode.or {
@@ -312,16 +276,21 @@ mark {
     color: var(--mode-or-text);
 }
 
+.search-mode.or:hover {
+    background: var(--mode-or-bg);
+}
+
 .title-search-mode {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 3px 7px;
-    border: 1px solid var(--button-border);
-    border-radius: 6px;
-    background: var(--button-bg);
+    padding: 4px 7px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    background: transparent;
     color: var(--button-text);
     font-weight: 600;
+    font-size: 12.5px;
 }
 
 .title-search-mode select {
@@ -353,13 +322,13 @@ mark {
 .icon-btn {
     background: none;
     border: none;
-    color: #aaa;
+    color: var(--text-muted);
     cursor: pointer;
     padding: 2px 4px;
 }
 
 .icon-btn:hover {
-    color: #ff4500;
+    color: var(--danger);
 }
 
 .rating-badge {
@@ -578,7 +547,8 @@ tr.empty-state td {
 /* ==========================
    Loading skeleton
 ========================== */
-.table-wrapper.is-loading::before {
+.table-wrapper.is-loading::before,
+.grid-wrapper.is-loading::before {
     content: '';
     display: block;
     height: 55vh;
@@ -703,15 +673,15 @@ tr.empty-state td {
    Poster thumbnails (title cell)
 ========================== */
 .row-poster {
-    width: 28px;
-    height: 42px;
-    margin-right: 8px;
+    width: 36px;
+    height: 54px;
+    margin-right: 9px;
     vertical-align: middle;
     object-fit: cover;
-    border-radius: 4px;
-    background: var(--row-zebra);
+    border-radius: 6px;
+    background: var(--surface-2);
     border: 1px solid var(--border-light);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-sm);
     opacity: 0;
     transition: opacity 0.3s ease;
 }

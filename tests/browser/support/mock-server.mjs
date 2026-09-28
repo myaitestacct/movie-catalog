@@ -994,15 +994,21 @@ async function renderApplication() {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Movie Catalog</title>
 
 ${headerCss}
+
+    <link rel="stylesheet"
+          href="assets/vendor/font-awesome/css/all.min.css"
+          crossorigin="anonymous" />
 
     <script>
         const BASE_URL = '';
     </script>
 </head>
 <body>
+<h1 class="sr-only">Movie Catalog</h1>
 `;
 
   const browserFooter =

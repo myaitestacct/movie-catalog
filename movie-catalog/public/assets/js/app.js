@@ -13,8 +13,14 @@ import {
   loadStoredPageSize
 } from './table/pagination.js';
 import {
+  renderGridView,
+  loadStoredView,
+  storeView
+} from './table/grid-view.js';
+import {
   initStats,
-  refreshStats
+  refreshStats,
+  isStatsLoaded
 } from './stats/stats.js';
 import {
   clearError,
@@ -28,6 +34,10 @@ let columns;
 let statsPanel;
 let filterPills;
 let tableWrapper;
+let gridWrapper;
+let gridView;
+let gridRenderedData = null;
+let currentMovies = null;
 
 function hasActiveSearchFilters() {
   return Object.values(state.search).some(
@@ -44,6 +54,51 @@ function syncClearFiltersButton(button) {
 }
 
 /* ==============================
+   View switching (table / grid)
+============================== */
+function syncViewButtons() {
+  const tableBtn = document.getElementById('view-table');
+  const gridBtn = document.getElementById('view-grid');
+
+  const isGrid = state.view === 'grid';
+
+  tableBtn?.classList.toggle('active', !isGrid);
+  gridBtn?.classList.toggle('active', isGrid);
+  tableBtn?.setAttribute('aria-pressed', String(!isGrid));
+  gridBtn?.setAttribute('aria-pressed', String(isGrid));
+}
+
+function switchView(view) {
+  if (state.view === view) return;
+
+  state.view = view;
+  storeView(view);
+  syncViewButtons();
+
+  const showGrid = view === 'grid';
+
+  gridWrapper?.classList.toggle('hidden', !showGrid);
+  tableWrapper?.classList.toggle('hidden', showGrid);
+
+  // Reuse the rendered grid unless the underlying page changed.
+  if (showGrid && currentMovies !== gridRenderedData) {
+    renderGridView(gridView, currentMovies);
+    gridRenderedData = currentMovies;
+  }
+}
+
+/* ==============================
+   App header summary
+============================== */
+function updateSummaryMovies(total) {
+  const el = document.getElementById('summary-movies');
+
+  if (el) {
+    el.textContent = Number(total).toLocaleString();
+  }
+}
+
+/* ==============================
    EXPORTED: loadMovies
 ============================== */
 const loadMoviePage = createMovieLoader({
@@ -51,7 +106,14 @@ const loadMoviePage = createMovieLoader({
     table.classList.remove('show');
     table.classList.add('table-fade');
     table.setAttribute('aria-busy', 'true');
-    tableWrapper?.classList.add('is-loading');
+
+    if (tableWrapper && state.view === 'table') {
+      tableWrapper.classList.add('is-loading');
+    }
+
+    if (gridWrapper && state.view === 'grid') {
+      gridWrapper.classList.add('is-loading');
+    }
   },
   render(data) {
     clearError('movies');
@@ -64,6 +126,14 @@ const loadMoviePage = createMovieLoader({
       loadMovies
     );
     renderFilterPills();
+    updateSummaryMovies(data.total);
+
+    currentMovies = data.data;
+
+    if (state.view === 'grid') {
+      renderGridView(gridView, data.data);
+      gridRenderedData = data.data;
+    }
 
     document.title = data.total > 0
       ? `Movie Catalog — ${data.total} titles`
@@ -85,7 +155,14 @@ const loadMoviePage = createMovieLoader({
       if (!isCurrent()) return;
       table.setAttribute('aria-busy', 'false');
       table.classList.add('show');
-      tableWrapper?.classList.remove('is-loading');
+
+      if (tableWrapper && state.view === 'table') {
+        tableWrapper.classList.remove('is-loading');
+      }
+
+      if (gridWrapper && state.view === 'grid') {
+        gridWrapper.classList.remove('is-loading');
+      }
     });
   }
 });
@@ -133,7 +210,8 @@ function renderFilterPills() {
 
     const remove = document.createElement('button');
     remove.type = 'button';
-    remove.textContent = '✕';
+    remove.innerHTML =
+      '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
     remove.setAttribute(
       'aria-label',
       `Remove filter ${labels[column] ?? column}: ${value}`
@@ -164,11 +242,11 @@ function renderFilterPills() {
    Keyboard shortcuts
    /  focus title filter input
    Esc clear focused filter
-   ↑/↓ move row highlight
+   ↑/↓ move row highlight (table view)
    Enter open highlighted movie
 ============================== */
 function isTypingTarget(target) {
-  if (!target) return false;
+  if (!target) return;
 
   const tag = target.tagName?.toLowerCase();
 
@@ -227,6 +305,9 @@ function setupKeyboardShortcuts() {
 
     if (isTypingTarget(event.target)) return;
 
+    // Grid view has its own focus model (Tab + Enter on cards).
+    if (state.view === 'grid') return;
+
     const rows = getDataRows();
 
     if (rows.length === 0) return;
@@ -264,6 +345,21 @@ function setupKeyboardShortcuts() {
 }
 
 /* ==============================
+   Idle-time stats preload (header summary + instant panel)
+============================== */
+function scheduleIdleStatsPreload() {
+  const schedule = typeof requestIdleCallback === 'function'
+    ? callback => requestIdleCallback(callback, { timeout: 3000 })
+    : callback => setTimeout(callback, 1000);
+
+  schedule(() => {
+    if (!isStatsLoaded()) {
+      refreshStats();
+    }
+  });
+}
+
+/* ==============================
    INIT
 ============================== */
 (async function init() {
@@ -293,6 +389,16 @@ function setupKeyboardShortcuts() {
   tableWrapper =
     table.closest('.table-wrapper');
 
+  gridWrapper =
+    document.getElementById(
+      'grid-wrapper'
+    );
+
+  gridView =
+    document.getElementById(
+      'grid-view'
+    );
+
   if (
     !table ||
     !searchRow ||
@@ -306,6 +412,18 @@ function setupKeyboardShortcuts() {
   if (storedPageSize) {
     state.limit = storedPageSize;
   }
+
+  state.view = loadStoredView();
+  syncViewButtons();
+
+  gridWrapper?.classList.toggle('hidden', state.view !== 'grid');
+  tableWrapper?.classList.toggle('hidden', state.view === 'grid');
+
+  const viewTable = document.getElementById('view-table');
+  const viewGrid = document.getElementById('view-grid');
+
+  viewTable?.addEventListener('click', () => switchView('table'));
+  viewGrid?.addEventListener('click', () => switchView('grid'));
 
   columns = [
     ...table.querySelectorAll(
@@ -454,8 +572,9 @@ function setupKeyboardShortcuts() {
           'theme-dark'
         );
 
-      themeToggle.textContent =
-        dark ? '☀️' : '🌙';
+      themeToggle.innerHTML = dark
+        ? '<i class="fa-solid fa-sun" aria-hidden="true"></i>'
+        : '<i class="fa-solid fa-moon" aria-hidden="true"></i>';
 
       themeToggle.setAttribute(
         'aria-pressed',
@@ -468,8 +587,7 @@ function setupKeyboardShortcuts() {
       );
 
       themeToggle.title = dark
-        ? 'Switch to light theme'
-        : 'Switch to dark theme';
+        ? 'Switch to light theme' : 'Switch to dark theme';
     };
 
     updateIcon();
@@ -539,14 +657,12 @@ function setupKeyboardShortcuts() {
     );
 
     if (
-      statsPanel.classList.contains(
-        'show'
-      )
+      statsPanel.classList.contains('show')
     ) {
       refreshStats();
     }
   }
 
   // 5️⃣ Initial load
-  loadMovies();
+  loadMovies().then(() => scheduleIdleStatsPreload());
 })();

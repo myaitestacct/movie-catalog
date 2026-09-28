@@ -324,7 +324,7 @@ test('exact matches remain grouped when no fuzzy matches are returned', () => {
   assert.equal(infoBanner.children.length, 2);
   assert.equal(
     infoBanner.children[0].textContent,
-    '✅ 1 exact match for "Arrival"'
+    '1 exact match for "Arrival"'
   );
   assert.equal(
     infoBanner.children[1].textContent,

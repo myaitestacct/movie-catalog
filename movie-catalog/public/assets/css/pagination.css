@@ -1,56 +1,63 @@
 .pagination {
     position: fixed;
-    bottom: 10px;
+    bottom: 12px;
     left: 50%;
     transform: translateX(-50%);
 
     background: var(--pagination-bg);
     color: var(--pagination-text);
 
-    padding: 8px 12px;
-    border-radius: 10px;
+    padding: 7px 12px;
+    border-radius: 12px;
     display: flex;
-    gap: 6px;
+    gap: 5px;
+    align-items: center;
 
-    font-family: sans-serif;
-    font-size: 14px;
+    font-size: 13px;
 
-    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    box-shadow: var(--shadow-md);
 
-    /* glass effect */
+    /* glass effect — kept to this one small bar for performance */
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
 
-    border: 1px solid rgba(255,255,255,0.15);
+    border: 1px solid color-mix(in srgb, var(--border-light), transparent 30%);
 
     z-index: 999;
     white-space: nowrap;
 }
 
 .pagination .info {
-    font-style: italic;
-    margin-right: 12px;
+    margin: 0 8px 0 2px;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
 }
 
 .pagination button {
-
-    background: var(--pagination-button-bg);
+    min-width: 28px;
+    padding: 4px 8px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
     color: var(--pagination-text);
-
-    border: 1px solid var(--border-light);
-    border-radius: 5px;
-    padding: 3px 8px;
-
+    font: inherit;
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
     cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease,
+        border-color 0.15s ease;
 }
 
-.pagination button:hover {
-    background: var(--primary);
-    color: white;
+.pagination button:hover:not(:disabled):not(.active) {
+    background: var(--button-hover);
+    border-color: var(--border-light);
 }
 
 .pagination button:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: default;
 }
 
@@ -59,24 +66,32 @@
     color: #fff;
     border-color: var(--primary);
     font-weight: 700;
+    box-shadow: var(--shadow-sm);
     cursor: default;
+}
+
+.pagination .ellipsis {
+    padding: 4px 3px;
+    color: var(--text-muted);
+    user-select: none;
+}
+
+.pagination select {
+    margin-left: 4px;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    background: var(--pagination-button-bg);
+    color: var(--pagination-text);
+    font: inherit;
+    font-size: 12px;
+    padding: 4px 6px;
 }
 
 .pagination select.page-size {
     margin-left: 6px;
 }
 
-.pagination select {
-    border-radius: 5px;
-    border: 1px solid var(--border-light);
-
-    background: var(--pagination-button-bg);
-    color: var(--pagination-text);
-
-    padding: 3px 6px;
-}
-
 .pagination:hover {
-    transform: translateX(-50%) translateY(-2px);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+    transform: translateX(-50%) translateY(-1px);
+    box-shadow: var(--shadow-lg);
 }

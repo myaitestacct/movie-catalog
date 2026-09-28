@@ -79,11 +79,101 @@ function appendEmptyState(container, message) {
     container.appendChild(empty);
 }
 
+const DONUT_TOP_SEGMENTS = 6;
+
+/* Static conic-gradient donut: one inline style, zero DOM churn per
+   segment (the legend list is the only repeated node). */
+function renderGenreDonut(model) {
+    const donut = document.getElementById('genre-donut');
+    const legend = document.getElementById('genre-donut-legend');
+    const count = document.getElementById('genre-donut-count');
+    const card = donut?.closest('.stats-genre-donut-card');
+
+    if (!donut || !legend || !card) return;
+
+    if (model.genres.length === 0 || model.taggedMovies <= 0) {
+        card.classList.add('hidden');
+        return;
+    }
+
+    card.classList.remove('hidden');
+
+    if (count) {
+        count.textContent = model.taggedMovies.toLocaleString();
+    }
+
+    const top = model.genres.slice(0, DONUT_TOP_SEGMENTS);
+    const topTotal = top.reduce((sum, genre) => sum + genre.count, 0);
+    const otherCount = Math.max(0, model.taggedMovies - topTotal);
+
+    const segments = top.map((genre, index) => ({
+        label: genre.label,
+        count: genre.count,
+        color: `var(--chart-${index + 1})`
+    }));
+
+    if (otherCount > 0) {
+        segments.push({
+            label: 'Other',
+            count: otherCount,
+            color: `var(--chart-${Math.min(DONUT_TOP_SEGMENTS + 1, 10)})`
+        });
+    }
+
+    let cursor = 0;
+    const stops = segments.map(segment => {
+        const start = cursor;
+        cursor += (segment.count / model.taggedMovies) * 100;
+        return `${segment.color} ${start.toFixed(2)}% ${cursor.toFixed(2)}%`;
+    });
+
+    donut.style.background =
+        `conic-gradient(from -90deg, ${stops.join(', ')})`;
+
+    donut.setAttribute(
+        'aria-label',
+        `Share of tagged movies per leading genre: ` +
+        segments
+            .map(segment =>
+                `${segment.label} ${Math.round(
+                    (segment.count / model.taggedMovies) * 100
+                )}%`
+            )
+            .join(', ')
+    );
+
+    legend.replaceChildren();
+
+    segments.forEach(segment => {
+        const item = document.createElement('li');
+
+        const swatch = document.createElement('span');
+        swatch.className = 'swatch';
+        swatch.style.background = segment.color;
+
+        const label = document.createElement('span');
+        label.className = 'legend-label';
+        label.textContent = segment.label;
+        label.title = segment.label;
+
+        const share = document.createElement('span');
+        share.className = 'legend-share';
+        share.textContent = formatPercentage(
+            (segment.count / model.taggedMovies) * 100
+        );
+
+        item.append(swatch, label, share);
+        legend.appendChild(item);
+    });
+}
+
 export function renderGenreAnalytics(analytics, totalMovies) {
     const container = document.getElementById('genre-distribution');
     if (!container) return false;
 
     const model = createGenreViewModel(analytics, totalMovies);
+
+    renderGenreDonut(model);
     const topGenre = document.getElementById('top-genre');
     const topGenreDetail = document.getElementById('top-genre-detail');
     const coverage = document.getElementById('genre-coverage');

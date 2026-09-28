@@ -64,7 +64,18 @@ export function initColumnToggles(table, toggleContainer) {
         updateToggleAllButton();
     });
 
-    toggleContainer.appendChild(toggleAllButton);
+    // Keep the theme toggle as the right-most toolbar control:
+    // insert "Hide All" before it when present.
+    const anchorButton = toggleContainer.querySelector(
+        '#theme-toggle, #stats-toggle'
+    );
+
+    if (anchorButton) {
+        toggleContainer.insertBefore(toggleAllButton, anchorButton);
+    } else {
+        toggleContainer.appendChild(toggleAllButton);
+    }
+
     updateToggleAllButton();
 
     function setColumnVisibility(column, visible) {

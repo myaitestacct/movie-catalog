@@ -1,13 +1,38 @@
+/* ============================================================
+   Base — app shell, background, app bar, toolbar, grid view
+   ============================================================ */
+
+html,
 body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    height: 100%;
+}
+
+body {
+    font-family: var(--font-sans);
     background: var(--bg-light);
     color: var(--text-color);
     margin: 0;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    font-feature-settings: "cv02", "cv03", "tnum" 0;
 
     transition:
-        background 0.25s ease,
+        background-color 0.25s ease,
         color 0.25s ease;
+}
+
+/* Ambient background glow — one static layer, no animation */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(900px 320px at 18% -8%, var(--bg-glow-1), transparent 65%),
+        radial-gradient(760px 300px at 88% -10%, var(--bg-glow-2), transparent 65%);
 }
 
 /* Generic visibility helper (search info banner, stats panel, ...) */
@@ -15,24 +40,482 @@ body {
     display: none !important;
 }
 
-h1 { margin-bottom: 10px; }
-
-.controls {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
+/* Screen-reader-only text (visually hidden, accessible) */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
-input[type="text"] {
-    padding: 6px 8px;
+/* Theme cross-fade on the main surfaces (kept scoped on purpose) */
+body,
+.column-toggles,
+#movies,
+#movies thead th,
+#movies #search-row td,
+.movie-modal-content,
+.stats-panel,
+.pagination,
+.stat-card,
+.movie-card {
+    transition-property: background-color, color, border-color, box-shadow;
+    transition-duration: 0.25s;
+    transition-timing-function: ease;
+}
+
+h1 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: var(--tracking-tight);
+    line-height: 1.2;
+}
+
+h2 {
+    letter-spacing: var(--tracking-tight);
+}
+
+/* ============================================================
+   Library summary chips (now live in the table-legend row)
+============================================================ */
+
+.app-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    /* Right-align stats + theme toggle in the legend row */
+    margin-left: auto;
+}
+
+.app-summary-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 11px;
+    border: 1px solid var(--border-light);
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.app-summary-chip i {
+    color: var(--primary);
+    font-size: 12px;
+}
+
+.app-summary-chip b {
+    color: var(--text-color);
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.app-summary-chip small {
+    font-size: 11px;
+}
+
+.app-summary-chip[data-tier="good"] i {
+    color: var(--health-good);
+}
+
+.app-summary-chip[data-tier="warning"] i {
+    color: var(--health-warning);
+}
+
+.app-summary-chip[data-tier="critical"] i {
+    color: var(--health-critical);
+}
+
+#theme-toggle {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--button-border);
+    border-radius: 50%;
+    background: var(--button-bg);
+    color: var(--button-text);
     font-size: 14px;
-    width: 220px;
+    cursor: pointer;
+}
+
+#theme-toggle:hover {
+    background: var(--button-hover);
+}
+
+#theme-toggle[aria-pressed="true"] {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* ============================================================
+   Toolbar (search controls · column toggles)
+============================================================ */
+
+.toolbar {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 18px 0;
+}
+
+.column-toggles {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    font-size: 13px;
+}
+
+/* Visual grouping: soft cluster shells instead of flat buttons in a row */
+.tool-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+}
+
+/* Row 1: the optional-column filters absorb all free width, so the
+   toolbar row always spans edge to edge. Chips spread across the
+   group (space-between) and wrap inside it when the viewport is
+   narrow — nothing overlaps or clips. */
+.columns-group {
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.tool-group-label {
+    margin-right: 2px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    user-select: none;
+}
+
+.view-toggle {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+}
+
+.view-toggle button {
+    width: 30px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.view-toggle button:hover {
+    color: var(--text-color);
+    background: var(--button-hover);
+}
+
+.view-toggle button.active {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: var(--shadow-sm);
+}
+
+.column-toggles button {
+    padding: 5px 9px;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--button-text);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.column-toggles button:hover {
+    background: var(--button-hover);
+}
+
+.column-toggles button.toggle-col.active {
+    background: var(--primary-soft);
+    border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+    color: var(--primary);
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.column-toggles button.toggle-col i {
+    margin-right: 0;
+    font-size: 12px;
+}
+
+.column-toggles button.toggle-col.active i {
+    color: var(--primary);
+}
+
+.column-toggles i {
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.column-toggles i.active {
+    color: var(--primary);
+}
+
+/* ============================================================
+   Content panes (table / grid) — fill the viewport between the
+   toolbar and the floating pagination bar.
+============================================================ */
+
+.content-area {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    padding: 10px 18px 0;
+}
+
+.table-wrapper {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    /* Bottom space so the floating pagination bar never covers rows */
+    padding-bottom: 72px;
+    box-sizing: border-box;
+    background: var(--table-bg);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.grid-wrapper {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-height: none;
+    overflow-y: auto;
+    padding: 4px 4px 72px;
     box-sizing: border-box;
 }
 
+/* ============================================================
+   Movie grid (poster cards)
+============================================================ */
+
+.movie-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+    gap: 14px;
+    padding: 12px;
+}
+
+.movie-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 0;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    background: var(--table-bg);
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.movie-card:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.movie-card-poster {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    background:
+        linear-gradient(160deg, var(--surface-3), var(--surface-2));
+    overflow: hidden;
+}
+
+/* Placeholder glyph shown while a poster is missing/failed */
+.movie-card-poster::before {
+    content: "\f00d"; /* fa-film */
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 30px;
+    color: color-mix(in srgb, var(--text-muted) 35%, transparent);
+}
+
+.movie-card-poster img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.movie-card-poster img.loaded {
+    opacity: 1;
+}
+
+.movie-card-poster img.poster-missing {
+    opacity: 0 !important;
+}
+
+.movie-card-status {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 2;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    backdrop-filter: blur(2px);
+}
+
+.movie-card-status.missing {
+    background: var(--row-missing-bg);
+    color: var(--row-missing-text);
+    border: 1px solid var(--row-missing-accent);
+}
+
+.movie-card-status.better {
+    background: var(--row-better-bg);
+    color: var(--row-better-text);
+    border: 1px solid var(--row-better-accent);
+}
+
+.movie-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 9px 11px 11px;
+    min-width: 0;
+}
+
+.movie-card-title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: 0;
+    color: var(--text-color);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.movie-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.movie-card-meta .rating-badge {
+    padding: 2px 8px;
+    font-size: 11px;
+}
+
+.movie-card.missing-file .movie-card-title {
+    color: var(--row-missing-text);
+}
+
+.movie-card.better-copy .movie-card-title {
+    color: var(--row-better-text);
+}
+
+.movie-grid-empty {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 64px 16px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.movie-grid-empty i {
+    font-size: 34px;
+    opacity: 0.55;
+    color: var(--primary);
+}
+
+.movie-grid-empty .movie-grid-empty-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.movie-grid-empty button {
+    margin-top: 4px;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--primary);
+    background: var(--primary);
+    color: #fff;
+    font-weight: 600;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.movie-grid-empty button:hover {
+    filter: brightness(1.1);
+}
+
+/* ============================================================
+   API error toasts
+============================================================ */
+
 .api-error-container {
     position: fixed;
-    top: 12px;
+    top: 66px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 12000;
@@ -48,15 +531,16 @@ input[type="text"] {
     gap: 10px;
     padding: 10px 12px;
     border: 1px solid color-mix(in srgb, var(--danger), white 25%);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: var(--table-bg);
     color: var(--text-color);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    box-shadow: var(--shadow-lg);
     pointer-events: auto;
 }
 
 .api-error-icon {
     flex: 0 0 auto;
+    color: var(--danger);
 }
 
 .api-error-message {
@@ -65,7 +549,7 @@ input[type="text"] {
 
 .api-error button {
     border: 1px solid var(--button-border);
-    border-radius: 5px;
+    border-radius: 6px;
     background: var(--button-bg);
     color: var(--button-text);
     cursor: pointer;
@@ -84,4 +568,5 @@ input[type="text"] {
 .api-error-close {
     font-size: 18px;
     line-height: 1;
+    color: var(--text-muted);
 }

@@ -1,243 +1,323 @@
-<div class="column-toggles">
-    <button
-        type="button"
-        id="theme-toggle"
-    >
-        🌙
-    </button>
+<div class="toolbar">
+    <div class="column-toggles">
+        <div class="view-toggle" role="group" aria-label="View mode">
+            <button
+                type="button"
+                id="view-table"
+                class="active"
+                aria-pressed="true"
+                aria-label="Table view"
+                title="Table view"
+            >
+                <i class="fa-solid fa-table-list" aria-hidden="true"></i>
+            </button>
 
-    <button
-        type="button"
-        id="search-mode"
-        class="search-mode"
-    >
-        AND
-    </button>
+            <button
+                type="button"
+                id="view-grid"
+                aria-pressed="false"
+                aria-label="Grid view"
+                title="Grid view"
+            >
+                <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i>
+            </button>
+        </div>
 
-    <label
-        class="title-search-mode"
-        for="title-search-mode"
-    >
-        <span>Title:</span>
+        <div class="tool-group">
+            <label
+                class="title-search-mode"
+                for="title-search-mode"
+            >
+                <span>Title:</span>
 
-        <select
-            id="title-search-mode"
-            aria-label="Title search mode"
+                <select
+                    id="title-search-mode"
+                    aria-label="Title search mode"
+                >
+                    <option value="EXACT">
+                        Exact
+                    </option>
+                    <option value="CONTAINS">
+                        Contains
+                    </option>
+                    <option value="FUZZY">
+                        Fuzzy
+                    </option>
+                </select>
+            </label>
+
+            <button
+                type="button"
+                id="search-mode"
+                class="search-mode"
+                title="Toggle AND / OR filter matching"
+            >
+                AND
+            </button>
+
+            <button
+                type="button"
+                id="clear-filters"
+                class="clear-filters"
+                disabled
+            >
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                Clear filters
+            </button>
+        </div>
+
+        <div
+            class="tool-group columns-group"
+            role="group"
+            aria-label="Optional columns"
         >
-            <option value="EXACT">
-                Exact
-            </option>
-            <option value="CONTAINS">
-                Contains
-            </option>
-            <option value="FUZZY">
-                Fuzzy
-            </option>
-        </select>
-    </label>
+            <span class="tool-group-label" aria-hidden="true">Columns</span>
 
-    <button
-        type="button"
-        id="clear-filters"
-        class="clear-filters"
-        disabled
-    >
-        Clear filters
-    </button>
-
-    <button
-        type="button"
-        class="toggle-col"
-        data-col="LANGUAGES"
-    >
-        <i class="fa-solid fa-language"></i>
-        Language
-    </button>
-
-    <button
-        type="button"
-        class="toggle-col"
-        data-col="LENGTH"
-    >
-        <i class="fa-solid fa-clock"></i>
-        Length
-    </button>
-
-    <button
-        type="button"
-        class="toggle-col"
-        data-col="CERTIFICATION"
-    >
-        <i class="fa-solid fa-ribbon"></i>
-        Cert
-    </button>
-
-    <button
-        type="button"
-        class="toggle-col"
-        data-col="CATEGORY"
-    >
-        <i class="fa-solid fa-tags"></i>
-        Genre
-    </button>
-
-    <button
-        type="button"
-        class="toggle-col"
-        data-col="RESOLUTION"
-    >
-        <i class="fa-solid fa-expand"></i>
-        Resolution
-    </button>
-
-    <button
-        type="button"
-        class="toggle-col"
-        data-col="AUDIOFORMAT"
-    >
-        <i class="fa-solid fa-volume-high"></i>
-        Audio
-    </button>
-
-    <button
-        type="button"
-        class="toggle-col"
-        data-col="FILEPATH"
-    >
-        <i class="fa-solid fa-file-video"></i>
-        File
-    </button>
-
-    <button
-        type="button"
-        class="toggle-col"
-        data-col="PATH"
-    >
-        <i class="fa-solid fa-folder-open"></i>
-        Path
-    </button>
-</div>
-
-<div
-    id="filter-pills"
-    aria-live="polite"
-></div>
-
-<div class="table-legend">
-    <span class="legend-chip">
-        <span
-            class="legend-swatch missing"
-            aria-hidden="true"
-        ></span>
-        Missing file
-    </span>
-
-    <span class="legend-chip">
-        <span
-            class="legend-swatch better-copy"
-            aria-hidden="true"
-        ></span>
-        Better copy available
-    </span>
-
-    <span class="legend-chip">
-        <kbd>/</kbd> search &middot;
-        <kbd>&uarr;</kbd><kbd>&darr;</kbd> browse &middot;
-        <kbd>Enter</kbd> open
-    </span>
-</div>
-
-<div
-    id="search-group-info"
-    class="search-group-info hidden"
-></div>
-
-<div class="table-wrapper">
-    <table id="movies">
-        <thead>
-        <tr>
-            <th data-col="NUM">
-                No
-            </th>
-
-            <th data-col="FORMATTEDTITLE">
-                Title
-            </th>
-
-            <th data-col="YEAR">
-                Year
-            </th>
-
-            <th data-col="RATING">
-                Rating
-            </th>
-
-            <th data-col="FILESIZE">
-                Size
-            </th>
-
-            <th
-                data-col="CERTIFICATION"
-                style="display:none;"
-            >
-                Cert
-            </th>
-
-            <th
-                data-col="LENGTH"
-                style="display:none;"
-            >
-                Length
-            </th>
-
-            <th
+            <button
+                type="button"
+                class="toggle-col"
                 data-col="LANGUAGES"
-                style="display:none;"
             >
+                <i class="fa-solid fa-language"></i>
                 Language
-            </th>
+            </button>
 
-            <th
+            <button
+                type="button"
+                class="toggle-col"
+                data-col="LENGTH"
+            >
+                <i class="fa-solid fa-clock"></i>
+                Length
+            </button>
+
+            <button
+                type="button"
+                class="toggle-col"
+                data-col="CERTIFICATION"
+            >
+                <i class="fa-solid fa-ribbon"></i>
+                Cert
+            </button>
+
+            <button
+                type="button"
+                class="toggle-col"
                 data-col="CATEGORY"
-                style="display:none;"
             >
+                <i class="fa-solid fa-tags"></i>
                 Genre
-            </th>
+            </button>
 
-            <th
+            <button
+                type="button"
+                class="toggle-col"
                 data-col="RESOLUTION"
-                style="display:none;"
             >
+                <i class="fa-solid fa-expand"></i>
                 Resolution
-            </th>
+            </button>
 
-            <th
+            <button
+                type="button"
+                class="toggle-col"
                 data-col="AUDIOFORMAT"
-                style="display:none;"
             >
+                <i class="fa-solid fa-volume-high"></i>
                 Audio
-            </th>
+            </button>
 
-            <th
+            <button
+                type="button"
+                class="toggle-col"
                 data-col="FILEPATH"
-                style="display:none;"
             >
+                <i class="fa-solid fa-file-video"></i>
                 File
-            </th>
+            </button>
 
-            <th
+            <button
+                type="button"
+                class="toggle-col"
                 data-col="PATH"
-                style="display:none;"
             >
+                <i class="fa-solid fa-folder-open"></i>
                 Path
-            </th>
-        </tr>
+            </button>
+        </div>
 
-        <tr id="search-row"></tr>
-        </thead>
+        <button
+            type="button"
+            id="theme-toggle"
+            aria-pressed="false"
+            aria-label="Switch to dark theme"
+            title="Switch to dark theme"
+        >
+            <i class="fa-solid fa-moon" aria-hidden="true"></i>
+        </button>
+    </div>
 
-        <tbody></tbody>
-    </table>
+    <div
+        id="filter-pills"
+        aria-live="polite"
+    ></div>
+
+    <div class="table-legend">
+        <span class="legend-chip">
+            <span
+                class="legend-swatch missing"
+                aria-hidden="true"
+            ></span>
+            Missing file
+        </span>
+
+        <span class="legend-chip">
+            <span
+                class="legend-swatch better-copy"
+                aria-hidden="true"
+            ></span>
+            Better copy available
+        </span>
+
+        <span class="legend-chip">
+            <kbd>/</kbd> search &middot;
+            <kbd>&uarr;</kbd><kbd>&darr;</kbd> browse &middot;
+            <kbd>Enter</kbd> open
+        </span>
+
+        <span
+            class="app-summary"
+            role="status"
+            aria-label="Library summary"
+        >
+            <span class="app-summary-chip" id="summary-movies-chip">
+                <i class="fa-solid fa-film" aria-hidden="true"></i>
+                <b id="summary-movies">&ndash;</b>
+                <small>titles</small>
+            </span>
+            <span class="app-summary-chip" id="summary-size-chip" hidden>
+                <i class="fa-solid fa-database" aria-hidden="true"></i>
+                <b id="summary-size">&ndash;</b>
+                <small>stored</small>
+            </span>
+            <span class="app-summary-chip" id="summary-health-chip" hidden>
+                <i class="fa-solid fa-heart-pulse" aria-hidden="true"></i>
+                <b id="summary-health">&ndash;</b>
+                <small>health</small>
+            </span>
+        </span>
+
+        <button
+            type="button"
+            id="stats-toggle"
+            class="stats-ribbon"
+            aria-controls="stats-panel"
+            aria-expanded="false"
+            aria-label="Analytics"
+        >
+            <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
+            <span class="stats-ribbon-label">Analytics</span>
+        </button>
+    </div>
+
+    <div
+        id="search-group-info"
+        class="search-group-info hidden"
+    ></div>
+</div>
+
+<div class="content-area">
+    <div class="table-wrapper">
+        <table id="movies">
+            <thead>
+            <tr>
+                <th data-col="NUM">
+                    No
+                </th>
+
+                <th data-col="FORMATTEDTITLE">
+                    Title
+                </th>
+
+                <th data-col="YEAR">
+                    Year
+                </th>
+
+                <th data-col="RATING">
+                    Rating
+                </th>
+
+                <th data-col="FILESIZE">
+                    Size
+                </th>
+
+                <th
+                    data-col="CERTIFICATION"
+                    style="display:none;"
+                >
+                    Cert
+                </th>
+
+                <th
+                    data-col="LENGTH"
+                    style="display:none;"
+                >
+                    Length
+                </th>
+
+                <th
+                    data-col="LANGUAGES"
+                    style="display:none;"
+                >
+                    Language
+                </th>
+
+                <th
+                    data-col="CATEGORY"
+                    style="display:none;"
+                >
+                    Genre
+                </th>
+
+                <th
+                    data-col="RESOLUTION"
+                    style="display:none;"
+                >
+                    Resolution
+                </th>
+
+                <th
+                    data-col="AUDIOFORMAT"
+                    style="display:none;"
+                >
+                    Audio
+                </th>
+
+                <th
+                    data-col="FILEPATH"
+                    style="display:none;"
+                >
+                    File
+                </th>
+
+                <th
+                    data-col="PATH"
+                    style="display:none;"
+                >
+                    Path
+                </th>
+            </tr>
+
+            <tr id="search-row"></tr>
+            </thead>
+
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="grid-wrapper hidden" id="grid-wrapper">
+        <div class="movie-grid" id="grid-view" aria-label="Movie grid"></div>
+    </div>
 </div>
 
 <div

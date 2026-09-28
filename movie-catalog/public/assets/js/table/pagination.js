@@ -60,10 +60,18 @@ export function renderPagination(
   const rangeStart = Math.max(1, state.page - 3);
   const rangeEnd = Math.min(totalPages, state.page + 3);
 
+  if (rangeStart > 1) {
+    container.appendChild(createEllipsis());
+  }
+
   for (let i = rangeStart; i <= rangeEnd; i++) {
     container.appendChild(
       createBtn(i, i, i === state.page, onPageChange, true)
     );
+  }
+
+  if (rangeEnd < totalPages) {
+    container.appendChild(createEllipsis());
   }
 
   container.appendChild(
@@ -127,6 +135,15 @@ function createPageSizeSelect(currentSize, onPageChange) {
   });
 
   return select;
+}
+
+function createEllipsis() {
+  const span = document.createElement('span');
+  span.className = 'ellipsis';
+  span.setAttribute('aria-hidden', 'true');
+  span.textContent = '…';
+
+  return span;
 }
 
 function createBtn(label, page, disabled, onPageChange, isNumber = false) {

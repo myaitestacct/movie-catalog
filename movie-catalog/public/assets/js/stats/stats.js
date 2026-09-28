@@ -31,11 +31,17 @@ import { createLatestRequest, isAbortError } from '../core/request.js';
 import { state, getMovieStateSignature } from '../core/state.js';
 import { clearError, showError } from '../utils/feedback.js';
 import { configureExternalLink } from '../utils/url.js';
+import { formatBytes } from '../utils/format.js';
 import { loadMovies } from '../app.js';
 
 let panel, loaded = false;
 let statsToggleButton;
+let statsBackdrop;
 let duplicateModal;
+
+export function isStatsLoaded() {
+    return loaded;
+}
 
 // duplicate state
 let dupGroups = [];
@@ -95,7 +101,7 @@ function createGroupHeader(group, colspan, alternate, itemLabel = 'copy') {
 
     const toggle = document.createElement('span');
     toggle.className = 'dup-toggle';
-    toggle.textContent = group.open ? '▼' : '▶';
+    toggle.innerHTML = `<i class="fa-solid fa-chevron-${group.open ? 'down' : 'right'}" aria-hidden="true"></i>`;
 
     const details = document.createTextNode(
         ` ${String(group.title ?? '')} (${String(group.year ?? '')}) `
@@ -148,6 +154,7 @@ function createMovieReferenceRow(row) {
 export function initStats(toggleBtn, statsPanel) {
     panel = statsPanel;
     statsToggleButton = toggleBtn;
+    statsBackdrop = document.getElementById('stats-backdrop');
     loaded = false;
     if (!toggleBtn || !panel) return;
 
@@ -178,6 +185,7 @@ export function initStats(toggleBtn, statsPanel) {
 
         panel.classList.toggle('show', !open);
         panel.classList.toggle('hidden', open);
+        statsBackdrop?.classList.toggle('show', !open);
         toggleBtn.setAttribute('aria-expanded', String(!open));
         panel.setAttribute('aria-hidden', String(open));
 
@@ -185,6 +193,24 @@ export function initStats(toggleBtn, statsPanel) {
             refreshStats();
         }
     });
+
+    // Backdrop click closes the drawer (the global outside-click
+    // listener below already covers it; this keeps focus on the ribbon).
+    statsBackdrop?.addEventListener('click', () => closePanel(true));
+
+    // Section anchor navigation
+    panel.querySelectorAll('.stats-section-nav button')
+        .forEach(button => {
+            button.addEventListener('click', () => {
+                const target = document.getElementById(
+                    button.dataset.target || ''
+                );
+                target?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            });
+        });
 
     panel.querySelector('.stats-close')?.addEventListener('click', () => {
         closePanel(true);
@@ -343,6 +369,30 @@ export async function refreshStats() {
         duplicateCard.onclick =
             data.duplicate_count > 0 ? loadDuplicates : null;
 
+        // App header summary chips
+        const sizeChip = el('summary-size-chip');
+        const sizeValue = el('summary-size');
+        if (sizeChip && sizeValue) {
+            sizeValue.textContent = formatBytes(
+                Number(data.total_size) || 0
+            );
+            sizeChip.hidden = false;
+        }
+
+        const healthChip = el('summary-health-chip');
+        const healthValue = el('summary-health');
+        if (healthChip && healthValue) {
+            healthValue.textContent = String(
+                Number(data.health_score) || 0
+            );
+            healthChip.dataset.tier = data.health_score >= 90
+                ? 'good'
+                : data.health_score >= 75
+                    ? 'warning'
+                    : 'critical';
+            healthChip.hidden = false;
+        }
+
         const betterCopyCard = el('better-copy-card');
         betterCopyCard.title = data.needs_better_copy_count > 0
             ? `Show ${data.needs_better_copy_count} movies marked as needing a better copy`
@@ -378,6 +428,7 @@ function closePanel(restoreFocus = false) {
     panel.classList.add('hidden');
     panel.setAttribute('aria-hidden', 'true');
     statsToggleButton?.setAttribute('aria-expanded', 'false');
+    statsBackdrop?.classList.remove('show');
 }
 
 /* =============================
