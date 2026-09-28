@@ -275,7 +275,7 @@ test.describe('movie catalog', () => {
   );
 
   test(
-    'shows all optional columns in the scrollable table',
+    'shows all optional columns without horizontal scrolling',
     async ({ page }) => {
       await openCatalog(page);
 
@@ -293,8 +293,13 @@ test.describe('movie catalog', () => {
         page.locator('.table-wrapper')
       ).toHaveCSS(
         'overflow-x',
-        'auto'
+        'hidden'
       );
+
+      const overflow = await page.locator('.table-wrapper').evaluate(
+        el => el.scrollWidth - el.clientWidth
+      );
+      expect(overflow).toBeLessThanOrEqual(1);
     }
   );
 
