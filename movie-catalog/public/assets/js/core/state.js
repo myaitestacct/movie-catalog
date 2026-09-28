@@ -15,7 +15,9 @@ export const state = {
   searchMode: 'AND',
   titleSearchMode: 'CONTAINS',
   fuzzy: false,
-  debounce: null
+  debounce: null,
+  // UI-only (not part of the query signature)
+  view: 'table'
 };
 
 export const ALWAYS_VISIBLE = [

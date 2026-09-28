@@ -994,15 +994,61 @@ async function renderApplication() {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Movie Catalog</title>
 
 ${headerCss}
+
+    <link rel="stylesheet"
+          href="assets/vendor/font-awesome/css/all.min.css"
+          crossorigin="anonymous" />
 
     <script>
         const BASE_URL = '';
     </script>
 </head>
 <body>
+<header class="app-header">
+    <div class="app-brand">
+        <span class="app-brand-mark" aria-hidden="true">
+            <i class="fa-solid fa-clapperboard"></i>
+        </span>
+        <div class="app-brand-text">
+            <h1>Movie Catalog</h1>
+            <p class="app-tagline">Library browser</p>
+        </div>
+    </div>
+
+    <div class="app-summary" role="status" aria-label="Library summary">
+        <span class="app-summary-chip" id="summary-movies-chip">
+            <i class="fa-solid fa-film" aria-hidden="true"></i>
+            <b id="summary-movies">&ndash;</b>
+            <small>titles</small>
+        </span>
+        <span class="app-summary-chip" id="summary-size-chip" hidden>
+            <i class="fa-solid fa-database" aria-hidden="true"></i>
+            <b id="summary-size">&ndash;</b>
+            <small>stored</small>
+        </span>
+        <span class="app-summary-chip" id="summary-health-chip" hidden>
+            <i class="fa-solid fa-heart-pulse" aria-hidden="true"></i>
+            <b id="summary-health">&ndash;</b>
+            <small>health</small>
+        </span>
+    </div>
+
+    <div class="app-header-actions">
+        <button
+            type="button"
+            id="theme-toggle"
+            aria-pressed="false"
+            aria-label="Switch to dark theme"
+            title="Switch to dark theme"
+        >
+            <i class="fa-solid fa-moon" aria-hidden="true"></i>
+        </button>
+    </div>
+</header>
 `;
 
   const browserFooter =

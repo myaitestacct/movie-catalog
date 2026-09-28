@@ -37,8 +37,8 @@ function createRowPoster(movie) {
   poster.alt = '';
   poster.loading = 'lazy';
   poster.decoding = 'async';
-  poster.width = 28;
-  poster.height = 42;
+  poster.width = 36;
+  poster.height = 54;
 
   poster.addEventListener('load', () => {
     poster.classList.add('loaded');
@@ -61,7 +61,7 @@ function createEmptyStateRow(columns) {
 
   const icon = document.createElement('div');
   icon.className = 'empty-state-icon';
-  icon.textContent = '🎬';
+  icon.innerHTML = '<i class="fa-solid fa-film" aria-hidden="true"></i>';
 
   const title = document.createElement('div');
   title.className = 'empty-state-title';
@@ -110,9 +110,11 @@ function createGroupHeader(type, count, exactTitle, columns, titleSearchMode) {
 
   const icon = document.createElement('span');
   icon.className = 'group-header-icon';
-  icon.textContent = type === 'exact'
-    ? '✅'
-    : (fuzzy ? '🔍' : '📄');
+  icon.innerHTML = type === 'exact'
+    ? '<i class="fa-solid fa-circle-check" aria-hidden="true"></i>'
+    : (fuzzy
+        ? '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>'
+        : '<i class="fa-solid fa-file-lines" aria-hidden="true"></i>');
 
   const titleSpan = document.createElement('span');
   titleSpan.className = 'group-header-title';
@@ -150,7 +152,7 @@ function renderSearchGroupInfo(
   const exactMessage = document.createElement('span');
   exactMessage.className = 'info-exact';
   exactMessage.textContent =
-    `✅ ${exactCount} exact match${exactCount === 1 ? '' : 'es'} for "${exactTitle}"`;
+    `${exactCount} exact match${exactCount === 1 ? '' : 'es'} for "${exactTitle}"`;
 
   const separator = document.createElement('span');
   separator.className = 'info-sep';
@@ -167,7 +169,7 @@ function renderSearchGroupInfo(
 
   if (otherCount > 0) {
     otherMessage.textContent =
-      `🔍 ${otherCount} ${modeLabel} match${otherCount === 1 ? '' : 'es'}`;
+      `${otherCount} ${modeLabel} match${otherCount === 1 ? '' : 'es'}`;
   } else {
     otherMessage.textContent = 'No additional matches';
   }
@@ -263,7 +265,7 @@ function renderMovieRow(
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'copy-btn icon-btn';
-      btn.innerHTML = '📋';
+      btn.innerHTML = '<i class="fa-solid fa-copy" aria-hidden="true"></i>';
       btn.title = 'Copy Num';
 
       btn.onclick = event => {
@@ -375,7 +377,7 @@ function renderMovieRow(
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'copy-btn icon-btn';
-      btn.innerHTML = '📋';
+      btn.innerHTML = '<i class="fa-solid fa-copy" aria-hidden="true"></i>';
       btn.title = 'Copy File Name';
 
       btn.onclick = event => {

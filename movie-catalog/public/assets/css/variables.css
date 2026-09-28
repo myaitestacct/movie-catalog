@@ -1,19 +1,45 @@
+/* ============================================================
+   Design tokens — single source of truth for the whole app
+   (table, toolbar, modal, analytics). Every theme-aware value
+   lives here; component files only reference these tokens.
+   ============================================================ */
+
 :root {
 
     color-scheme: light;
 
-    /* THEME COLORS */
-    --primary: #1e90ff;
-    --danger: #b30000;
-    --success: #28a745;
-    --warning: #e6a23c;
+    /* Typography */
+    --font-sans:
+        system-ui,
+        -apple-system,
+        "Segoe UI",
+        Roboto,
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+    --tracking-tight: -0.02em;
 
-    /* LIGHT THEME */
-    --bg-light: #f4f6f8;
-    --text-color: #222;
-    --text-muted: #6b7280;
+    /* Brand: indigo primary, amber "marquee" accent */
+    --primary: #4f46e5;
+    --primary-strong: #4338ca;
+    --primary-soft: color-mix(in srgb, var(--primary) 10%, white);
+    --accent: #d97706;
+    --accent-soft: color-mix(in srgb, #f59e0b 16%, white);
+    --danger: #c0262d;
+    --success: #15803d;
+    --warning: #b45309;
+
+    /* Light surfaces */
+    --bg-light: #f2f3f7;
+    --bg-glow-1: color-mix(in srgb, var(--primary) 8%, transparent);
+    --bg-glow-2: color-mix(in srgb, #f59e0b 7%, transparent);
+
+    --text-color: #1b1e27;
+    --text-muted: #646c82;
 
     --table-bg: #ffffff;
+    --surface-2: #f7f8fa;
+    --surface-3: #edeff4;
     --table-hover: #f1f2f6;
 
     /* Row states (semantic, theme-aware) */
@@ -32,33 +58,45 @@
     --row-exact-bg: color-mix(in srgb, var(--success) 7%, var(--table-bg));
     --row-fuzzy-bg: color-mix(in srgb, var(--text-color) 3%, var(--table-bg));
 
+    --row-flash: #fff3b0;
+
     /* Rating tiers */
     --rating-good: #2f9e44;
     --rating-mid: #e8a33d;
     --rating-bad: #d64545;
 
-    --header-bg: #2f3542;
-    --header-color: #ffffff;
-    --header-hover-bg: color-mix(in srgb, var(--primary) 30%, var(--header-bg));
+    /* App bar + sticky table head */
+    --appbar-bg: #ffffff;
+    --appbar-border: #e5e8ef;
+    --appbar-color: var(--text-color);
 
-    --border-light: #ddd;
+    --header-bg: #f7f8fa;
+    --header-color: #454b5e;
+    --header-hover-bg: color-mix(in srgb, var(--primary) 12%, var(--header-bg));
+    --header-shadow: 0 1px 0 var(--appbar-border), 0 2px 8px rgba(20, 22, 30, 0.05);
+
+    --border-light: #dde1ea;
 
     --highlight: #ffe066;
     --highlight-text: #222;
 
     --focus-ring: 0 0 0 2px color-mix(in srgb, var(--primary), white 40%);
 
-    --link-color: #1e90ff;
-    --title-color: #1e90ff;
+    --link-color: var(--primary);
+    --title-color: var(--primary);
 
-    --pagination-bg: rgba(255,255,255,0.75);
+    --modal-overlay: rgba(15, 17, 24, 0.55);
+    --modal-bg: var(--table-bg);
+    --modal-text: var(--text-color);
+
+    --pagination-bg: rgba(255, 255, 255, 0.8);
     --pagination-button-bg: #ffffff;
     --pagination-text: #222;
 
     --button-bg: #ffffff;
     --button-text: #222;
-    --button-border: #aaa;
-    --button-hover: #f0f0f0;
+    --button-border: #c9cfdd;
+    --button-hover: #eef0f5;
 
     /* AND / OR mode pill (fixed-contrast: dark text on yellow in both themes) */
     --mode-or-bg: #ffe066;
@@ -67,7 +105,32 @@
 
     /* Skeleton loading shimmer */
     --skeleton-base: #eceef2;
-    --skeleton-sheen: rgba(255,255,255,0.65);
+    --skeleton-sheen: rgba(255, 255, 255, 0.65);
+
+    /* Health score tiers */
+    --health-good: #157347;
+    --health-warning: #8a5a00;
+    --health-critical: #bb2d3b;
+
+    /* Categorical chart palette (stable order, readable on light) */
+    --chart-1: #4f46e5;
+    --chart-2: #0284c7;
+    --chart-3: #059669;
+    --chart-4: #d97706;
+    --chart-5: #dc2626;
+    --chart-6: #7c3aed;
+    --chart-7: #0d9488;
+    --chart-8: #db2777;
+    --chart-9: #65a30d;
+    --chart-10: #64748b;
+
+    /* Shape & depth */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --shadow-sm: 0 1px 2px rgba(18, 20, 28, 0.05), 0 1px 6px rgba(18, 20, 28, 0.07);
+    --shadow-md: 0 2px 6px rgba(18, 20, 28, 0.07), 0 10px 28px rgba(18, 20, 28, 0.12);
+    --shadow-lg: 0 10px 28px rgba(18, 20, 28, 0.16), 0 30px 70px rgba(18, 20, 28, 0.25);
 }
 
 /* AUTO DARK MODE (if user has not overridden) */
@@ -76,16 +139,21 @@
 
         color-scheme: dark;
 
-        --bg-light: #12141a;
-        --text-color: #e6e6e6;
-        --text-muted: #9aa1ad;
+        --bg-light: #0e1015;
+        --bg-glow-1: color-mix(in srgb, var(--primary) 22%, transparent);
+        --bg-glow-2: color-mix(in srgb, #f59e0b 10%, transparent);
 
-        --table-bg: #1a1d26;
+        --text-color: #e9ebf1;
+        --text-muted: #98a0b3;
+
+        --table-bg: #151821;
+        --surface-2: #1b1f2a;
+        --surface-3: #232837;
         --table-hover: #232734;
 
-        --row-zebra: #1e222c;
-        --row-hover: color-mix(in srgb, var(--primary) 10%, #1a1d26);
-        --row-active-bg: color-mix(in srgb, var(--primary) 22%, #1a1d26);
+        --row-zebra: #1a1e28;
+        --row-hover: color-mix(in srgb, var(--primary) 12%, #151821);
+        --row-active-bg: color-mix(in srgb, var(--primary) 24%, #151821);
 
         --row-missing-bg: #2a1518;
         --row-missing-accent: #ff7b72;
@@ -95,22 +163,44 @@
         --row-better-accent: #ffb454;
         --row-better-text: #ffd699;
 
-        --row-exact-bg: color-mix(in srgb, var(--success) 14%, #1a1d26);
-        --row-fuzzy-bg: color-mix(in srgb, #1a1d26, white 3%);
+        --row-exact-bg: color-mix(in srgb, var(--success) 16%, #151821);
+        --row-fuzzy-bg: color-mix(in srgb, #151821, white 3%);
+
+        --row-flash: #4a3a10;
 
         --rating-good: #4dd187;
         --rating-mid: #ffc857;
         --rating-bad: #ff6b78;
 
-        --header-bg: #1f232e;
-        --header-color: #f5f5f5;
+        --appbar-bg: #151821;
+        --appbar-border: #262b38;
+        --appbar-color: var(--text-color);
+
+        --header-bg: #1b1f2a;
+        --header-color: #b9c0d2;
+        --header-hover-bg: color-mix(in srgb, var(--primary) 18%, #1b1f2a);
+        --header-shadow: 0 1px 0 var(--appbar-border), 0 2px 10px rgba(0, 0, 0, 0.35);
 
         --border-light: #2c3140;
 
         --highlight: #ffc107;
         --highlight-text: #111;
 
-        --pagination-bg: rgba(18,20,26,0.75);
+        --link-color: #97a3ff;
+        --title-color: #97a3ff;
+
+        --primary: #818cf8;
+        --primary-strong: #a5b0ff;
+        --primary-soft: color-mix(in srgb, var(--primary) 16%, #151821);
+        --accent: #fbbf24;
+        --accent-soft: color-mix(in srgb, #fbbf24 16%, #151821);
+        --danger: #ff6b78;
+        --success: #4dd187;
+        --warning: #ffc857;
+
+        --modal-overlay: rgba(5, 6, 10, 0.72);
+
+        --pagination-bg: rgba(18, 20, 26, 0.8);
         --pagination-button-bg: #262b37;
         --pagination-text: #e6e6e6;
 
@@ -120,7 +210,26 @@
         --button-hover: #323949;
 
         --skeleton-base: #232734;
-        --skeleton-sheen: rgba(255,255,255,0.06);
+        --skeleton-sheen: rgba(255, 255, 255, 0.06);
+
+        --health-good: #4dd187;
+        --health-warning: #ffc857;
+        --health-critical: #ff6b78;
+
+        --chart-1: #818cf8;
+        --chart-2: #38bdf8;
+        --chart-3: #34d399;
+        --chart-4: #fbbf24;
+        --chart-5: #f87171;
+        --chart-6: #a78bfa;
+        --chart-7: #2dd4bf;
+        --chart-8: #f472b6;
+        --chart-9: #a3e635;
+        --chart-10: #94a3b8;
+
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 6px rgba(0, 0, 0, 0.45);
+        --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.45), 0 10px 28px rgba(0, 0, 0, 0.55);
+        --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.55), 0 30px 70px rgba(0, 0, 0, 0.7);
     }
 }
 
@@ -129,16 +238,21 @@
 
     color-scheme: dark;
 
-    --bg-light: #12141a;
-    --text-color: #e6e6e6;
-    --text-muted: #9aa1ad;
+    --bg-light: #0e1015;
+    --bg-glow-1: color-mix(in srgb, #818cf8 22%, transparent);
+    --bg-glow-2: color-mix(in srgb, #f59e0b 10%, transparent);
 
-    --table-bg: #1a1d26;
+    --text-color: #e9ebf1;
+    --text-muted: #98a0b3;
+
+    --table-bg: #151821;
+    --surface-2: #1b1f2a;
+    --surface-3: #232837;
     --table-hover: #232734;
 
-    --row-zebra: #1e222c;
-    --row-hover: color-mix(in srgb, var(--primary) 10%, #1a1d26);
-    --row-active-bg: color-mix(in srgb, var(--primary) 22%, #1a1d26);
+    --row-zebra: #1a1e28;
+    --row-hover: color-mix(in srgb, #818cf8 12%, #151821);
+    --row-active-bg: color-mix(in srgb, #818cf8 24%, #151821);
 
     --row-missing-bg: #2a1518;
     --row-missing-accent: #ff7b72;
@@ -148,26 +262,44 @@
     --row-better-accent: #ffb454;
     --row-better-text: #ffd699;
 
-    --row-exact-bg: color-mix(in srgb, var(--success) 14%, #1a1d26);
-    --row-fuzzy-bg: color-mix(in srgb, #1a1d26, white 3%);
+    --row-exact-bg: color-mix(in srgb, #4dd187 16%, #151821);
+    --row-fuzzy-bg: color-mix(in srgb, #151821, white 3%);
+
+    --row-flash: #4a3a10;
 
     --rating-good: #4dd187;
     --rating-mid: #ffc857;
     --rating-bad: #ff6b78;
 
-    --header-bg: #1f232e;
-    --header-color: #f5f5f5;
-    --header-hover-bg: color-mix(in srgb, var(--primary) 30%, #1f232e);
+    --appbar-bg: #151821;
+    --appbar-border: #262b38;
+    --appbar-color: var(--text-color);
+
+    --header-bg: #1b1f2a;
+    --header-color: #b9c0d2;
+    --header-hover-bg: color-mix(in srgb, #818cf8 18%, #1b1f2a);
+    --header-shadow: 0 1px 0 var(--appbar-border), 0 2px 10px rgba(0, 0, 0, 0.35);
 
     --border-light: #2c3140;
 
-    --highlight-text: #111;
     --highlight: #ffc107;
+    --highlight-text: #111;
 
-    --link-color: #8ab4ff;
-    --title-color: #8ab4ff;
+    --link-color: #97a3ff;
+    --title-color: #97a3ff;
 
-    --pagination-bg: rgba(18,20,26,0.75);
+    --primary: #818cf8;
+    --primary-strong: #a5b0ff;
+    --primary-soft: color-mix(in srgb, #818cf8 16%, #151821);
+    --accent: #fbbf24;
+    --accent-soft: color-mix(in srgb, #fbbf24 16%, #151821);
+    --danger: #ff6b78;
+    --success: #4dd187;
+    --warning: #ffc857;
+
+    --modal-overlay: rgba(5, 6, 10, 0.72);
+
+    --pagination-bg: rgba(18, 20, 26, 0.8);
     --pagination-button-bg: #262b37;
     --pagination-text: #e6e6e6;
 
@@ -177,7 +309,26 @@
     --button-hover: #323949;
 
     --skeleton-base: #232734;
-    --skeleton-sheen: rgba(255,255,255,0.06);
+    --skeleton-sheen: rgba(255, 255, 255, 0.06);
+
+    --health-good: #4dd187;
+    --health-warning: #ffc857;
+    --health-critical: #ff6b78;
+
+    --chart-1: #818cf8;
+    --chart-2: #38bdf8;
+    --chart-3: #34d399;
+    --chart-4: #fbbf24;
+    --chart-5: #f87171;
+    --chart-6: #a78bfa;
+    --chart-7: #2dd4bf;
+    --chart-8: #f472b6;
+    --chart-9: #a3e635;
+    --chart-10: #94a3b8;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 6px rgba(0, 0, 0, 0.45);
+    --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.45), 0 10px 28px rgba(0, 0, 0, 0.55);
+    --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.55), 0 30px 70px rgba(0, 0, 0, 0.7);
 }
 
 /* Theme-aware scrollbars (color-scheme above already flips native UI) */

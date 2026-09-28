@@ -5,24 +5,51 @@ class="stats-ribbon"
 aria-controls="stats-panel"
 aria-expanded="false"
 >
-📊 Analytics
+<i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
+Analytics
 </button>
+
+<div
+id="stats-backdrop"
+class="stats-backdrop"
+aria-hidden="true"
+></div>
 
 <div
 id="stats-panel"
 class="stats-panel hidden"
+role="region"
+aria-label="Collection analytics"
 aria-hidden="true"
 >
 <div class="stats-panel-inner">
 <header class="stats-dashboard-header">
 <div>
-<h2>📊 Collection Analytics</h2>
+<h2><i class="fa-solid fa-chart-pie" aria-hidden="true"></i> Collection Analytics</h2>
 <p>A live summary of your movie library and its overall health.</p>
 </div>
-<button type="button" class="stats-close" aria-label="Close analytics panel">&times;</button>
+<button type="button" class="stats-close" aria-label="Close analytics panel"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
 </header>
 
-<section class="stats-section" aria-labelledby="overview-heading">
+<nav
+class="stats-section-nav"
+aria-label="Analytics sections"
+>
+<button type="button" data-target="section-overview">Overview</button>
+<button type="button" data-target="section-release-years">Release Years</button>
+<button type="button" data-target="section-genres">Genres</button>
+<button type="button" data-target="section-rating-runtime">Rating &amp; Runtime</button>
+<button type="button" data-target="section-certifications">Certifications</button>
+<button type="button" data-target="section-directors">Directors</button>
+<button type="button" data-target="section-cast">Cast</button>
+<button type="button" data-target="section-origin">Language &amp; Country</button>
+<button type="button" data-target="section-technical">Technical</button>
+<button type="button" data-target="section-storage">Storage</button>
+<button type="button" data-target="section-metadata">Metadata</button>
+<button type="button" data-target="section-health">Library Health</button>
+</nav>
+
+<section id="section-overview" class="stats-section" aria-labelledby="overview-heading">
 <h3 id="overview-heading">Overview</h3>
 
 <div class="stats-cards stats-overview-cards">
@@ -100,7 +127,7 @@ aria-hidden="true"
 </div>
 </section>
 
-<section class="stats-section stats-release-section" aria-labelledby="release-years-heading">
+<section id="section-release-years" class="stats-section stats-release-section" aria-labelledby="release-years-heading">
 <div class="stats-section-header">
 <h3 id="release-years-heading">Release-Year Analytics</h3>
 <p>Explore collection coverage by year and decade.</p>
@@ -151,7 +178,7 @@ aria-hidden="true"
 </div>
 </section>
 
-<section class="stats-section stats-genre-section" aria-labelledby="genre-analytics-heading">
+<section id="section-genres" class="stats-section stats-genre-section" aria-labelledby="genre-analytics-heading">
 <div class="stats-section-header">
 <h3 id="genre-analytics-heading">Genre Analytics</h3>
 <p>See which genres shape the collection.</p>
@@ -177,6 +204,22 @@ aria-hidden="true"
 </article>
 </div>
 
+<div class="stats-genre-layout">
+<article class="stats-genre-donut-card" aria-hidden="false">
+<div
+id="genre-donut"
+class="stats-genre-donut"
+role="img"
+aria-label="Share of tagged movies per leading genre"
+>
+<div class="stats-genre-donut-hole">
+<b id="genre-donut-count">&ndash;</b>
+<small>tagged</small>
+</div>
+</div>
+<ul class="stats-genre-donut-legend" id="genre-donut-legend"></ul>
+</article>
+
 <article class="stats-genre-chart" aria-labelledby="genre-distribution-heading">
 <header>
 <div>
@@ -189,9 +232,10 @@ aria-hidden="true"
 <p class="stats-chart-empty">Loading genre data…</p>
 </div>
 </article>
+</div>
 </section>
 
-<section class="stats-section stats-rating-runtime-section" aria-labelledby="rating-runtime-heading">
+<section id="section-rating-runtime" class="stats-section stats-rating-runtime-section" aria-labelledby="rating-runtime-heading">
 <div class="stats-section-header">
 <h3 id="rating-runtime-heading">Rating &amp; Runtime Analytics</h3>
 <p>Understand quality bands and movie-length patterns.</p>
@@ -246,7 +290,7 @@ aria-hidden="true"
 </div>
 </section>
 
-<section class="stats-section stats-certification-section" aria-labelledby="certification-analytics-heading">
+<section id="section-certifications" class="stats-section stats-certification-section" aria-labelledby="certification-analytics-heading">
 <div class="stats-section-header">
 <h3 id="certification-analytics-heading">Certification Analytics</h3>
 <p>Review audience classifications and certification coverage.</p>
@@ -286,7 +330,7 @@ aria-hidden="true"
 </article>
 </section>
 
-<section class="stats-section stats-director-section" aria-labelledby="director-analytics-heading">
+<section id="section-directors" class="stats-section stats-director-section" aria-labelledby="director-analytics-heading">
 <div class="stats-section-header">
 <h3 id="director-analytics-heading">Director Analytics</h3>
 <p>See which filmmakers are most represented across the library.</p>
@@ -332,7 +376,7 @@ aria-hidden="true"
 </article>
 </section>
 
-<section class="stats-section stats-cast-section" aria-labelledby="cast-analytics-heading">
+<section id="section-cast" class="stats-section stats-cast-section" aria-labelledby="cast-analytics-heading">
 <div class="stats-section-header">
 <h3 id="cast-analytics-heading">Actor &amp; Cast Analytics</h3>
 <p>Explore cast coverage and the actors most represented in the library.</p>
@@ -378,7 +422,7 @@ aria-hidden="true"
 </article>
 </section>
 
-<section class="stats-section stats-origin-section" aria-labelledby="origin-analytics-heading">
+<section id="section-origin" class="stats-section stats-origin-section" aria-labelledby="origin-analytics-heading">
 <div class="stats-section-header">
 <h3 id="origin-analytics-heading">Language &amp; Country Analytics</h3>
 <p>Explore the languages and countries represented in the library.</p>
@@ -439,7 +483,7 @@ aria-hidden="true"
 </div>
 </section>
 
-<section class="stats-section stats-technical-section" aria-labelledby="technical-format-heading">
+<section id="section-technical" class="stats-section stats-technical-section" aria-labelledby="technical-format-heading">
 <div class="stats-section-header">
 <h3 id="technical-format-heading">Technical Format Analytics</h3>
 <p>Explore resolution and audio-format coverage across the library.</p>
@@ -500,7 +544,7 @@ aria-hidden="true"
 </div>
 </section>
 
-<section class="stats-section stats-storage-section" aria-labelledby="storage-analytics-heading">
+<section id="section-storage" class="stats-section stats-storage-section" aria-labelledby="storage-analytics-heading">
 <div class="stats-section-header">
 <h3 id="storage-analytics-heading">Storage Analytics</h3>
 <p>Understand file-size coverage and how the library uses disk space.</p>
@@ -546,7 +590,7 @@ aria-hidden="true"
 </article>
 </section>
 
-<section class="stats-section stats-metadata-section" aria-labelledby="metadata-completeness-heading">
+<section id="section-metadata" class="stats-section stats-metadata-section" aria-labelledby="metadata-completeness-heading">
 <div class="stats-section-header">
 <h3 id="metadata-completeness-heading">Metadata Completeness</h3>
 <p>Review field-by-field coverage and open the movies behind each gap.</p>
@@ -592,7 +636,7 @@ aria-hidden="true"
 </article>
 </section>
 
-<section class="stats-section" aria-labelledby="health-heading">
+<section id="section-health" class="stats-section" aria-labelledby="health-heading">
 <div class="stats-section-header">
 <h3 id="health-heading">Library Health</h3>
 <p>Higher scores indicate fewer file, copy, poster, and metadata issues.</p>
