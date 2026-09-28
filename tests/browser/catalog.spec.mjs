@@ -16,6 +16,9 @@ test.describe('movie catalog', () => {
     async ({ page }) => {
       await openCatalog(page);
 
+      // Fuzzy grouping is no longer the default: opt in explicitly.
+      await page.locator('#title-search-mode').selectOption('FUZZY');
+
       const movieRows =
         page.locator(
           '#movies tbody tr[data-num]'
@@ -651,7 +654,6 @@ test.describe('movie catalog', () => {
     }
   );
 });
-
 
 test('slash focuses and selects the title filter without intercepting typing', async ({ page }) => {
   await openCatalog(page);
