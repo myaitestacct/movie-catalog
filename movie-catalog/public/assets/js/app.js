@@ -407,7 +407,7 @@ function setupKeyboardShortcuts() {
         state.titleSearchMode
       )
         ? state.titleSearchMode
-        : 'FUZZY';
+        : 'CONTAINS';
 
     titleSearchMode.addEventListener(
       'change',
