@@ -690,6 +690,15 @@ tr.empty-state td {
     opacity: 1;
 }
 
+/* Hide mini posters when the user disables them via the toolbar toggle */
+.hide-mini-posters .row-poster {
+    display: none !important;
+}
+
+.hide-mini-posters .title-cell {
+    gap: 0;
+}
+
 .title-cell {
     display: flex;
     align-items: center;
