@@ -40,6 +40,14 @@ body::before {
     display: none !important;
 }
 
+/* The `hidden` attribute is only a UA-sheet rule, so any author `display`
+   declaration — the flex toolbar chips, the summary chips, the stats bars —
+   silently overrides it and the element stays on screen. Pin it so markup
+   like `<button hidden>` and JS like `chip.hidden = false` stay reliable. */
+[hidden] {
+    display: none !important;
+}
+
 /* Screen-reader-only text (visually hidden, accessible) */
 .sr-only {
     position: absolute;

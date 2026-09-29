@@ -592,6 +592,102 @@ test.describe('movie catalog', () => {
   );
 
   test(
+    'toggles the mini poster thumbnails and remembers the choice',
+    async ({ page }) => {
+      await openCatalog(page);
+
+      const posterChip =
+        page.locator('#toggle-mini-poster');
+
+      const posters =
+        page.locator('#movies tbody .row-poster');
+
+      await expect(posterChip).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+
+      await expect(posters.first()).toBeVisible();
+
+      await posterChip.click();
+
+      await expect(
+        page.locator('html')
+      ).toHaveClass(/hide-mini-posters/);
+
+      await expect(posters.first()).toBeHidden();
+
+      await expect(posterChip).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
+
+      // Rows rendered later inherit the preference: the class lives on <html>,
+      // not on the rows that existed when the chip was clicked.
+      await page.getByRole(
+        'button',
+        {
+          name: '>',
+          exact: true
+        }
+      ).click();
+
+      await expect(
+        page.locator(
+          '#movies tbody .row-poster'
+        ).first()
+      ).toBeHidden();
+
+      await page.reload();
+
+      await expect(
+        page.locator('html')
+      ).toHaveClass(/hide-mini-posters/);
+
+      await expect(posterChip).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
+
+      await posterChip.click();
+
+      await expect(
+        page.locator('html')
+      ).not.toHaveClass(/hide-mini-posters/);
+
+      await expect(
+        page.locator(
+          '#movies tbody .row-poster'
+        ).first()
+      ).toBeVisible();
+    }
+  );
+
+  test(
+    'reveals the clear-filters chip only while a filter is active',
+    async ({ page }) => {
+      await openCatalog(page);
+
+      const clearFilters =
+        page.locator('#clear-filters');
+
+      await expect(clearFilters).toBeHidden();
+
+      await page.locator(
+        '#search-row input[data-col="FORMATTEDTITLE"]'
+      ).fill('Arrival');
+
+      await expect(clearFilters).toBeVisible();
+      await expect(clearFilters).toBeEnabled();
+
+      await clearFilters.click();
+
+      await expect(clearFilters).toBeHidden();
+      await expect(clearFilters).toBeDisabled();
+    }
+  );
+
+  test(
     'shows an API error and recovers with retry',
     async ({ page }) => {
       let movieRequestCount = 0;

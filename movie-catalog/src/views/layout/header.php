@@ -9,17 +9,17 @@
     $publicRoot = dirname(__DIR__, 3) . '/public';
     $bundleCss = $publicRoot . '/assets/dist/bundle.css';
     $hasBundleCss = is_file($bundleCss);
+    // Source stylesheets get the same mtime cache key as the bundle. Without
+    // it a browser can pair freshly rendered view markup with a stale cached
+    // stylesheet — e.g. a toolbar control whose CSS rule it has never seen.
+    $sourceCss = ['variables', 'base', 'table', 'pagination', 'modal', 'responsive', 'stats'];
     if ($hasBundleCss):
     ?>
     <link rel="stylesheet" href="assets/dist/bundle.css?v=<?= filemtime($bundleCss) ?>">
     <?php else: ?>
-    <link rel="stylesheet" href="assets/css/variables.css">
-    <link rel="stylesheet" href="assets/css/base.css">
-    <link rel="stylesheet" href="assets/css/table.css">
-    <link rel="stylesheet" href="assets/css/pagination.css">
-    <link rel="stylesheet" href="assets/css/modal.css">
-    <link rel="stylesheet" href="assets/css/responsive.css">
-    <link rel="stylesheet" href="assets/css/stats.css">
+    <?php foreach ($sourceCss as $name): $file = $publicRoot . '/assets/css/' . $name . '.css'; ?>
+    <link rel="stylesheet" href="assets/css/<?= $name ?>.css<?= is_file($file) ? '?v=' . filemtime($file) : '' ?>">
+    <?php endforeach; ?>
     <?php endif; ?>
 
     <link rel="stylesheet"
