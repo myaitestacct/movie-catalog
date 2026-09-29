@@ -236,6 +236,15 @@ rendered view markup with a stale cached asset. (In source mode the ES modules
 imported *by* `app.js` are not versioned; use a build for fully cache-keyed
 assets.)
 
+Because the entry script is versioned and its own imports are not, **no module
+may import `app.js`**. `app.js?v=…` and `../app.js` are two different module
+records, so a cycle back into the entry makes the browser evaluate — and boot —
+the whole application twice. The visible symptoms are duplicated JS-created
+toolbar controls plus buttons that look dead, because their two handlers undo
+each other on every click. Modules that need something from the entry receive it
+by injection instead (`setMovieLoader()` in `stats/stats.js`), and
+`tests/js/entry-cycle.test.mjs` fails if a cycle is reintroduced.
+
 ## Deployment and troubleshooting
 
 - Set the web document root to **`movie-catalog/public/`**, never the repository

@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -984,10 +984,30 @@ async function renderApplication() {
     <link rel="stylesheet" href="assets/css/responsive.css">
     <link rel="stylesheet" href="assets/css/stats.css">`;
 
+  // Mirror src/views/layout/footer.php exactly, cache key included.
+  //
+  // The `?v=<mtime>` on the entry script is load-bearing: every *internal*
+  // import stays unversioned, so a module that imports the entry point back
+  // (`import { x } from '../app.js'`) resolves to a second module record and
+  // the whole application boots twice -- duplicated JS-created toolbar
+  // buttons and controls whose handlers cancel each other out. Browser tests
+  // must load the app the way the PHP app serves it, or that class of
+  // regression stays invisible here.
+  const cacheKey = file =>
+    existsSync(file)
+      ? Math.floor(statSync(file).mtimeMs / 1000)
+      : '';
+
+  const bundleJsPath =
+    path.join(distDir, 'bundle.js');
+
+  const appJsPath =
+    path.join(publicRoot, 'assets/js/app.js');
+
   const footerJs =
     hasBundleJs
-      ? '<script type="module" src="assets/dist/bundle.js"></script>'
-      : '<script type="module" src="assets/js/app.js"></script>';
+      ? `<script type="module" src="assets/dist/bundle.js?v=${cacheKey(bundleJsPath)}"></script>`
+      : `<script type="module" src="assets/js/app.js?v=${cacheKey(appJsPath)}"></script>`;
 
   const browserHeader =
     `<!DOCTYPE html>

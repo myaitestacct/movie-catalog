@@ -47,11 +47,17 @@ class MockElement {
   }
 
   addEventListener(type, listener) {
-    this.listeners.set(type, listener);
+    // Stack like the real DOM does: binding the same element twice must be
+    // observable, otherwise a duplicated handler cannot fail a test.
+    const listeners = this.listeners.get(type) ?? [];
+    listeners.push(listener);
+    this.listeners.set(type, listeners);
   }
 
   click() {
-    this.listeners.get('click')?.();
+    // One click fires the `onclick` property handler *and* every listener.
+    this.onclick?.();
+    (this.listeners.get('click') ?? []).forEach(listener => listener());
   }
 
   appendChild(child) {
@@ -59,9 +65,24 @@ class MockElement {
     return child;
   }
 
+  insertBefore(child, reference) {
+    const index = this.children.indexOf(reference);
+
+    if (index === -1) this.children.push(child);
+    else this.children.splice(index, 0, child);
+
+    return child;
+  }
+
   querySelector(selector) {
     if (selector === 'i.fa-eye, i.fa-eye-slash') {
       return this.eyeIcon;
+    }
+
+    if (selector === '.toggle-all-columns') {
+      return this.children.find(
+        child => String(child.className).includes('toggle-all-columns')
+      ) ?? null;
     }
 
     return null;
@@ -185,4 +206,75 @@ test('bulk column toggle synchronizes visibility and every button state', () => 
   const saved = JSON.parse(storage.get('movieCatalogColumns'));
   assert.equal(saved.PATH, true);
   assert.equal(saved.LANGUAGES, false);
+});
+
+test('initialising the toolbar twice keeps one Hide All button and one handler per chip', () => {
+  // Regression guard: the entry point used to be imported back by stats.js
+  // (`import { loadMovies } from '../app.js'`). Because the page loads the
+  // entry with a cache key (app.js?v=<mtime>) while internal imports stay
+  // unversioned, those two specifiers are different modules -- the whole app
+  // booted twice, the toolbar gained a second "Hide All" button, and every
+  // column chip ended up with two click handlers that cancelled each other
+  // out (clicking Path did nothing at all).
+  const columns = ['NUM', 'FORMATTEDTITLE', 'LANGUAGES', 'PATH'];
+  const headers = columns.map(makeHeader);
+  const tableCells = columns.map(() => [
+    new MockElement('th'),
+    new MockElement('td')
+  ]);
+
+  const table = new MockElement('table');
+  table.querySelectorAll = selector => {
+    if (selector === 'thead th') return headers;
+
+    const match = selector.match(/nth-child\((\d+)\)/);
+    return match ? tableCells[Number(match[1]) - 1] : [];
+  };
+
+  const pathButton = makeToggleButton('PATH');
+  const toggleContainer = new MockElement('div');
+  toggleContainer.querySelectorAll = selector =>
+    selector === '.toggle-col' ? [pathButton] : [];
+
+  const storage = new Map();
+  globalThis.localStorage = {
+    getItem: key => storage.get(key) ?? null,
+    setItem: (key, value) => storage.set(key, value)
+  };
+  globalThis.document = {
+    createElement: tagName => new MockElement(tagName),
+    querySelector: () => null
+  };
+
+  state.columnVisibility = {};
+
+  initColumnToggles(table, toggleContainer);
+  initColumnToggles(table, toggleContainer);
+
+  const hideAllButtons = toggleContainer.children.filter(
+    child => String(child.className).includes('toggle-all-columns')
+  );
+
+  assert.equal(
+    hideAllButtons.length,
+    1,
+    'a second initialisation must not add another Hide All button'
+  );
+
+  pathButton.click();
+
+  assert.equal(state.columnVisibility.PATH, true);
+  assert.equal(pathButton.getAttribute('aria-pressed'), 'true');
+  assert.equal(tableCells[3][0].style.display, '');
+  assert.equal(tableCells[3][1].style.display, '');
+
+  pathButton.click();
+
+  assert.equal(state.columnVisibility.PATH, false);
+  assert.equal(tableCells[3][0].style.display, 'none');
+
+  hideAllButtons[0].click();
+
+  assert.equal(state.columnVisibility.PATH, true);
+  assert.equal(hideAllButtons[0].textContent, 'Hide All');
 });

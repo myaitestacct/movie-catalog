@@ -39,7 +39,10 @@ export function initColumnToggles(table, toggleContainer) {
         // wired up elsewhere (they have no data-col). Skip them here.
         if (!button.dataset.col) return;
 
-        button.addEventListener('click', () => {
+        // `onclick` rather than addEventListener: a handler attached twice
+        // (e.g. if the toolbar is ever initialised twice) flips the column
+        // back to its original state on every click -- two flips, no change.
+        button.onclick = () => {
             const column = button.dataset.col;
             const visible = !state.columnVisibility[column];
 
@@ -47,14 +50,37 @@ export function initColumnToggles(table, toggleContainer) {
             syncToggleButton(button);
             savePreferences();
             updateToggleAllButton();
-        });
+        };
     });
 
-    const toggleAllButton = document.createElement('button');
-    toggleAllButton.type = 'button';
-    toggleAllButton.className = 'toggle-all-columns';
+    // Reuse an existing Hide/Show All button instead of creating another
+    // one: initialising the toolbar twice must not duplicate the control.
+    const existingToggleAllButton = qs(
+        '.toggle-all-columns',
+        toggleContainer
+    );
+    const toggleAllButton = existingToggleAllButton
+        ?? document.createElement('button');
 
-    toggleAllButton.addEventListener('click', () => {
+    if (!existingToggleAllButton) {
+        toggleAllButton.type = 'button';
+        toggleAllButton.className = 'toggle-all-columns';
+
+        // Keep the theme toggle as the right-most toolbar control:
+        // insert "Hide All" before it when present.
+        const anchorButton = toggleContainer.querySelector(
+            '#theme-toggle, #stats-toggle'
+        );
+
+        if (anchorButton) {
+            toggleContainer.insertBefore(toggleAllButton, anchorButton);
+        } else {
+            toggleContainer.appendChild(toggleAllButton);
+        }
+    }
+
+    // Single-owner handler, same reasoning as the column chips above.
+    toggleAllButton.onclick = () => {
         const anyVisible = optionalColumns
             .some(column => state.columnVisibility[column]);
         const visible = !anyVisible;
@@ -66,19 +92,7 @@ export function initColumnToggles(table, toggleContainer) {
         syncAllToggleButtons();
         savePreferences();
         updateToggleAllButton();
-    });
-
-    // Keep the theme toggle as the right-most toolbar control:
-    // insert "Hide All" before it when present.
-    const anchorButton = toggleContainer.querySelector(
-        '#theme-toggle, #stats-toggle'
-    );
-
-    if (anchorButton) {
-        toggleContainer.insertBefore(toggleAllButton, anchorButton);
-    } else {
-        toggleContainer.appendChild(toggleAllButton);
-    }
+    };
 
     updateToggleAllButton();
 

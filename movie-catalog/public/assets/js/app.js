@@ -21,7 +21,8 @@ import {
 import {
   initStats,
   refreshStats,
-  isStatsLoaded
+  isStatsLoaded,
+  setMovieLoader
 } from './stats/stats.js';
 import {
   clearError,
@@ -281,7 +282,12 @@ function setupKeyboardShortcuts() {
       ?.classList.remove('kbd-highlight');
   };
 
-  document.addEventListener('keydown', event => {
+  // Own the document `onkeydown` slot: a second boot then replaces this
+  // handler instead of adding another one (two handlers would move the
+  // row highlight two rows per keypress). The modal and the stats panel
+  // register their own keydown listeners with addEventListener, which
+  // coexists with this property handler.
+  document.onkeydown = event => {
     // Row navigation must not fight with the open detail modal.
     if (document.querySelector('.movie-modal.open')) return;
 
@@ -342,7 +348,7 @@ function setupKeyboardShortcuts() {
         ?.querySelector('.movie-title-link')
         ?.click();
     }
-  });
+  };
 
   // Reset the highlight whenever the table re-renders.
   const observer = new MutationObserver(() => {
@@ -430,8 +436,10 @@ function scheduleIdleStatsPreload() {
   const viewTable = document.getElementById('view-table');
   const viewGrid = document.getElementById('view-grid');
 
-  viewTable?.addEventListener('click', () => switchView('table'));
-  viewGrid?.addEventListener('click', () => switchView('grid'));
+  // `onclick` (not addEventListener) so re-running the boot replaces the
+  // handler instead of stacking a second one.
+  if (viewTable) viewTable.onclick = () => switchView('table');
+  if (viewGrid) viewGrid.onclick = () => switchView('grid');
 
   columns = [
     ...table.querySelectorAll(
@@ -535,24 +543,21 @@ function scheduleIdleStatsPreload() {
         ? state.titleSearchMode
         : 'CONTAINS';
 
-    titleSearchMode.addEventListener(
-      'change',
-      () => {
-        if (
-          !TITLE_SEARCH_MODES.includes(
-            titleSearchMode.value
-          )
-        ) {
-          return;
-        }
-
-        state.titleSearchMode =
-          titleSearchMode.value;
-
-        state.page = 1;
-        loadMovies();
+    titleSearchMode.onchange = () => {
+      if (
+        !TITLE_SEARCH_MODES.includes(
+          titleSearchMode.value
+        )
+      ) {
+        return;
       }
-    );
+
+      state.titleSearchMode =
+        titleSearchMode.value;
+
+      state.page = 1;
+      loadMovies();
+    };
   }
 
   /* ==============================
@@ -657,6 +662,13 @@ function scheduleIdleStatsPreload() {
   );
 
   // 4️⃣ Stats
+  // stats.js needs loadMovies() but must not import it from here: an import
+  // of the entry point resolves to a *second* module instance once the script
+  // tag carries a cache key (app.js?v=<mtime>), which boots the whole app
+  // twice. Inject the loader instead. Done unconditionally so jump-to-movie
+  // works even when the stats panel is not rendered on this page.
+  setMovieLoader(loadMovies);
+
   const statsToggle =
     document.getElementById(
       'stats-toggle'
