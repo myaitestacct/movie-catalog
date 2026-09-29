@@ -45,34 +45,33 @@
                     </option>
                 </select>
             </label>
-
-            <button
-                type="button"
-                id="search-mode"
-                class="search-mode"
-                title="Toggle AND / OR filter matching"
-            >
-                AND
-            </button>
-
-            <button
-                type="button"
-                id="clear-filters"
-                class="clear-filters"
-                disabled
-                hidden
-            >
-                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-                Clear filters
-            </button>
         </div>
-	
+		<div class="tool-group">
+			<button
+				type="button"
+				id="search-mode"
+				class="search-mode"
+				title="Toggle AND / OR filter matching"
+			>
+				AND
+			</button>
+		</div>
+		<button
+			type="button"
+			id="clear-filters"
+			class="clear-filters"
+			disabled
+			hidden
+		>
+			<i class="fa-solid fa-xmark" aria-hidden="true"></i>
+			Clear filters
+		</button>
         <div
             class="tool-group columns-group"
             role="group"
             aria-label="Optional columns"
         >
-            <span class="tool-group-label" aria-hidden="true">Columns</span>
+            <!--<span class="tool-group-label" aria-hidden="true">Columns</span> -->
 
             <button
                 type="button"
