@@ -60,6 +60,7 @@
                 id="clear-filters"
                 class="clear-filters"
                 disabled
+                hidden
             >
                 <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                 Clear filters
