@@ -5,7 +5,11 @@
 //  - the thumbnails live inside the always-visible Title cell, so there is no
 //    POSTER column to hide and nothing to add to state.columnVisibility;
 //  - the toolbar chip therefore carries `data-ui` instead of `data-col`, and
-//    columns.js skips it (it only owns buttons with a data-col);
+//    columns.js never binds it (it only owns buttons with a data-col). The
+//    bulk "Hide All"/"Show All" button *does* cover the thumbnails: it drives
+//    them through the handle returned below, and reports back through
+//    `onChange` so its own label stays correct when this chip is clicked
+//    on its own;
 //  - hiding is done with one class on <html> so it also applies to rows that
 //    are rendered later (pagination, search, sort) without any extra work.
 //
@@ -56,11 +60,16 @@ function writeStoredVisibility(storage, visible) {
  *
  * @param {Document|Element} root element the chip is looked up in
  * @param {Storage} storage preference store (localStorage in the browser)
+ * @param {(visible: boolean) => void} [onChange] called after the visibility
+ *   changes through a click or through the returned handle, so other toolbar
+ *   controls can re-sync. Not called for the initial application of the stored
+ *   preference, which happens before the rest of the toolbar exists.
  * @returns {{visible: boolean, show: Function, hide: Function, toggle: Function}|null}
  */
 export function initMiniPosterToggle(
   root = document,
-  storage = globalThis.localStorage
+  storage = globalThis.localStorage,
+  onChange = null
 ) {
   const button =
     root?.querySelector?.(MINI_POSTER_BUTTON_SELECTOR) ?? null;
@@ -81,12 +90,16 @@ export function initMiniPosterToggle(
     button.setAttribute('aria-pressed', String(visible));
   }
 
-  function apply() {
+  function apply(notify = false) {
     // Ancestor class => also covers rows rendered after this call.
     html?.classList.toggle(HIDE_MINI_POSTERS_CLASS, !visible);
 
     syncButton();
     writeStoredVisibility(storage, visible);
+
+    if (notify) {
+      onChange?.(visible);
+    }
   }
 
   apply();
@@ -94,7 +107,7 @@ export function initMiniPosterToggle(
   if (button) {
     button.onclick = () => {
       visible = !visible;
-      apply();
+      apply(true);
     };
   }
 
@@ -105,17 +118,17 @@ export function initMiniPosterToggle(
 
     show() {
       visible = true;
-      apply();
+      apply(true);
     },
 
     hide() {
       visible = false;
-      apply();
+      apply(true);
     },
 
     toggle() {
       visible = !visible;
-      apply();
+      apply(true);
     }
   });
 }

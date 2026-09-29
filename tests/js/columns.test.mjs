@@ -278,3 +278,93 @@ test('initialising the toolbar twice keeps one Hide All button and one handler p
   assert.equal(state.columnVisibility.PATH, true);
   assert.equal(hideAllButtons[0].textContent, 'Hide All');
 });
+
+test('Hide All / Show All covers the poster thumbnails as well as the columns', () => {
+  // PATH is the only optional column here (ALWAYS_VISIBLE covers NUM and
+  // FORMATTEDTITLE), matching the single chip this toolbar exposes.
+  const columns = ['NUM', 'FORMATTEDTITLE', 'PATH'];
+  const headers = columns.map(makeHeader);
+  const tableCells = columns.map(() => [
+    new MockElement('th'),
+    new MockElement('td')
+  ]);
+
+  const table = new MockElement('table');
+  table.querySelectorAll = selector => {
+    if (selector === 'thead th') return headers;
+
+    const match = selector.match(/nth-child\((\d+)\)/);
+    return match ? tableCells[Number(match[1]) - 1] : [];
+  };
+
+  const pathButton = makeToggleButton('PATH');
+  const toggleContainer = new MockElement('div');
+  toggleContainer.querySelectorAll = selector =>
+    selector === '.toggle-col' ? [pathButton] : [];
+
+  globalThis.localStorage = {
+    getItem: () => null,
+    setItem: () => {}
+  };
+  globalThis.document = {
+    createElement: tagName => new MockElement(tagName),
+    querySelector: () => null
+  };
+
+  // Stand-in for the handle returned by initMiniPosterToggle().
+  let postersVisible = true;
+  const posterCalls = [];
+  const posterToggle = {
+    get visible() {
+      return postersVisible;
+    },
+    show() {
+      postersVisible = true;
+      posterCalls.push('show');
+    },
+    hide() {
+      postersVisible = false;
+      posterCalls.push('hide');
+    }
+  };
+
+  state.columnVisibility = {};
+
+  const handle = initColumnToggles(table, toggleContainer, posterToggle);
+  const toggleAllButton = toggleContainer.children[0];
+
+  // No optional column is visible yet, but the thumbnails are, so "All" is
+  // not hidden: the button must offer to hide them.
+  assert.equal(toggleAllButton.textContent, 'Hide All');
+  assert.match(
+    toggleAllButton.getAttribute('aria-label'),
+    /poster thumbnails/
+  );
+
+  toggleAllButton.click();
+
+  assert.deepEqual(posterCalls, ['hide']);
+  assert.equal(state.columnVisibility.PATH, false);
+  assert.equal(toggleAllButton.textContent, 'Show All');
+
+  toggleAllButton.click();
+
+  assert.deepEqual(posterCalls, ['hide', 'show']);
+  assert.equal(state.columnVisibility.PATH, true);
+  assert.equal(tableCells[2][0].style.display, '');
+  assert.equal(toggleAllButton.textContent, 'Hide All');
+
+  // With every column hidden again, the thumbnails alone decide the label --
+  // which is what the Poster chip's onChange callback refreshes.
+  pathButton.click();
+  assert.equal(state.columnVisibility.PATH, false);
+  assert.equal(toggleAllButton.textContent, 'Hide All');
+
+  postersVisible = false;
+  handle.refresh();
+  assert.equal(toggleAllButton.textContent, 'Show All');
+
+  postersVisible = true;
+  handle.refresh();
+  assert.equal(toggleAllButton.textContent, 'Hide All');
+});

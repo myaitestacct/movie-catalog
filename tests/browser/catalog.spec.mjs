@@ -282,9 +282,20 @@ test.describe('movie catalog', () => {
     async ({ page }) => {
       await openCatalog(page);
 
-      await page.locator(
-        '.toggle-all-columns'
-      ).click();
+      const bulkToggle =
+        page.locator(
+          '.toggle-all-columns'
+        );
+
+      // The mini posters count as visible content, so a fresh page offers
+      // "Hide All" even though no optional column is showing yet.
+      await expect(bulkToggle).toHaveText('Hide All');
+
+      await bulkToggle.click();
+
+      await expect(bulkToggle).toHaveText('Show All');
+
+      await bulkToggle.click();
 
       await expect(
         page.locator(
@@ -660,6 +671,65 @@ test.describe('movie catalog', () => {
           '#movies tbody .row-poster'
         ).first()
       ).toBeVisible();
+    }
+  );
+
+  test(
+    'Hide All / Show All covers the mini posters too',
+    async ({ page }) => {
+      await openCatalog(page);
+
+      const bulkToggle =
+        page.locator(
+          '.toggle-all-columns'
+        );
+
+      const posterChip =
+        page.locator('#toggle-mini-poster');
+
+      await bulkToggle.click();
+
+      await expect(
+        page.locator('html')
+      ).toHaveClass(/hide-mini-posters/);
+
+      await expect(posterChip).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
+
+      await expect(bulkToggle).toHaveText('Show All');
+
+      await bulkToggle.click();
+
+      await expect(
+        page.locator('html')
+      ).not.toHaveClass(/hide-mini-posters/);
+
+      await expect(posterChip).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+
+      await expect(
+        page.locator(
+          '#movies tbody .row-poster'
+        ).first()
+      ).toBeVisible();
+
+      // The chip on its own keeps the bulk label honest: with every optional
+      // column hidden again, the thumbnails are the only thing left to hide.
+      await bulkToggle.click();
+
+      await expect(bulkToggle).toHaveText('Show All');
+
+      await posterChip.click();
+
+      await expect(
+        page.locator('html')
+      ).not.toHaveClass(/hide-mini-posters/);
+
+      await expect(bulkToggle).toHaveText('Hide All');
     }
   );
 

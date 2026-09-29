@@ -2,14 +2,33 @@
 import { qs, qsa } from '../core/dom.js';
 import { state, ALWAYS_VISIBLE } from '../core/state.js';
 
-export function initColumnToggles(table, toggleContainer) {
-    if (!table || !toggleContainer) return;
+/**
+ * Wire the column chips plus the bulk Hide/Show All button.
+ *
+ * @param {HTMLTableElement} table
+ * @param {HTMLElement} toggleContainer toolbar group holding the chips
+ * @param {{visible: boolean, show: Function, hide: Function}|null} [posterToggle]
+ *   handle from initMiniPosterToggle(). The thumbnails are not a column, but
+ *   "All" means all: the bulk button hides and shows them too, and counts them
+ *   when deciding which label to show.
+ * @returns {{refresh: Function}|null} `refresh()` recomputes the bulk button
+ *   label; call it when the poster chip changes on its own.
+ */
+export function initColumnToggles(table, toggleContainer, posterToggle = null) {
+    if (!table || !toggleContainer) return null;
 
     const columns = [...table.querySelectorAll('thead th')]
         .map(header => header.dataset.col);
     const optionalColumns = columns
         .filter(column => !ALWAYS_VISIBLE.includes(column));
     const toggleButtons = qsa('.toggle-col', toggleContainer);
+
+    // Optional columns come from state; the thumbnails come from their own
+    // module, so "anything visible" is the union of the two.
+    const anythingVisible = () =>
+        optionalColumns
+            .some(column => state.columnVisibility[column]) ||
+        (posterToggle ? Boolean(posterToggle.visible) : false);
 
     let savedPreferences = {};
 
@@ -81,13 +100,18 @@ export function initColumnToggles(table, toggleContainer) {
 
     // Single-owner handler, same reasoning as the column chips above.
     toggleAllButton.onclick = () => {
-        const anyVisible = optionalColumns
-            .some(column => state.columnVisibility[column]);
-        const visible = !anyVisible;
+        const visible = !anythingVisible();
 
         optionalColumns.forEach(column => {
             setColumnVisibility(column, visible);
         });
+
+        // Drive the Poster chip through its own module so the <html> class,
+        // the chip state and the stored preference all stay in sync.
+        if (posterToggle) {
+            if (visible) posterToggle.show();
+            else posterToggle.hide();
+        }
 
         syncAllToggleButtons();
         savePreferences();
@@ -142,8 +166,7 @@ export function initColumnToggles(table, toggleContainer) {
     }
 
     function updateToggleAllButton() {
-        const anyVisible = optionalColumns
-            .some(column => state.columnVisibility[column]);
+        const anyVisible = anythingVisible();
 
         toggleAllButton.textContent = anyVisible
             ? 'Hide All'
@@ -151,8 +174,12 @@ export function initColumnToggles(table, toggleContainer) {
         toggleAllButton.setAttribute(
             'aria-label',
             anyVisible
-                ? 'Hide all optional columns'
-                : 'Show all optional columns'
+                ? 'Hide all optional columns and poster thumbnails'
+                : 'Show all optional columns and poster thumbnails'
         );
     }
+
+    return Object.freeze({
+        refresh: updateToggleAllButton
+    });
 }

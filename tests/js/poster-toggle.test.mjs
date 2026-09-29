@@ -305,3 +305,30 @@ test('a missing chip is a no-op and a missing root returns null', () => {
     null
   );
 });
+
+test('the change callback reports changes, not the stored preference', () => {
+  const button = new MockButton();
+  const root = makeRoot({ buttons: [button] });
+  const seen = [];
+
+  const toggle = initMiniPosterToggle(
+    root,
+    new MockStorage({ [MINI_POSTER_STORAGE_KEY]: 'hide' }),
+    visible => seen.push(visible)
+  );
+
+  // Applying the stored preference happens before the rest of the toolbar
+  // exists, so it must not notify anybody.
+  assert.deepEqual(seen, []);
+  assert.equal(toggle.visible, false);
+
+  button.click();
+  assert.deepEqual(seen, [true]);
+
+  toggle.hide();
+  assert.deepEqual(seen, [true, false]);
+
+  toggle.show();
+  toggle.toggle();
+  assert.deepEqual(seen, [true, false, true, false]);
+});

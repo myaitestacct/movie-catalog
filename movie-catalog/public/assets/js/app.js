@@ -447,16 +447,31 @@ function scheduleIdleStatsPreload() {
     )
   ].map(th => th.dataset.col);
 
-  // 1️⃣ Column toggles
+  // 1️⃣ Column toggles, and the Poster chip they bulk-toggle.
+  //
+  // The mini-poster toggle is initialised *first* because Hide All / Show All
+  // covers the thumbnails as well as the optional columns: columns.js needs the
+  // handle, and the `onChange` callback keeps the bulk button's label correct
+  // when the Poster chip is clicked on its own. The thumbnails are a UI-only
+  // preference, not a column -- see table/poster-toggle.js.
+  let columnToggles = null;
+
+  const posterToggle = initMiniPosterToggle(
+    document,
+    globalThis.localStorage,
+    () => columnToggles?.refresh()
+  );
+
   const toggleContainer =
     document.querySelector(
       '.column-toggles'
     );
 
   if (toggleContainer) {
-    initColumnToggles(
+    columnToggles = initColumnToggles(
       table,
-      toggleContainer
+      toggleContainer,
+      posterToggle
     );
   }
 
@@ -645,9 +660,8 @@ function scheduleIdleStatsPreload() {
     };
   }
 
-  // 2.7️⃣ Mini-poster toggle (thumbnails inside the Title cell).
-  // Owned by table/poster-toggle.js: UI-only preference, not a column.
-  initMiniPosterToggle();
+  // 2.7️⃣ Mini-poster toggle (thumbnails inside the Title cell): initialised
+  // up in step 1️⃣, because the bulk Hide All / Show All button drives it too.
 
   /* ==============================
      Keyboard shortcuts
