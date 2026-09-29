@@ -35,6 +35,10 @@ export function initColumnToggles(table, toggleContainer) {
         button.type = 'button';
         syncToggleButton(button);
 
+        // Poster/UI-only toggles live alongside column toggles but are
+        // wired up elsewhere (they have no data-col). Skip them here.
+        if (!button.dataset.col) return;
+
         button.addEventListener('click', () => {
             const column = button.dataset.col;
             const visible = !state.columnVisibility[column];
@@ -98,6 +102,7 @@ export function initColumnToggles(table, toggleContainer) {
 
     function syncToggleButton(button) {
         const column = button.dataset.col;
+        if (!column) return; // UI-only toggles manage their own state
         const visible = Boolean(state.columnVisibility[column]);
         const eyeIcon = button.querySelector('i.fa-eye, i.fa-eye-slash');
 
