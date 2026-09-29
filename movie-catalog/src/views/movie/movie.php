@@ -144,6 +144,18 @@
                 <i class="fa-solid fa-folder-open"></i>
                 Path
             </button>
+
+            <button
+                type="button"
+                id="toggle-mini-poster"
+                class="toggle-col active"
+                data-ui="miniPoster"
+                aria-pressed="true"
+                title="Toggle mini poster thumbnail in table rows"
+            >
+                <i class="fa-solid fa-image" aria-hidden="true"></i>
+                Poster
+            </button>
         </div>
         <button
             type="button"
