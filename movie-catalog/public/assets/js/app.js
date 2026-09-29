@@ -632,6 +632,59 @@ function scheduleIdleStatsPreload() {
     };
   }
 
+  // Mini-poster toggle (thumbnails in title column of the table)
+  const MINI_POSTER_STORAGE_KEY = 'movieCatalogMiniPoster';
+  const miniPosterBtn =
+    document.getElementById('toggle-mini-poster');
+
+  function setMiniPosterVisible(visible) {
+    document.documentElement.classList.toggle(
+      'hide-mini-posters',
+      !visible
+    );
+
+    if (miniPosterBtn) {
+      miniPosterBtn.classList.toggle('active', visible);
+      miniPosterBtn.setAttribute(
+        'aria-pressed',
+        String(visible)
+      );
+    }
+
+    try {
+      localStorage.setItem(
+        MINI_POSTER_STORAGE_KEY,
+        visible ? 'show' : 'hide'
+      );
+    } catch {
+      /* storage unavailable – ignore */
+    }
+  }
+
+  if (miniPosterBtn) {
+    let storedPref = 'show';
+    try {
+      const saved = localStorage.getItem(
+        MINI_POSTER_STORAGE_KEY
+      );
+      if (saved === 'show' || saved === 'hide') {
+        storedPref = saved;
+      }
+    } catch {
+      storedPref = 'show';
+    }
+
+    setMiniPosterVisible(storedPref === 'show');
+
+    miniPosterBtn.addEventListener('click', () => {
+      const currentlyHidden =
+        document.documentElement.classList.contains(
+          'hide-mini-posters'
+        );
+      setMiniPosterVisible(currentlyHidden);
+    });
+  }
+
   /* ==============================
      Keyboard shortcuts
   ============================== */
