@@ -56,20 +56,6 @@
                 AND
             </button>
         </div>
-
-        <!-- `hidden` is managed by syncClearFiltersButton(): the chip only
-             appears once a column filter is active. -->
-        <button
-            type="button"
-            id="clear-filters"
-            class="clear-filters"
-            disabled
-            hidden
-        >
-            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-            Clear filters
-        </button>
-
         <div
             class="tool-group columns-group"
             role="group"
@@ -148,7 +134,8 @@
                 <i class="fa-solid fa-folder-open"></i>
                 Path
             </button>
-
+        </div>
+		<div class="tool-group">
             <!-- UI-only toggle: no data-col on purpose. The thumbnails live
                  in the Title cell, not in their own column, so this chip is
                  wired by assets/js/table/poster-toggle.js (data-ui contract)
@@ -164,7 +151,7 @@
                 <i class="fa-solid fa-image" aria-hidden="true"></i>
                 Poster
             </button>
-        </div>
+		</div>
         <button
             type="button"
             id="theme-toggle"
