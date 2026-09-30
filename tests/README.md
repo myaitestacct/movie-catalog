@@ -51,7 +51,10 @@ On constrained machines use `npm run test:browser -- --workers=2`.
 
 - API parsing, validation, cancellation signals, and safe external URLs.
 - Title/year parsing, ordered-character fuzzy matching, and HTML escaping.
-- Column visibility, pagination, poster fallback, and movie-modal controls.
+- Column visibility, the mini-poster (`Poster`) chip — including stored
+  preferences, a chip found only through its `data-ui` contract, unavailable
+  storage, and the double-initialization case that would otherwise cancel the
+  toggle out — pagination, poster fallback, and movie-modal controls.
 - Movie-loader query snapshots and request freshness: late successes/failures,
   aborts, superseded animation delays, state changes during debounce, and retries.
 - Explicit `true`/`false` load completion for analytics page jumps.
@@ -89,7 +92,9 @@ setup and File-filter examples. Browser mock tests are not a substitute for this
 - Analytics and issue drill-down; cross-page jumps reveal and highlight the movie.
 - File filter examples: the `MISSING` marker, real substring matches, fuzzy-only
   filenames, hidden folder matches, wildcard characters, and OR semantics.
-- Theme/column preferences and error/retry recovery.
+- Theme/column preferences, the `Poster` chip across a re-render and a reload,
+  the clear-filters chip appearing only while a filter is active, and
+  error/retry recovery.
 
 `playwright.config.mjs` automatically starts
 `tests/browser/support/mock-server.mjs`. It serves the current view fragments,

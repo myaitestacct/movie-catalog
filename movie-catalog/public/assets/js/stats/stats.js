@@ -32,7 +32,23 @@ import { state, getMovieStateSignature } from '../core/state.js';
 import { clearError, showError } from '../utils/feedback.js';
 import { configureExternalLink } from '../utils/url.js';
 import { formatBytes } from '../utils/format.js';
-import { loadMovies } from '../app.js';
+
+// This module must never import from the entry point (../app.js).
+// The page loads the entry with a cache key (app.js?v=<mtime>), so an
+// import of '../app.js' resolves to a *second* module record and the
+// whole application evaluates twice: JS-created toolbar buttons show
+// up duplicated, and every addEventListener-bound control flips its
+// state twice per click (which looks like "does nothing").
+// app.js injects what we need instead -- see setMovieLoader().
+let movieLoader = null;
+
+/**
+ * Register the movie loader owned by the entry point.
+ * @param {() => Promise<*>} loader
+ */
+export function setMovieLoader(loader) {
+    movieLoader = typeof loader === 'function' ? loader : null;
+}
 
 let panel, loaded = false;
 let statsToggleButton;
@@ -998,7 +1014,7 @@ async function jumpToMovie(num) {
         // (for example after a second click). Await a current render even then.
         state.page = data.page;
         const targetSignature = getMovieStateSignature();
-        const rendered = await loadMovies();
+        const rendered = await movieLoader?.();
 
         if (
             !rendered || !request.isCurrent() ||

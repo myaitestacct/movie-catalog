@@ -228,8 +228,22 @@ See [tests/README.md](tests/README.md) for coverage and limitations.
 
 The PHP layouts automatically use `public/assets/dist/bundle.js` and
 `bundle.css` when present; otherwise they load source assets. Bundles are ignored
-by Git and must be rebuilt during deployment. Both bundle URLs use a file-mtime
-cache key in the PHP layouts.
+by Git and must be rebuilt during deployment — a stale `dist/` is served as-is,
+so delete it, or keep `npm run build:watch`/`npm run dev` running, after editing
+frontend sources. Bundles, source stylesheets, and source `app.js` all carry a
+file-mtime cache key in the PHP layouts, so a browser cannot pair freshly
+rendered view markup with a stale cached asset. (In source mode the ES modules
+imported *by* `app.js` are not versioned; use a build for fully cache-keyed
+assets.)
+
+Because the entry script is versioned and its own imports are not, **no module
+may import `app.js`**. `app.js?v=…` and `../app.js` are two different module
+records, so a cycle back into the entry makes the browser evaluate — and boot —
+the whole application twice. The visible symptoms are duplicated JS-created
+toolbar controls plus buttons that look dead, because their two handlers undo
+each other on every click. Modules that need something from the entry receive it
+by injection instead (`setMovieLoader()` in `stats/stats.js`), and
+`tests/js/entry-cycle.test.mjs` fails if a cycle is reintroduced.
 
 ## Deployment and troubleshooting
 

@@ -282,9 +282,20 @@ test.describe('movie catalog', () => {
     async ({ page }) => {
       await openCatalog(page);
 
-      await page.locator(
-        '.toggle-all-columns'
-      ).click();
+      const bulkToggle =
+        page.locator(
+          '.toggle-all-columns'
+        );
+
+      // The mini posters count as visible content, so a fresh page offers
+      // "Hide All" even though no optional column is showing yet.
+      await expect(bulkToggle).toHaveText('Hide All');
+
+      await bulkToggle.click();
+
+      await expect(bulkToggle).toHaveText('Show All');
+
+      await bulkToggle.click();
 
       await expect(
         page.locator(
@@ -588,6 +599,161 @@ test.describe('movie catalog', () => {
         'aria-pressed',
         'true'
       );
+    }
+  );
+
+  test(
+    'toggles the mini poster thumbnails and remembers the choice',
+    async ({ page }) => {
+      await openCatalog(page);
+
+      const posterChip =
+        page.locator('#toggle-mini-poster');
+
+      const posters =
+        page.locator('#movies tbody .row-poster');
+
+      await expect(posterChip).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+
+      await expect(posters.first()).toBeVisible();
+
+      await posterChip.click();
+
+      await expect(
+        page.locator('html')
+      ).toHaveClass(/hide-mini-posters/);
+
+      await expect(posters.first()).toBeHidden();
+
+      await expect(posterChip).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
+
+      // Rows rendered later inherit the preference: the class lives on <html>,
+      // not on the rows that existed when the chip was clicked.
+      await page.getByRole(
+        'button',
+        {
+          name: '>',
+          exact: true
+        }
+      ).click();
+
+      await expect(
+        page.locator(
+          '#movies tbody .row-poster'
+        ).first()
+      ).toBeHidden();
+
+      await page.reload();
+
+      await expect(
+        page.locator('html')
+      ).toHaveClass(/hide-mini-posters/);
+
+      await expect(posterChip).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
+
+      await posterChip.click();
+
+      await expect(
+        page.locator('html')
+      ).not.toHaveClass(/hide-mini-posters/);
+
+      await expect(
+        page.locator(
+          '#movies tbody .row-poster'
+        ).first()
+      ).toBeVisible();
+    }
+  );
+
+  test(
+    'Hide All / Show All covers the mini posters too',
+    async ({ page }) => {
+      await openCatalog(page);
+
+      const bulkToggle =
+        page.locator(
+          '.toggle-all-columns'
+        );
+
+      const posterChip =
+        page.locator('#toggle-mini-poster');
+
+      await bulkToggle.click();
+
+      await expect(
+        page.locator('html')
+      ).toHaveClass(/hide-mini-posters/);
+
+      await expect(posterChip).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
+
+      await expect(bulkToggle).toHaveText('Show All');
+
+      await bulkToggle.click();
+
+      await expect(
+        page.locator('html')
+      ).not.toHaveClass(/hide-mini-posters/);
+
+      await expect(posterChip).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+
+      await expect(
+        page.locator(
+          '#movies tbody .row-poster'
+        ).first()
+      ).toBeVisible();
+
+      // The chip on its own keeps the bulk label honest: with every optional
+      // column hidden again, the thumbnails are the only thing left to hide.
+      await bulkToggle.click();
+
+      await expect(bulkToggle).toHaveText('Show All');
+
+      await posterChip.click();
+
+      await expect(
+        page.locator('html')
+      ).not.toHaveClass(/hide-mini-posters/);
+
+      await expect(bulkToggle).toHaveText('Hide All');
+    }
+  );
+
+  test(
+    'reveals the clear-filters chip only while a filter is active',
+    async ({ page }) => {
+      await openCatalog(page);
+
+      const clearFilters =
+        page.locator('#clear-filters');
+
+      await expect(clearFilters).toBeHidden();
+
+      await page.locator(
+        '#search-row input[data-col="FORMATTEDTITLE"]'
+      ).fill('Arrival');
+
+      await expect(clearFilters).toBeVisible();
+      await expect(clearFilters).toBeEnabled();
+
+      await clearFilters.click();
+
+      await expect(clearFilters).toBeHidden();
+      await expect(clearFilters).toBeDisabled();
     }
   );
 

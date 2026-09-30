@@ -6,6 +6,7 @@ import {
 } from './core/state.js';
 import { renderTable } from './table/table.js';
 import { initColumnToggles } from './table/columns.js';
+import { initMiniPosterToggle } from './table/poster-toggle.js';
 import { initSearch } from './table/search.js';
 import { initSorting } from './table/sorting.js';
 import {
@@ -20,7 +21,8 @@ import {
 import {
   initStats,
   refreshStats,
-  isStatsLoaded
+  isStatsLoaded,
+  setMovieLoader
 } from './stats/stats.js';
 import {
   clearError,
@@ -49,8 +51,15 @@ function hasActiveSearchFilters() {
 function syncClearFiltersButton(button) {
   if (!button) return;
 
-  button.disabled =
-    !hasActiveSearchFilters();
+  const active = hasActiveSearchFilters();
+
+  button.disabled = !active;
+
+  // The view ships this chip with `hidden`, so it stays out of the toolbar
+  // until a filter is actually active. base.css pins
+  // `[hidden] { display: none !important }` — without that, the toolbar's
+  // `display: inline-flex` rule silently overrides the attribute.
+  button.hidden = !active;
 }
 
 /* ==============================
@@ -273,7 +282,12 @@ function setupKeyboardShortcuts() {
       ?.classList.remove('kbd-highlight');
   };
 
-  document.addEventListener('keydown', event => {
+  // Own the document `onkeydown` slot: a second boot then replaces this
+  // handler instead of adding another one (two handlers would move the
+  // row highlight two rows per keypress). The modal and the stats panel
+  // register their own keydown listeners with addEventListener, which
+  // coexists with this property handler.
+  document.onkeydown = event => {
     // Row navigation must not fight with the open detail modal.
     if (document.querySelector('.movie-modal.open')) return;
 
@@ -334,7 +348,7 @@ function setupKeyboardShortcuts() {
         ?.querySelector('.movie-title-link')
         ?.click();
     }
-  });
+  };
 
   // Reset the highlight whenever the table re-renders.
   const observer = new MutationObserver(() => {
@@ -422,8 +436,10 @@ function scheduleIdleStatsPreload() {
   const viewTable = document.getElementById('view-table');
   const viewGrid = document.getElementById('view-grid');
 
-  viewTable?.addEventListener('click', () => switchView('table'));
-  viewGrid?.addEventListener('click', () => switchView('grid'));
+  // `onclick` (not addEventListener) so re-running the boot replaces the
+  // handler instead of stacking a second one.
+  if (viewTable) viewTable.onclick = () => switchView('table');
+  if (viewGrid) viewGrid.onclick = () => switchView('grid');
 
   columns = [
     ...table.querySelectorAll(
@@ -431,16 +447,31 @@ function scheduleIdleStatsPreload() {
     )
   ].map(th => th.dataset.col);
 
-  // 1️⃣ Column toggles
+  // 1️⃣ Column toggles, and the Poster chip they bulk-toggle.
+  //
+  // The mini-poster toggle is initialised *first* because Hide All / Show All
+  // covers the thumbnails as well as the optional columns: columns.js needs the
+  // handle, and the `onChange` callback keeps the bulk button's label correct
+  // when the Poster chip is clicked on its own. The thumbnails are a UI-only
+  // preference, not a column -- see table/poster-toggle.js.
+  let columnToggles = null;
+
+  const posterToggle = initMiniPosterToggle(
+    document,
+    globalThis.localStorage,
+    () => columnToggles?.refresh()
+  );
+
   const toggleContainer =
     document.querySelector(
       '.column-toggles'
     );
 
   if (toggleContainer) {
-    initColumnToggles(
+    columnToggles = initColumnToggles(
       table,
-      toggleContainer
+      toggleContainer,
+      posterToggle
     );
   }
 
@@ -527,24 +558,21 @@ function scheduleIdleStatsPreload() {
         ? state.titleSearchMode
         : 'CONTAINS';
 
-    titleSearchMode.addEventListener(
-      'change',
-      () => {
-        if (
-          !TITLE_SEARCH_MODES.includes(
-            titleSearchMode.value
-          )
-        ) {
-          return;
-        }
-
-        state.titleSearchMode =
-          titleSearchMode.value;
-
-        state.page = 1;
-        loadMovies();
+    titleSearchMode.onchange = () => {
+      if (
+        !TITLE_SEARCH_MODES.includes(
+          titleSearchMode.value
+        )
+      ) {
+        return;
       }
-    );
+
+      state.titleSearchMode =
+        titleSearchMode.value;
+
+      state.page = 1;
+      loadMovies();
+    };
   }
 
   /* ==============================
@@ -632,58 +660,8 @@ function scheduleIdleStatsPreload() {
     };
   }
 
-  // Mini-poster toggle (thumbnails in title column of the table)
-  const MINI_POSTER_STORAGE_KEY = 'movieCatalogMiniPoster';
-  const miniPosterBtn =
-    document.getElementById('toggle-mini-poster');
-
-  function setMiniPosterVisible(visible) {
-    document.documentElement.classList.toggle(
-      'hide-mini-posters',
-      !visible
-    );
-
-    if (miniPosterBtn) {
-      miniPosterBtn.classList.toggle('active', visible);
-      miniPosterBtn.setAttribute(
-        'aria-pressed',
-        String(visible)
-      );
-    }
-
-    try {
-      localStorage.setItem(
-        MINI_POSTER_STORAGE_KEY,
-        visible ? 'show' : 'hide'
-      );
-    } catch {
-      /* storage unavailable – ignore */
-    }
-  }
-
-  if (miniPosterBtn) {
-    let storedPref = 'show';
-    try {
-      const saved = localStorage.getItem(
-        MINI_POSTER_STORAGE_KEY
-      );
-      if (saved === 'show' || saved === 'hide') {
-        storedPref = saved;
-      }
-    } catch {
-      storedPref = 'show';
-    }
-
-    setMiniPosterVisible(storedPref === 'show');
-
-    miniPosterBtn.addEventListener('click', () => {
-      const currentlyHidden =
-        document.documentElement.classList.contains(
-          'hide-mini-posters'
-        );
-      setMiniPosterVisible(currentlyHidden);
-    });
-  }
+  // 2.7️⃣ Mini-poster toggle (thumbnails inside the Title cell): initialised
+  // up in step 1️⃣, because the bulk Hide All / Show All button drives it too.
 
   /* ==============================
      Keyboard shortcuts
@@ -698,6 +676,13 @@ function scheduleIdleStatsPreload() {
   );
 
   // 4️⃣ Stats
+  // stats.js needs loadMovies() but must not import it from here: an import
+  // of the entry point resolves to a *second* module instance once the script
+  // tag carries a cache key (app.js?v=<mtime>), which boots the whole app
+  // twice. Inject the loader instead. Done unconditionally so jump-to-movie
+  // works even when the stats panel is not rendered on this page.
+  setMovieLoader(loadMovies);
+
   const statsToggle =
     document.getElementById(
       'stats-toggle'

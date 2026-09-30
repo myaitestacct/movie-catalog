@@ -46,26 +46,30 @@
                 </select>
             </label>
         </div>
-		<div class="tool-group">
-			<button
-				type="button"
-				id="search-mode"
-				class="search-mode"
-				title="Toggle AND / OR filter matching"
-			>
-				AND
-			</button>
-		</div>
-		<button
-			type="button"
-			id="clear-filters"
-			class="clear-filters"
-			disabled
-			hidden
-		>
-			<i class="fa-solid fa-xmark" aria-hidden="true"></i>
-			Clear filters
-		</button>
+        <div class="tool-group">
+            <button
+                type="button"
+                id="search-mode"
+                class="search-mode"
+                title="Toggle AND / OR filter matching"
+            >
+                AND
+            </button>
+        </div>
+
+        <!-- `hidden` is managed by syncClearFiltersButton(): the chip only
+             appears once a column filter is active. -->
+        <button
+            type="button"
+            id="clear-filters"
+            class="clear-filters"
+            disabled
+            hidden
+        >
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            Clear filters
+        </button>
+
         <div
             class="tool-group columns-group"
             role="group"
@@ -145,6 +149,10 @@
                 Path
             </button>
 
+            <!-- UI-only toggle: no data-col on purpose. The thumbnails live
+                 in the Title cell, not in their own column, so this chip is
+                 wired by assets/js/table/poster-toggle.js (data-ui contract)
+                 and skipped by the column-toggle logic. -->
             <button
                 type="button"
                 id="toggle-mini-poster"
@@ -169,8 +177,9 @@
         <div
             id="filter-pills"
             aria-live="polite"
-        ></div>	
-	    <div
+        ></div>
+
+        <div
             id="search-group-info"
             class="search-group-info hidden"
         ></div>

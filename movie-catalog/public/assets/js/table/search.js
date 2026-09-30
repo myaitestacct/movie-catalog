@@ -2,6 +2,13 @@
 import { state, ALWAYS_VISIBLE } from '../core/state.js';
 
 export function initSearch(columns, searchRow, onSearch, onFilterChange) {
+    if (!searchRow) return;
+
+    // Drop cells built by a previous initialisation before adding ours:
+    // appending blindly duplicates every filter input when the app boots
+    // twice (grid-view.js does the same with replaceChildren()).
+    searchRow.replaceChildren();
+
     columns.forEach(col => {
         const td = document.createElement('td');
         const input = document.createElement('input');
@@ -26,7 +33,7 @@ export function initSearch(columns, searchRow, onSearch, onFilterChange) {
         td.style.display =
             visible ? '' : 'none';
 
-        input.addEventListener('input', () => {
+        input.oninput = () => {
             clearTimeout(state.debounce);
 
             // Commit every field immediately; only the network reload is
@@ -39,7 +46,7 @@ export function initSearch(columns, searchRow, onSearch, onFilterChange) {
                 state.debounce = null;
                 onSearch?.();
             }, 500);
-        });
+        };
 
         td.appendChild(input);
         searchRow.appendChild(td);
