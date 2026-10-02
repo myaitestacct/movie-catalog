@@ -1,6 +1,10 @@
 import {
     createLanguageCountryViewModel
 } from './stats-language-country.js';
+import {
+    getFacetTableFilter,
+    makeSliceInteractive
+} from './stats-table-filters.js';
 
 function toNonNegativeNumber(value) {
     const number = Number(value);
@@ -60,7 +64,7 @@ function appendEmptyState(container, message) {
     container.appendChild(empty);
 }
 
-function renderDirectorList(container, model) {
+function renderDirectorList(container, model, onSliceSelect) {
     container.innerHTML = '';
 
     if (model.items.length === 0) {
@@ -75,6 +79,13 @@ function renderDirectorList(container, model) {
             'aria-label',
             `${item.label}: ${formatMovieCount(item.count)}, ` +
             `${item.shareLabel} of movies with director data`
+        );
+
+        makeSliceInteractive(
+            row,
+            getFacetTableFilter('DIRECTOR', item.label),
+            `Filter the table to movies directed by ${item.label}`,
+            onSliceSelect
         );
 
         const label = document.createElement('strong');
@@ -109,7 +120,11 @@ function distributionSummary(model) {
             `${model.totalItems === 1 ? 'director' : 'directors'}`;
 }
 
-export function renderDirectorAnalytics(analytics, totalMovies) {
+export function renderDirectorAnalytics(
+    analytics,
+    totalMovies,
+    onSliceSelect
+) {
     const distribution = document.getElementById('director-distribution');
     if (!distribution) return false;
 
@@ -145,6 +160,6 @@ export function renderDirectorAnalytics(analytics, totalMovies) {
     );
     setText('director-distribution-summary', distributionSummary(model));
 
-    renderDirectorList(distribution, model);
+    renderDirectorList(distribution, model, onSliceSelect);
     return true;
 }

@@ -88,7 +88,12 @@ try {
         'RESOLUTION',
         'AUDIOFORMAT',
         'FILEPATH',
-        'PATH'
+        'PATH',
+        // Filter-only columns used by the analytics drill-down
+        // (no table header, shown as removable filter pills).
+        'DIRECTOR',
+        'ACTORS',
+        'COUNTRY'
     ];
 
     $filters = [];

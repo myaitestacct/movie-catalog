@@ -15,7 +15,7 @@ aria-hidden="true"
 <header class="stats-dashboard-header">
 <div>
 <h2><i class="fa-solid fa-chart-pie" aria-hidden="true"></i> Collection Analytics</h2>
-<p>A live summary of your movie library and its overall health.</p>
+<p>A live summary of your movie library and its overall health. Click a bar, band, or slice to filter the movie table to the matching titles.</p>
 </div>
 <button type="button" class="stats-close" aria-label="Close analytics panel"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
 </header>

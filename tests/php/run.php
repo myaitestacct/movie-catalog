@@ -446,6 +446,192 @@ assertSameValue(
 
 @rmdir(dirname($cachePath));
 
+// Analytics drill-down: numeric columns understand a range grammar and
+// DIRECTOR / ACTORS / COUNTRY become filter-only columns.
+$parseNumericFilterValue = $repositoryReflection->getMethod(
+    'parseNumericFilterValue'
+);
+
+assertSameValue(
+    ['type' => 'exact', 'min' => 2005.0],
+    $parseNumericFilterValue->invoke($repository, '2005'),
+    'Numeric filter parser keeps a bare number exact'
+);
+
+assertSameValue(
+    ['type' => 'range', 'min' => 2000.0, 'max' => 2009.0],
+    $parseNumericFilterValue->invoke($repository, '2000-2009'),
+    'Numeric filter parser understands a decade range'
+);
+
+assertSameValue(
+    ['type' => 'range', 'min' => 700.0, 'max' => 1535.99],
+    $parseNumericFilterValue->invoke($repository, '700-1535.99'),
+    'Numeric filter parser understands fractional size ranges'
+);
+
+assertSameValue(
+    ['type' => 'range', 'min' => 3.0, 'max' => 9.0],
+    $parseNumericFilterValue->invoke($repository, '9-3'),
+    'Numeric filter parser sorts inverted ranges'
+);
+
+assertSameValue(
+    ['type' => 'min', 'min' => 150.0],
+    $parseNumericFilterValue->invoke($repository, '150+'),
+    'Numeric filter parser understands open-ended minimums'
+);
+
+assertSameValue(
+    ['type' => 'max', 'max' => 90.0],
+    $parseNumericFilterValue->invoke($repository, '<90'),
+    'Numeric filter parser understands exclusive maximums'
+);
+
+assertSameValue(
+    null,
+    $parseNumericFilterValue->invoke($repository, 'missing'),
+    'Numeric filter parser rejects non-numeric values'
+);
+
+[$decadeWhere, $decadeParams] = $buildWhereClause->invoke(
+    $repository, ['YEAR' => '2000-2009'], 'AND', false, null
+);
+assertSameValue(
+    ' WHERE (`YEAR` BETWEEN :YEAR_min AND :YEAR_max)',
+    $decadeWhere,
+    'Decade drill-down filters the YEAR column with an inclusive range'
+);
+assertSameValue(
+    ['YEAR_min' => 2000, 'YEAR_max' => 2009],
+    $decadeParams,
+    'Decade drill-down binds integer range bounds'
+);
+
+[$ratingWhere, $ratingParams] = $buildWhereClause->invoke(
+    $repository, ['RATING' => '7-7.9'], 'AND', false, null
+);
+assertSameValue(
+    ' WHERE ((`RATING` > 0 AND `RATING` BETWEEN :RATING_min AND :RATING_max))',
+    $ratingWhere,
+    'Rating band drill-down keeps the zero-means-unknown rule'
+);
+assertSameValue(
+    ['RATING_min' => 7, 'RATING_max' => 7.9],
+    $ratingParams,
+    'Rating band drill-down binds fractional bounds'
+);
+
+[$runtimeWhere, $runtimeParams] = $buildWhereClause->invoke(
+    $repository, ['LENGTH' => '150+'], 'AND', false, null
+);
+assertSameValue(
+    ' WHERE ((`LENGTH` > 0 AND `LENGTH` >= :LENGTH_min))',
+    $runtimeWhere,
+    'Runtime band drill-down supports open-ended minimums'
+);
+assertSameValue(
+    ['LENGTH_min' => 150],
+    $runtimeParams,
+    'Runtime band drill-down binds the minimum'
+);
+
+[$sizeWhere, $sizeParams] = $buildWhereClause->invoke(
+    $repository, ['FILESIZE' => '<700'], 'AND', false, null
+);
+assertSameValue(
+    ' WHERE ((`FILESIZE` > 0 AND `FILESIZE` < :FILESIZE_max))',
+    $sizeWhere,
+    'Size band drill-down supports exclusive maximums'
+);
+assertSameValue(
+    ['FILESIZE_max' => 700],
+    $sizeParams,
+    'Size band drill-down binds the maximum'
+);
+
+[$exactRatingWhere, $exactRatingParams] = $buildWhereClause->invoke(
+    $repository, ['RATING' => '7.5'], 'AND', false, null
+);
+assertSameValue(
+    ' WHERE (`RATING` = :RATING)',
+    $exactRatingWhere,
+    'Exact numeric rating filters use equality, not LIKE'
+);
+assertSameValue(
+    ['RATING' => 7.5],
+    $exactRatingParams,
+    'Exact numeric rating filters bind the value'
+);
+
+[, $legacyRatingParams] = $buildWhereClause->invoke(
+    $repository, ['RATING' => 'great'], 'AND', false, null
+);
+assertSameValue(
+    ['RATING' => '%great%'],
+    $legacyRatingParams,
+    'Non-numeric rating input keeps legacy contains matching'
+);
+
+[, $legacyYearParams] = $buildWhereClause->invoke(
+    $repository, ['YEAR' => 'unknown'], 'AND', false, null
+);
+assertSameValue(
+    ['YEAR' => 0],
+    $legacyYearParams,
+    'Non-numeric year input keeps the legacy integer cast'
+);
+
+[$directorWhere, $directorParams] = $buildWhereClause->invoke(
+    $repository, ['DIRECTOR' => 'Denis Villeneuve'], 'AND', false, null
+);
+assertSameValue(
+    " WHERE (`DIRECTOR` LIKE :DIRECTOR ESCAPE '=')",
+    $directorWhere,
+    'Director drill-down filters with contains matching'
+);
+assertSameValue(
+    ['DIRECTOR' => '%Denis Villeneuve%'],
+    $directorParams,
+    'Director drill-down builds a contains pattern'
+);
+
+[$castWhere] = $buildWhereClause->invoke(
+    $repository, ['ACTORS' => 'Amy Adams'], 'AND', false, null
+);
+assertSameValue(
+    " WHERE (`ACTORS` LIKE :ACTORS ESCAPE '=')",
+    $castWhere,
+    'Cast drill-down filters the ACTORS column'
+);
+
+[$countryWhere] = $buildWhereClause->invoke(
+    $repository, ['COUNTRY' => 'Canada'], 'AND', false, null
+);
+assertSameValue(
+    " WHERE (`COUNTRY` LIKE :COUNTRY ESCAPE '=')",
+    $countryWhere,
+    'Country drill-down filters the COUNTRY column'
+);
+
+[$unknownWhere] = $buildWhereClause->invoke(
+    $repository, ['NOTACOLUMN' => 'x'], 'AND', false, null
+);
+assertSameValue(
+    '',
+    $unknownWhere,
+    'Unknown columns are still ignored by the filter builder'
+);
+
+[$directorOrder] = $buildOrderByClause->invoke(
+    $repository, [], 'DIRECTOR', 'ASC', false, null
+);
+assertSameValue(
+    '`NUM` ASC',
+    $directorOrder,
+    'Filter-only columns are not sortable and fall back to NUM order'
+);
+
 if ($failures > 0) {
     echo "\n{$failures} test(s) failed.\n";
     exit(1);

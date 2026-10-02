@@ -1,4 +1,8 @@
 import { formatBytes } from '../utils/format.js';
+import {
+    getBandTableFilter,
+    makeSliceInteractive
+} from './stats-table-filters.js';
 
 function toNonNegativeNumber(value) {
     const number = Number(value);
@@ -112,7 +116,7 @@ function appendEmptyState(container, message) {
     container.appendChild(empty);
 }
 
-function renderBands(container, model) {
+function renderBands(container, model, onSliceSelect) {
     container.innerHTML = '';
 
     if (model.sizedMovies === 0 || model.sizeBands.length === 0) {
@@ -127,6 +131,13 @@ function renderBands(container, model) {
             'aria-label',
             `${band.label}: ${formatMovieCount(band.count)}, ` +
             `${band.shareLabel}, ${band.totalSizeLabel} total storage`
+        );
+
+        makeSliceInteractive(
+            row,
+            getBandTableFilter('fileSize', band.key),
+            `Filter the table to movies sized ${band.label}`,
+            onSliceSelect
         );
 
         const label = document.createElement('strong');
@@ -153,7 +164,11 @@ function renderBands(container, model) {
     });
 }
 
-export function renderStorageAnalytics(analytics, totalMovies) {
+export function renderStorageAnalytics(
+    analytics,
+    totalMovies,
+    onSliceSelect
+) {
     const distribution = document.getElementById('storage-size-distribution');
     if (!distribution) return false;
 
@@ -204,6 +219,6 @@ export function renderStorageAnalytics(analytics, totalMovies) {
             : 'No file-size data'
     );
 
-    renderBands(distribution, model);
+    renderBands(distribution, model, onSliceSelect);
     return true;
 }

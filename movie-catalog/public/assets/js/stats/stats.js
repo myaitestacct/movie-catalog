@@ -20,6 +20,14 @@ import {
     LIBRARY_ISSUE_CONFIG
 } from './stats-issues.js';
 import {
+    applyTableFilter,
+    getBandTableFilter,
+    getDecadeTableFilter,
+    getFacetTableFilter,
+    getYearTableFilter,
+    setTableFilterLoader
+} from './stats-table-filters.js';
+import {
     fetchBetterCopyRows,
     fetchDuplicates,
     fetchLibraryIssueRows,
@@ -48,6 +56,7 @@ let movieLoader = null;
  */
 export function setMovieLoader(loader) {
     movieLoader = typeof loader === 'function' ? loader : null;
+    setTableFilterLoader(movieLoader);
 }
 
 let panel, loaded = false;
@@ -274,6 +283,7 @@ export async function refreshStats() {
 
         clearError('stats');
         loaded = true;
+        latestStatsData = data;
 
         const el = id => document.getElementById(id);
         animateNumber(el('total-movies'), data.total_movies);
@@ -306,45 +316,56 @@ export async function refreshStats() {
 
         releaseYearAnalytics.renderReleaseYearAnalytics?.(
             data.release_year_analytics,
-            data.total_movies
+            data.total_movies,
+            handleSliceSelect
         );
         genreAnalytics.renderGenreAnalytics?.(
             data.genre_analytics,
-            data.total_movies
+            data.total_movies,
+            handleSliceSelect
         );
         ratingRuntimeAnalytics.renderRatingRuntimeAnalytics?.(
             data.rating_runtime_analytics,
-            data.total_movies
+            data.total_movies,
+            handleSliceSelect
         );
         certificationAnalytics.renderCertificationAnalytics?.(
             data.certification_analytics,
-            data.total_movies
+            data.total_movies,
+            handleSliceSelect
         );
         directorAnalytics.renderDirectorAnalytics?.(
             data.director_analytics,
-            data.total_movies
+            data.total_movies,
+            handleSliceSelect
         );
         castAnalytics.renderCastAnalytics?.(
             data.cast_analytics,
-            data.total_movies
+            data.total_movies,
+            handleSliceSelect
         );
         languageCountryAnalytics.renderLanguageCountryAnalytics?.(
             data.language_country_analytics,
-            data.total_movies
+            data.total_movies,
+            handleSliceSelect
         );
         technicalFormatAnalytics.renderTechnicalFormatAnalytics?.(
             data.technical_format_analytics,
-            data.total_movies
+            data.total_movies,
+            handleSliceSelect
         );
         storageAnalytics.renderStorageAnalytics?.(
             data.storage_analytics,
-            data.total_movies
+            data.total_movies,
+            handleSliceSelect
         );
         metadataCompleteness.renderMetadataCompleteness?.(
             data.metadata_completeness,
             data.total_movies,
             loadMetadataIssues
         );
+
+        bindInsightDrillDowns();
 
         const healthCard = el('health-score-card');
         healthCard.dataset.health = data.health_score >= 90
@@ -445,6 +466,214 @@ function closePanel(restoreFocus = false) {
     panel.setAttribute('aria-hidden', 'true');
     statsToggleButton?.setAttribute('aria-expanded', 'false');
     statsBackdrop?.classList.remove('show');
+}
+
+/**
+ * Analytics drill-down: apply the clicked chart slice as a filter on the
+ * main movie table, then close the drawer so the filtered results are
+ * visible. The filter behaves like any toolbar filter (editable input and
+ * removable pill), so further slices stack as AND filters.
+ * @param {{column: string, value: string}} spec
+ */
+function handleSliceSelect(spec) {
+    if (!applyTableFilter(spec)) return;
+
+    // Reveal the filtered table behind the drawer.
+    closePanel(true);
+}
+
+/* =============================
+   Insight-card drill-downs
+============================= */
+
+// Latest stats payload, so insight cards bound once can resolve their
+// filter spec from fresh data on click.
+let latestStatsData = null;
+
+// Top-item insight cards that drill down into the main table. `getSpec`
+// resolves the filter from the latest stats payload; cards whose data is
+// missing stay non-interactive.
+const INSIGHT_DRILL_DOWNS = [
+    {
+        valueId: 'peak-release-year',
+        getSpec: data => getYearTableFilter(
+            data?.release_year_analytics?.peak_year?.year
+        ),
+        title: (spec, data) => `Filter the table to movies from ` +
+            `${data?.release_year_analytics?.peak_year?.year}`
+    },
+    {
+        valueId: 'busiest-release-decade',
+        getSpec: data => getDecadeTableFilter(
+            data?.release_year_analytics?.busiest_decade?.start_year
+        ),
+        title: (spec, data) => `Filter the table to movies from the ` +
+            `${data?.release_year_analytics?.busiest_decade?.label}`
+    },
+    {
+        valueId: 'top-genre',
+        getSpec: data => getFacetTableFilter(
+            'CATEGORY',
+            data?.genre_analytics?.top_genre?.label
+        ),
+        title: spec => `Filter the table to ${spec.value} movies`
+    },
+    {
+        valueId: 'top-rating-band',
+        getSpec: data => getBandTableFilter(
+            'rating',
+            data?.rating_runtime_analytics?.top_rating_band?.key
+        ),
+        title: (spec, data) => `Filter the table to movies rated ` +
+            `${data?.rating_runtime_analytics?.top_rating_band?.label}`
+    },
+    {
+        valueId: 'common-runtime-band',
+        getSpec: data => getBandTableFilter(
+            'runtime',
+            data?.rating_runtime_analytics?.common_runtime_band?.key
+        ),
+        title: (spec, data) => `Filter the table to movies running ` +
+            `${data?.rating_runtime_analytics?.common_runtime_band?.label}`
+    },
+    {
+        valueId: 'top-certification',
+        getSpec: data => getFacetTableFilter(
+            'CERTIFICATION',
+            data?.certification_analytics?.top_item?.label
+        ),
+        title: spec => `Filter the table to movies certified ${spec.value}`
+    },
+    {
+        valueId: 'top-director',
+        getSpec: data => getFacetTableFilter(
+            'DIRECTOR',
+            data?.director_analytics?.top_item?.label
+        ),
+        title: spec => `Filter the table to movies directed by ` +
+            `${spec.value}`
+    },
+    {
+        valueId: 'top-actor',
+        getSpec: data => getFacetTableFilter(
+            'ACTORS',
+            data?.cast_analytics?.top_actor?.label
+        ),
+        title: spec => `Filter the table to movies with ${spec.value}`
+    },
+    {
+        valueId: 'top-language',
+        getSpec: data => getFacetTableFilter(
+            'LANGUAGES',
+            data?.language_country_analytics?.languages?.top_item?.label
+        ),
+        title: spec => `Filter the table to ${spec.value} movies`
+    },
+    {
+        valueId: 'top-country',
+        getSpec: data => getFacetTableFilter(
+            'COUNTRY',
+            data?.language_country_analytics?.countries?.top_item?.label
+        ),
+        title: spec => `Filter the table to movies from ${spec.value}`
+    },
+    {
+        valueId: 'top-resolution',
+        getSpec: data => getFacetTableFilter(
+            'RESOLUTION',
+            data?.technical_format_analytics?.resolutions?.top_item?.label
+        ),
+        title: spec => `Filter the table to ${spec.value} movies`
+    },
+    {
+        valueId: 'top-audio-format',
+        getSpec: data => getFacetTableFilter(
+            'AUDIOFORMAT',
+            data?.technical_format_analytics?.audio_formats?.top_item?.label
+        ),
+        title: spec => `Filter the table to ${spec.value} movies`
+    }
+];
+
+/**
+ * Make the top-item insight cards clickable drill-downs. Bound once per
+ * card; each click resolves its filter from the latest stats payload.
+ */
+function bindInsightDrillDowns() {
+    INSIGHT_DRILL_DOWNS.forEach(binding => {
+        const card = document
+            .getElementById(binding.valueId)
+            ?.closest('article');
+
+        if (!card) return;
+
+        if (card.dataset.drillDownBound !== 'true') {
+            // Do not style the card as actionable until its data exists.
+            if (!binding.getSpec(latestStatsData)) return;
+
+            card.dataset.drillDownBound = 'true';
+            card.classList.add('stat-card-action', 'stats-slice-action');
+            card.setAttribute('role', 'button');
+            card.tabIndex = 0;
+
+            card.addEventListener('click', () => {
+                const spec = binding.getSpec(latestStatsData);
+
+                if (spec) handleSliceSelect(spec);
+            });
+
+            card.addEventListener('keydown', event => {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+
+                event.preventDefault();
+                card.click();
+            });
+        }
+
+        const spec = binding.getSpec(latestStatsData);
+
+        if (spec) {
+            const description = binding.title(spec, latestStatsData);
+
+            card.title = description;
+            card.setAttribute('aria-label', description);
+        }
+    });
+
+    bindLargestMovieDrillDown();
+}
+
+/** The Largest Movie card jumps to that row instead of filtering. */
+function bindLargestMovieDrillDown() {
+    const card = document
+        .getElementById('largest-storage-movie')
+        ?.closest('article');
+
+    if (!card || card.dataset.drillDownBound === 'true') return;
+
+    const num = String(
+        latestStatsData?.storage_analytics?.largest_movie?.num ?? ''
+    );
+
+    if (!num) return;
+
+    card.dataset.drillDownBound = 'true';
+    card.classList.add('stat-card-action', 'stats-slice-action');
+    card.setAttribute('role', 'button');
+    card.tabIndex = 0;
+
+    const description = 'Jump to the largest movie in the table';
+    card.title = description;
+    card.setAttribute('aria-label', description);
+
+    card.addEventListener('click', () => jumpToMovie(num));
+
+    card.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+
+        event.preventDefault();
+        card.click();
+    });
 }
 
 /* =============================

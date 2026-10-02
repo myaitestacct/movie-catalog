@@ -1,3 +1,8 @@
+import {
+    getFacetTableFilter,
+    makeSliceInteractive
+} from './stats-table-filters.js';
+
 function toNonNegativeNumber(value) {
     const number = Number(value);
     return Number.isFinite(number) && number >= 0 ? number : 0;
@@ -83,7 +88,7 @@ const DONUT_TOP_SEGMENTS = 6;
 
 /* Static conic-gradient donut: one inline style, zero DOM churn per
    segment (the legend list is the only repeated node). */
-function renderGenreDonut(model) {
+function renderGenreDonut(model, onSliceSelect) {
     const donut = document.getElementById('genre-donut');
     const legend = document.getElementById('genre-donut-legend');
     const count = document.getElementById('genre-donut-count');
@@ -162,18 +167,34 @@ function renderGenreDonut(model) {
             (segment.count / model.taggedMovies) * 100
         );
 
+        // The aggregated "Other" wedge is not one genre, so it does not
+        // drill down; the named segments filter by their genre.
+        makeSliceInteractive(
+            item,
+            segment.label === 'Other'
+                ? null
+                : getFacetTableFilter('CATEGORY', segment.label),
+            `Filter the table to ${segment.label} movies`,
+            onSliceSelect,
+            { keepRole: true }
+        );
+
         item.append(swatch, label, share);
         legend.appendChild(item);
     });
 }
 
-export function renderGenreAnalytics(analytics, totalMovies) {
+export function renderGenreAnalytics(
+    analytics,
+    totalMovies,
+    onSliceSelect
+) {
     const container = document.getElementById('genre-distribution');
     if (!container) return false;
 
     const model = createGenreViewModel(analytics, totalMovies);
 
-    renderGenreDonut(model);
+    renderGenreDonut(model, onSliceSelect);
     const topGenre = document.getElementById('top-genre');
     const topGenreDetail = document.getElementById('top-genre-detail');
     const coverage = document.getElementById('genre-coverage');
@@ -225,6 +246,13 @@ export function renderGenreAnalytics(analytics, totalMovies) {
             'aria-label',
             `${genre.label}: ${formatMovieCount(genre.count)}, ` +
             `${genre.shareLabel} of tagged movies`
+        );
+
+        makeSliceInteractive(
+            row,
+            getFacetTableFilter('CATEGORY', genre.label),
+            `Filter the table to ${genre.label} movies`,
+            onSliceSelect
         );
 
         const label = document.createElement('strong');

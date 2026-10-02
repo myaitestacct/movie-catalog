@@ -25,6 +25,9 @@ import {
   setMovieLoader
 } from './stats/stats.js';
 import {
+  FILTER_COLUMN_LABELS
+} from './stats/stats-table-filters.js';
+import {
   clearError,
   showError
 } from './utils/feedback.js';
@@ -40,6 +43,9 @@ let gridWrapper;
 let gridView;
 let gridRenderedData = null;
 let currentMovies = null;
+// Module-scope so the render callback can keep the Clear Filters chip in
+// sync even for filters applied programmatically (analytics drill-down).
+let clearFiltersButton = null;
 
 function hasActiveSearchFilters() {
   return Object.values(state.search).some(
@@ -135,6 +141,7 @@ const loadMoviePage = createMovieLoader({
       loadMovies
     );
     renderFilterPills();
+    syncClearFiltersButton(clearFiltersButton);
     updateSummaryMovies(data.total);
 
     currentMovies = data.data;
@@ -184,7 +191,9 @@ export async function loadMovies() {
    Filter pills
 ============================== */
 function getColumnLabels() {
-  const labels = {};
+  // Start with the filter-only analytics columns (Director, Cast,
+  // Country) that have no table header, then let real headers win.
+  const labels = { ...FILTER_COLUMN_LABELS };
 
   table.querySelectorAll('thead th').forEach(th => {
     labels[th.dataset.col] = th.textContent.trim();
@@ -234,12 +243,24 @@ function renderFilterPills() {
       if (input) {
         input.value = '';
         input.dispatchEvent(new Event('input'));
+
+        // The input handler owns state.search; mirror its effect
+        // immediately so the pills update without waiting for the
+        // debounced reload.
+        delete state.search[column];
+        renderFilterPills();
+        return;
       }
 
-      // The input handler owns state.search; mirror its effect immediately
-      // so the pills update without waiting for the debounced reload.
+      // Filter-only analytics columns (Director, Cast, Country) have no
+      // toolbar input, so removing the pill must reload the table itself.
+      clearTimeout(state.debounce);
+      state.debounce = null;
       delete state.search[column];
+      state.page = 1;
       renderFilterPills();
+      syncClearFiltersButton(clearFiltersButton);
+      loadMovies();
     };
 
     pill.append(label, valueSpan, remove);
@@ -476,7 +497,7 @@ function scheduleIdleStatsPreload() {
   }
 
   // 2️⃣ Search
-  const clearFiltersButton =
+  clearFiltersButton =
     document.getElementById(
       'clear-filters'
     );
