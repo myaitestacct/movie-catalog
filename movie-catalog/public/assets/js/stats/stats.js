@@ -1190,6 +1190,83 @@ function renderGetBetterCopyPage() {
    Jump to table row
 ============================= */
 
+/**
+ * Scroll the table wrapper so a row is comfortably visible below the
+ * two-row sticky header (column headers + filter inputs).
+ *
+ * scrollIntoView() does not account for that sticky overlay — rows have
+ * ended up parked behind it after a jump — so the target scroll position
+ * is computed manually against the wrapper's real geometry.
+ */
+function revealTableRow(row) {
+    const wrapper = row.closest('.table-wrapper');
+
+    if (!wrapper) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
+    const table = row.closest('table');
+
+    let headerHeight = 0;
+
+    table?.querySelectorAll('thead tr').forEach(tr => {
+        headerHeight += tr.offsetHeight;
+    });
+
+    // The floating pagination bar covers the wrapper's bottom padding
+    // zone; keep the row out of it too.
+    const paginationReserve = parseFloat(
+        getComputedStyle(wrapper).paddingBottom
+    ) || 0;
+
+    const visibleHeight =
+        wrapper.clientHeight - headerHeight - paginationReserve;
+
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const rowRect = row.getBoundingClientRect();
+
+    // Row position inside the scrollable content, then center it in the
+    // visible strip below the sticky header (with a minimum cushion).
+    const rowTopInContent =
+        wrapper.scrollTop + (rowRect.top - wrapperRect.top);
+
+    const cushion = Math.max(
+        16,
+        (visibleHeight - row.offsetHeight) / 2
+    );
+
+    const maxScroll = Math.max(
+        0,
+        wrapper.scrollHeight - wrapper.clientHeight
+    );
+
+    const target = Math.min(
+        maxScroll,
+        Math.max(0, rowTopInContent - headerHeight - cushion)
+    );
+
+    wrapper.scrollTo({ top: target, behavior: 'smooth' });
+
+    // Goal-based safety net: if the smooth scroll did not end with the
+    // row visible (interrupted or superseded), snap it into place once.
+    setTimeout(() => {
+        if (!row.isConnected) return;
+
+        const finalWrapper = wrapper.getBoundingClientRect();
+        const finalRow = row.getBoundingClientRect();
+
+        const hidden =
+            finalRow.top < finalWrapper.top + headerHeight + 2 ||
+            finalRow.bottom >
+                finalWrapper.bottom - paginationReserve + 2;
+
+        if (hidden) {
+            wrapper.scrollTo({ top: target });
+        }
+    }, 450);
+}
+
 async function jumpToMovie(num) {
     const request = movieJumpRequests.start();
     const movieStateSignature =
@@ -1258,6 +1335,12 @@ async function jumpToMovie(num) {
 
         if (!row) return;
 
+        // The jump destination is a table row; reveal the table view when
+        // the grid is active (the rows stay rendered in both views).
+        if (state.view === 'grid') {
+            document.getElementById('view-table')?.click();
+        }
+
         // Reveal the destination rather than leaving it behind a stats dialog.
         duplicateModal?.classList.add('hidden');
         getBetterCopyModal?.classList.add('hidden');
@@ -1265,10 +1348,7 @@ async function jumpToMovie(num) {
         closePanel();
         row.querySelector('.movie-title-link')?.focus({ preventScroll: true });
 
-        row.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-        });
+        revealTableRow(row);
 
         row.classList.add('row-highlight');
 

@@ -143,6 +143,13 @@ thead th {
     box-shadow: 0 0 2px var(--primary);
 }
 
+/* Programmatic scrolls that land on a row (scrollIntoView, anchors) must
+   clear the two-row sticky header (column headers + filter inputs)
+   instead of parking the row behind it. */
+#movies tbody tr {
+    scroll-margin-top: 84px;
+}
+
 .hidden-col {
     opacity: 0;
     max-width: 0;
