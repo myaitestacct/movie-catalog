@@ -7,8 +7,8 @@ async function openCatalog(page) {
 
 async function expectRowRevealed(page, row) {
   // The jump scrolls smoothly; poll until it settles and check the final
-  // geometry: the row must sit below the two-row sticky header and fully
-  // inside the table wrapper (never parked behind the header).
+  // geometry: the row must land as the first visible row — flush below
+  // the two-row sticky header — and stay inside the table wrapper.
   const geometry = await page.evaluate(() => {
     const wrapper = document.querySelector('.table-wrapper');
     const wrapperRect = wrapper.getBoundingClientRect();
@@ -31,7 +31,7 @@ async function expectRowRevealed(page, row) {
       if (!box) return false;
 
       return (
-        box.y >= geometry.headerBottom - 1 &&
+        Math.abs(box.y - geometry.headerBottom) <= 4 &&
         box.y + box.height <= geometry.wrapperBottom + 1
       );
     })
@@ -130,7 +130,7 @@ test('an analytics link changes page, reveals the table, and highlights its movi
 
   const row = page.locator('#movies tbody tr[data-num="51"]');
   await expect(page.locator('#pagination select')).toHaveValue('2');
-  await expect(row).toHaveClass(/row-highlight/);
+  await expect(row).toHaveClass(/row-selected/);
   await expect(row.locator('.movie-title-link')).toBeFocused();
   await expect(page.locator('.stats-modal:not(.hidden)')).toHaveCount(0);
   await expect(page.locator('#stats-panel')).toHaveClass(/hidden/);
@@ -156,7 +156,7 @@ test('a metadata completeness jump lands the row below the sticky header', async
   await modal.locator('.jump-to-row[data-num="11"]').click();
 
   const row = page.locator('#movies tbody tr[data-num="11"]');
-  await expect(row).toHaveClass(/row-highlight/);
+  await expect(row).toHaveClass(/row-selected/);
   await expect(page.locator('.stats-modal:not(.hidden)')).toHaveCount(0);
   await expectRowRevealed(page, row);
 });
@@ -174,7 +174,7 @@ test('jumping from analytics reveals the table when the grid view is active', as
 
   const row = page.locator('#movies tbody tr[data-num="51"]');
   await expect(row).toBeVisible();
-  await expect(row).toHaveClass(/row-highlight/);
+  await expect(row).toHaveClass(/row-selected/);
   await expect(page.locator('#view-table')).toHaveClass(/active/);
   await expectRowRevealed(page, row);
 });
@@ -247,7 +247,7 @@ test('repeating a jump while its page is loading still highlights the destinatio
     await firstLoadStarted.promise;
     await link.click();
 
-    await expect(page.locator('#movies tr[data-num="51"]')).toHaveClass(/row-highlight/);
+    await expect(page.locator('#movies tr[data-num="51"]')).toHaveClass(/row-selected/);
     await expect(page.locator('#movies tr[data-num="51"] .movie-title-link')).toBeFocused();
     await expect(page.locator('.stats-modal:not(.hidden)')).toHaveCount(0);
     expect(pageLoads).toBe(2);

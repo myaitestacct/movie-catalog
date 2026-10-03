@@ -1093,8 +1093,7 @@
     }
 
     .stat-card > div > span,
-    .stat-card-copy > span,
-    .row-highlight {
+    .stat-card-copy > span {
         animation: none;
     }
 }
@@ -1286,16 +1285,6 @@
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(2px); }
     to   { opacity: 1; transform: translateY(0); }
-}
-
-.row-highlight {
-    animation: flash 2s ease;
-    background: var(--row-flash) !important;
-}
-
-@keyframes flash {
-    from { background: var(--row-flash); }
-    to { background: transparent; }
 }
 
 /* Table fade while a page (re)loads — opacity only, GPU-cheap */

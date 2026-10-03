@@ -1191,15 +1191,16 @@ function renderGetBetterCopyPage() {
 ============================= */
 
 /**
- * Scroll the table wrapper so a row is comfortably visible below the
- * two-row sticky header (column headers + filter inputs).
+ * Scroll the table wrapper so a row becomes the first visible row,
+ * directly below the two-row sticky header (column headers + filter
+ * inputs).
  *
  * scrollIntoView() does not account for that sticky overlay — rows have
  * ended up parked behind it after a jump — so the target scroll position
  * is computed manually against the wrapper's real geometry, then a
- * settle loop verifies the row actually landed in the visible strip and
- * re-asserts from live geometry until it does (something may interrupt
- * or supersede the smooth scroll while it animates).
+ * settle loop verifies the row actually landed in place and re-asserts
+ * from live geometry until it does (something may interrupt or
+ * supersede the smooth scroll while it animates).
  *
  * Timing matters too: while the table reloads, the wrapper shows an
  * in-flow loading skeleton (::before, 55vh tall) that pushes every row
@@ -1238,28 +1239,21 @@ function revealTableRow(row) {
         const rowRect = row.getBoundingClientRect();
 
         return (
-            rowRect.top < wrapperRect.top + headerHeight + 2 ||
+            rowRect.top < wrapperRect.top + headerHeight - 2 ||
             rowRect.bottom >
                 wrapperRect.bottom - paginationReserve + 2
         );
     };
 
-    // Row centered in the visible strip below the sticky header
-    // (minimum 16px cushion), clamped to the scrollable range.
-    const computeTarget = ({ headerHeight, paginationReserve }) => {
-        const visibleHeight =
-            wrapper.clientHeight - headerHeight - paginationReserve;
-
+    // First visible row: the row's top edge sits flush below the sticky
+    // header, clamped to the scrollable range (rows near the top of a
+    // page simply go as high as the content allows).
+    const computeTarget = ({ headerHeight }) => {
         const wrapperRect = wrapper.getBoundingClientRect();
         const rowRect = row.getBoundingClientRect();
 
         const rowTopInContent =
             wrapper.scrollTop + (rowRect.top - wrapperRect.top);
-
-        const cushion = Math.max(
-            16,
-            (visibleHeight - row.offsetHeight) / 2
-        );
 
         const maxScroll = Math.max(
             0,
@@ -1268,7 +1262,7 @@ function revealTableRow(row) {
 
         return Math.min(
             maxScroll,
-            Math.max(0, rowTopInContent - headerHeight - cushion)
+            Math.max(0, rowTopInContent - headerHeight - 2)
         );
     };
 
@@ -1424,11 +1418,16 @@ async function jumpToMovie(num) {
 
         revealTableRow(row);
 
-        row.classList.add('row-highlight');
+        // Persistent "selected" marker: exactly one row carries it. It
+        // survives until the next jump or table (re)render, which
+        // rebuilds the rows.
+        document.querySelectorAll(
+            '#movies tbody tr.row-selected'
+        ).forEach(tr => {
+            tr.classList.remove('row-selected');
+        });
 
-        setTimeout(() => {
-            row.classList.remove('row-highlight');
-        }, 2000);
+        row.classList.add('row-selected');
     } catch (error) {
         if (
             !request.isCurrent() ||
