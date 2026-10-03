@@ -1197,6 +1197,12 @@ function renderGetBetterCopyPage() {
  * scrollIntoView() does not account for that sticky overlay — rows have
  * ended up parked behind it after a jump — so the target scroll position
  * is computed manually against the wrapper's real geometry.
+ *
+ * Timing matters: while the table reloads, the wrapper shows an in-flow
+ * loading skeleton (::before, 55vh tall) that pushes every row down.
+ * Geometry measured during that window overshoots by the skeleton's
+ * height once it disappears, leaving the row far above the intended
+ * spot. Measurement is therefore deferred until the skeleton is gone.
  */
 function revealTableRow(row) {
     const wrapper = row.closest('.table-wrapper');
@@ -1206,65 +1212,105 @@ function revealTableRow(row) {
         return;
     }
 
-    const table = row.closest('table');
+    // Measure live geometry and scroll the wrapper. Returns the metrics
+    // the visibility re-check needs. Recomputed at snap time so late
+    // layout changes cannot make a stale target win.
+    const measureAndScroll = behavior => {
+        const table = row.closest('table');
 
-    let headerHeight = 0;
+        let headerHeight = 0;
 
-    table?.querySelectorAll('thead tr').forEach(tr => {
-        headerHeight += tr.offsetHeight;
-    });
+        table?.querySelectorAll('thead tr').forEach(tr => {
+            headerHeight += tr.offsetHeight;
+        });
 
-    // The floating pagination bar covers the wrapper's bottom padding
-    // zone; keep the row out of it too.
-    const paginationReserve = parseFloat(
-        getComputedStyle(wrapper).paddingBottom
-    ) || 0;
+        // The floating pagination bar covers the wrapper's bottom padding
+        // zone; keep the row out of it too.
+        const paginationReserve = parseFloat(
+            getComputedStyle(wrapper).paddingBottom
+        ) || 0;
 
-    const visibleHeight =
-        wrapper.clientHeight - headerHeight - paginationReserve;
+        const visibleHeight =
+            wrapper.clientHeight - headerHeight - paginationReserve;
 
-    const wrapperRect = wrapper.getBoundingClientRect();
-    const rowRect = row.getBoundingClientRect();
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const rowRect = row.getBoundingClientRect();
 
-    // Row position inside the scrollable content, then center it in the
-    // visible strip below the sticky header (with a minimum cushion).
-    const rowTopInContent =
-        wrapper.scrollTop + (rowRect.top - wrapperRect.top);
+        // Row position inside the scrollable content, then center it in
+        // the visible strip below the sticky header (minimum cushion).
+        const rowTopInContent =
+            wrapper.scrollTop + (rowRect.top - wrapperRect.top);
 
-    const cushion = Math.max(
-        16,
-        (visibleHeight - row.offsetHeight) / 2
-    );
+        const cushion = Math.max(
+            16,
+            (visibleHeight - row.offsetHeight) / 2
+        );
 
-    const maxScroll = Math.max(
-        0,
-        wrapper.scrollHeight - wrapper.clientHeight
-    );
+        const maxScroll = Math.max(
+            0,
+            wrapper.scrollHeight - wrapper.clientHeight
+        );
 
-    const target = Math.min(
-        maxScroll,
-        Math.max(0, rowTopInContent - headerHeight - cushion)
-    );
+        const target = Math.min(
+            maxScroll,
+            Math.max(0, rowTopInContent - headerHeight - cushion)
+        );
 
-    wrapper.scrollTo({ top: target, behavior: 'smooth' });
+        wrapper.scrollTo({ top: target, behavior });
 
-    // Goal-based safety net: if the smooth scroll did not end with the
-    // row visible (interrupted or superseded), snap it into place once.
-    setTimeout(() => {
+        return { headerHeight, paginationReserve };
+    };
+
+    const reveal = () => {
         if (!row.isConnected) return;
 
-        const finalWrapper = wrapper.getBoundingClientRect();
-        const finalRow = row.getBoundingClientRect();
+        const metrics = measureAndScroll('smooth');
 
-        const hidden =
-            finalRow.top < finalWrapper.top + headerHeight + 2 ||
-            finalRow.bottom >
-                finalWrapper.bottom - paginationReserve + 2;
+        // Goal-based safety net: if the smooth scroll did not end with
+        // the row visible (interrupted or superseded), recompute against
+        // the live layout and snap it into place once.
+        setTimeout(() => {
+            if (!row.isConnected) return;
 
-        if (hidden) {
-            wrapper.scrollTo({ top: target });
-        }
-    }, 450);
+            const finalWrapper = wrapper.getBoundingClientRect();
+            const finalRow = row.getBoundingClientRect();
+
+            const hidden =
+                finalRow.top < finalWrapper.top + metrics.headerHeight + 2 ||
+                finalRow.bottom >
+                    finalWrapper.bottom - metrics.paginationReserve + 2;
+
+            if (hidden) measureAndScroll('auto');
+        }, 550);
+    };
+
+    if (!wrapper.classList.contains('is-loading')) {
+        reveal();
+        return;
+    }
+
+    // Wait for the loading skeleton to disappear before measuring. The
+    // loader removes `is-loading` in a requestAnimationFrame right after
+    // the page renders; fall back to a timeout if that never happens.
+    let observer;
+
+    const fallback = setTimeout(() => {
+        observer?.disconnect();
+        reveal();
+    }, 800);
+
+    observer = new MutationObserver(() => {
+        if (wrapper.classList.contains('is-loading')) return;
+
+        observer.disconnect();
+        clearTimeout(fallback);
+        reveal();
+    });
+
+    observer.observe(wrapper, {
+        attributes: true,
+        attributeFilter: ['class']
+    });
 }
 
 async function jumpToMovie(num) {
