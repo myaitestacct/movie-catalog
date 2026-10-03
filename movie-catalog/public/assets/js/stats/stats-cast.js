@@ -1,3 +1,8 @@
+import {
+    getFacetTableFilter,
+    makeSliceInteractive
+} from './stats-table-filters.js';
+
 function toNonNegativeNumber(value) {
     const number = Number(value);
 
@@ -217,7 +222,8 @@ function appendEmptyState(
 
 function renderActorList(
     container,
-    model
+    model,
+    onSliceSelect
 ) {
     container.innerHTML = '';
 
@@ -246,6 +252,13 @@ function renderActorList(
             )}, ` +
             `${actor.shareLabel} ` +
             'of movies with cast data'
+        );
+
+        makeSliceInteractive(
+            row,
+            getFacetTableFilter('ACTORS', actor.label),
+            `Filter the table to movies with ${actor.label}`,
+            onSliceSelect
         );
 
         const label =
@@ -329,7 +342,8 @@ function distributionSummary(model) {
 
 export function renderCastAnalytics(
     analytics,
-    totalMovies
+    totalMovies,
+    onSliceSelect
 ) {
     const distribution =
         document.getElementById(
@@ -416,7 +430,8 @@ export function renderCastAnalytics(
 
     renderActorList(
         distribution,
-        model
+        model,
+        onSliceSelect
     );
 
     return true;

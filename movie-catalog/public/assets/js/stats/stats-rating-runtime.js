@@ -1,3 +1,8 @@
+import {
+    getBandTableFilter,
+    makeSliceInteractive
+} from './stats-table-filters.js';
+
 function toNonNegativeNumber(value) {
     const number = Number(value);
     return Number.isFinite(number) && number >= 0 ? number : 0;
@@ -86,7 +91,15 @@ function appendEmptyState(container, message) {
     container.appendChild(empty);
 }
 
-function renderBandList(container, bands, coveredMovies, emptyMessage) {
+function renderBandList(
+    container,
+    bands,
+    coveredMovies,
+    emptyMessage,
+    bandKind,
+    describeBand,
+    onSliceSelect
+) {
     container.innerHTML = '';
 
     if (coveredMovies === 0 || bands.length === 0) {
@@ -101,6 +114,13 @@ function renderBandList(container, bands, coveredMovies, emptyMessage) {
             'aria-label',
             `${band.label}: ${formatMovieCount(band.count)}, ` +
             `${band.shareLabel}`
+        );
+
+        makeSliceInteractive(
+            row,
+            getBandTableFilter(bandKind, band.key),
+            describeBand(band.label),
+            onSliceSelect
         );
 
         const label = document.createElement('strong');
@@ -124,7 +144,11 @@ function renderBandList(container, bands, coveredMovies, emptyMessage) {
     });
 }
 
-export function renderRatingRuntimeAnalytics(analytics, totalMovies) {
+export function renderRatingRuntimeAnalytics(
+    analytics,
+    totalMovies,
+    onSliceSelect
+) {
     const ratingContainer = document.getElementById(
         'rating-band-distribution'
     );
@@ -187,13 +211,19 @@ export function renderRatingRuntimeAnalytics(analytics, totalMovies) {
         ratingContainer,
         model.ratingBands,
         model.ratedMovies,
-        'No rating data available.'
+        'No rating data available.',
+        'rating',
+        label => `Filter the table to movies rated ${label}`,
+        onSliceSelect
     );
     renderBandList(
         runtimeContainer,
         model.runtimeBands,
         model.runtimeKnownMovies,
-        'No runtime data available.'
+        'No runtime data available.',
+        'runtime',
+        label => `Filter the table to movies running ${label}`,
+        onSliceSelect
     );
 
     return true;

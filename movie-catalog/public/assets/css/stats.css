@@ -683,6 +683,31 @@
     font-size: 9px;
 }
 
+/* Analytics drill-down: chart slices that filter the main table. They
+   reuse the stat-card-action affordance from the clickable Metadata
+   Completeness rows; these rules add slice-specific polish. */
+.stats-slice-action {
+    border-radius: 8px;
+}
+
+.stats-slice-action:hover strong,
+.stats-slice-action:focus-visible strong {
+    color: var(--primary);
+}
+
+.stats-genre-donut-legend li.stats-slice-action {
+    cursor: pointer;
+}
+
+.stats-genre-donut-legend li.stats-slice-action:hover .legend-label,
+.stats-genre-donut-legend li.stats-slice-action:focus-visible .legend-label {
+    color: var(--primary);
+}
+
+.stats-timeline-year.stats-slice-action:hover small {
+    color: var(--text-main);
+}
+
 /* ==========================
    Genre Analytics
 ========================== */
@@ -1068,8 +1093,7 @@
     }
 
     .stat-card > div > span,
-    .stat-card-copy > span,
-    .row-highlight {
+    .stat-card-copy > span {
         animation: none;
     }
 }
@@ -1261,16 +1285,6 @@
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(2px); }
     to   { opacity: 1; transform: translateY(0); }
-}
-
-.row-highlight {
-    animation: flash 2s ease;
-    background: var(--row-flash) !important;
-}
-
-@keyframes flash {
-    from { background: var(--row-flash); }
-    to { background: transparent; }
 }
 
 /* Table fade while a page (re)loads — opacity only, GPU-cheap */

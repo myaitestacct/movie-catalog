@@ -1,3 +1,8 @@
+import {
+    getFacetTableFilter,
+    makeSliceInteractive
+} from './stats-table-filters.js';
+
 function toNonNegativeNumber(value) {
     const number = Number(value);
     return Number.isFinite(number) && number >= 0 ? number : 0;
@@ -89,7 +94,13 @@ function appendEmptyState(container, message) {
     container.appendChild(empty);
 }
 
-function renderFacetList(container, facet, singularLabel) {
+function renderFacetList(
+    container,
+    facet,
+    singularLabel,
+    column,
+    onSliceSelect
+) {
     container.innerHTML = '';
 
     if (facet.items.length === 0) {
@@ -104,6 +115,15 @@ function renderFacetList(container, facet, singularLabel) {
             'aria-label',
             `${item.label}: ${formatMovieCount(item.count)}, ` +
             `${item.shareLabel} of tagged movies`
+        );
+
+        makeSliceInteractive(
+            row,
+            getFacetTableFilter(column, item.label),
+            `Filter the table to ${singularLabel === 'language'
+                ? `${item.label} movies`
+                : `movies from ${item.label}`}`,
+            onSliceSelect
         );
 
         const label = document.createElement('strong');
@@ -133,7 +153,11 @@ function summaryText(facet, pluralLabel) {
         : `${facet.totalItems.toLocaleString()} ${pluralLabel}`;
 }
 
-export function renderLanguageCountryAnalytics(analytics, totalMovies) {
+export function renderLanguageCountryAnalytics(
+    analytics,
+    totalMovies,
+    onSliceSelect
+) {
     const languageContainer = document.getElementById(
         'language-distribution'
     );
@@ -208,7 +232,19 @@ export function renderLanguageCountryAnalytics(analytics, totalMovies) {
         );
     }
 
-    renderFacetList(languageContainer, model.languages, 'language');
-    renderFacetList(countryContainer, model.countries, 'country');
+    renderFacetList(
+        languageContainer,
+        model.languages,
+        'language',
+        'LANGUAGES',
+        onSliceSelect
+    );
+    renderFacetList(
+        countryContainer,
+        model.countries,
+        'country',
+        'COUNTRY',
+        onSliceSelect
+    );
     return true;
 }

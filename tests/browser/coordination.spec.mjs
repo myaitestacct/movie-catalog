@@ -5,6 +5,39 @@ async function openCatalog(page) {
   await expect(page.locator('#movies tbody tr[data-num]')).toHaveCount(50);
 }
 
+async function expectRowRevealed(page, row) {
+  // The jump scrolls smoothly; poll until it settles and check the final
+  // geometry: the row must land as the first visible row — flush below
+  // the two-row sticky header — and stay inside the table wrapper.
+  const geometry = await page.evaluate(() => {
+    const wrapper = document.querySelector('.table-wrapper');
+    const wrapperRect = wrapper.getBoundingClientRect();
+    let headerHeight = 0;
+
+    document.querySelectorAll('#movies thead tr').forEach(tr => {
+      headerHeight += tr.offsetHeight;
+    });
+
+    return {
+      headerBottom: wrapperRect.top + headerHeight,
+      wrapperBottom: wrapperRect.bottom
+    };
+  });
+
+  await expect
+    .poll(async () => {
+      const box = await row.boundingBox();
+
+      if (!box) return false;
+
+      return (
+        Math.abs(box.y - geometry.headerBottom) <= 4 &&
+        box.y + box.height <= geometry.wrapperBottom + 1
+      );
+    })
+    .toBe(true);
+}
+
 function deferred() {
   let resolve;
   const promise = new Promise(done => { resolve = done; });
@@ -97,10 +130,53 @@ test('an analytics link changes page, reveals the table, and highlights its movi
 
   const row = page.locator('#movies tbody tr[data-num="51"]');
   await expect(page.locator('#pagination select')).toHaveValue('2');
-  await expect(row).toHaveClass(/row-highlight/);
+  await expect(row).toHaveClass(/row-selected/);
   await expect(row.locator('.movie-title-link')).toBeFocused();
   await expect(page.locator('.stats-modal:not(.hidden)')).toHaveCount(0);
   await expect(page.locator('#stats-panel')).toHaveClass(/hidden/);
+  await expectRowRevealed(page, row);
+});
+
+test('a metadata completeness jump lands the row below the sticky header', async ({ page }) => {
+  await openCatalog(page);
+  await page.locator('#stats-toggle').click();
+
+  // The user flow: Metadata Completeness -> File Size -> missing list -> jump.
+  const fieldRow = page.locator(
+    '#metadata-completeness-fields .stats-origin-row',
+    { hasText: 'File Size' }
+  );
+  await fieldRow.click();
+
+  const modal = page.locator('.stats-modal:not(.hidden)');
+  await expect(modal.locator('#library-issue-title')).toHaveText(
+    'Missing File Size'
+  );
+  await modal.locator('.dup-group').click();
+  await modal.locator('.jump-to-row[data-num="11"]').click();
+
+  const row = page.locator('#movies tbody tr[data-num="11"]');
+  await expect(row).toHaveClass(/row-selected/);
+  await expect(page.locator('.stats-modal:not(.hidden)')).toHaveCount(0);
+  await expectRowRevealed(page, row);
+});
+
+test('jumping from analytics reveals the table when the grid view is active', async ({ page }) => {
+  await openCatalog(page);
+  await page.locator('#view-grid').click();
+  await expect(page.locator('#grid-wrapper')).toBeVisible();
+
+  await page.locator('#stats-toggle').click();
+  await page.locator('#better-copy-card').click();
+  const modal = page.locator('.stats-modal:not(.hidden)');
+  await modal.locator('.dup-group').click();
+  await modal.locator('.jump-to-row[data-num="51"]').click();
+
+  const row = page.locator('#movies tbody tr[data-num="51"]');
+  await expect(row).toBeVisible();
+  await expect(row).toHaveClass(/row-selected/);
+  await expect(page.locator('#view-table')).toHaveClass(/active/);
+  await expectRowRevealed(page, row);
 });
 
 test('File matches literal filename text, not fuzzy letters or a hidden folder', async ({ page }) => {
@@ -171,7 +247,7 @@ test('repeating a jump while its page is loading still highlights the destinatio
     await firstLoadStarted.promise;
     await link.click();
 
-    await expect(page.locator('#movies tr[data-num="51"]')).toHaveClass(/row-highlight/);
+    await expect(page.locator('#movies tr[data-num="51"]')).toHaveClass(/row-selected/);
     await expect(page.locator('#movies tr[data-num="51"] .movie-title-link')).toBeFocused();
     await expect(page.locator('.stats-modal:not(.hidden)')).toHaveCount(0);
     expect(pageLoads).toBe(2);

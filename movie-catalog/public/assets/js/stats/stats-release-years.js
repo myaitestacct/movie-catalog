@@ -1,3 +1,9 @@
+import {
+    getDecadeTableFilter,
+    getYearTableFilter,
+    makeSliceInteractive
+} from './stats-table-filters.js';
+
 function toNonNegativeNumber(value) {
     const number = Number(value);
     return Number.isFinite(number) && number >= 0 ? number : 0;
@@ -108,7 +114,11 @@ function appendEmptyState(container, message) {
     container.appendChild(empty);
 }
 
-export function renderReleaseYearAnalytics(analytics, totalMovies) {
+export function renderReleaseYearAnalytics(
+    analytics,
+    totalMovies,
+    onSliceSelect
+) {
     const decadeContainer = document.getElementById('decade-distribution');
     const timelineContainer = document.getElementById('release-year-timeline');
 
@@ -165,6 +175,13 @@ export function renderReleaseYearAnalytics(analytics, totalMovies) {
                 `${decade.shareLabel} of dated movies`
             );
 
+            makeSliceInteractive(
+                row,
+                getDecadeTableFilter(decade.startYear),
+                `Filter the table to movies from the ${decade.label}`,
+                onSliceSelect
+            );
+
             const label = document.createElement('strong');
             label.textContent = decade.label;
 
@@ -207,6 +224,16 @@ export function renderReleaseYearAnalytics(analytics, totalMovies) {
                 `${entry.year}: ${formatCount(entry.count)}`
             );
             item.title = `${entry.year}: ${formatCount(entry.count)}`;
+
+            // Keep the listitem role; when the slice is interactive the
+            // drill-down description takes over the tooltip.
+            makeSliceInteractive(
+                item,
+                getYearTableFilter(entry.year),
+                `Filter the table to movies from ${entry.year}`,
+                onSliceSelect,
+                { keepRole: true }
+            );
 
             const barArea = document.createElement('span');
             barArea.className = 'stats-timeline-bar-area';

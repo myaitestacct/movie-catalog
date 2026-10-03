@@ -689,6 +689,84 @@ function fuzzyMatch(
   return true;
 }
 
+const NUMERIC_FILTER_COLUMNS =
+  ['NUM', 'YEAR', 'LENGTH', 'FILESIZE', 'RATING'];
+
+// These columns treat 0 as "unknown" (matching the analytics), so
+// range/comparison forms exclude zero values. Exact matches do not.
+const ZERO_MEANS_UNKNOWN_COLUMNS =
+  ['RATING', 'LENGTH', 'FILESIZE'];
+
+// Mirrors MovieRepository::parseNumericFilterValue(): `2005` exact,
+// `2000-2009` inclusive range, `150+` at-least, `<90` below.
+function parseNumericFilterTerm(term) {
+  const value = String(term ?? '').trim();
+
+  let match =
+    value.match(/^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)$/);
+
+  if (match) {
+    let min = Number(match[1]);
+    let max = Number(match[2]);
+
+    if (min > max) {
+      [min, max] = [max, min];
+    }
+
+    return { type: 'range', min, max };
+  }
+
+  match = value.match(/^(\d+(?:\.\d+)?)\+$/);
+
+  if (match) {
+    return { type: 'min', min: Number(match[1]) };
+  }
+
+  match = value.match(/^<\s*(\d+(?:\.\d+)?)$/);
+
+  if (match) {
+    return { type: 'max', max: Number(match[1]) };
+  }
+
+  if (/^\d+(?:\.\d+)?$/.test(value)) {
+    return { type: 'exact', min: Number(value) };
+  }
+
+  return null;
+}
+
+function matchesNumericFilter(movieValue, term, column) {
+  const numeric = parseNumericFilterTerm(term);
+  const value = Number(movieValue);
+
+  if (numeric === null) {
+    if (column === 'RATING') {
+      return String(movieValue)
+        .toLowerCase()
+        .includes(String(term).toLowerCase());
+    }
+
+    return value === Number.parseInt(term, 10);
+  }
+
+  const positiveOnly =
+    ZERO_MEANS_UNKNOWN_COLUMNS.includes(column) &&
+    numeric.type !== 'exact';
+
+  if (positiveOnly && !(value > 0)) return false;
+
+  switch (numeric.type) {
+    case 'exact':
+      return value === numeric.min;
+    case 'range':
+      return value >= numeric.min && value <= numeric.max;
+    case 'min':
+      return value >= numeric.min;
+    default:
+      return value < numeric.max;
+  }
+}
+
 function movieResponse(url, { allRows = false } = {}) {
   const reservedParameters =
     new Set([
@@ -787,8 +865,8 @@ function movieResponse(url, { allRows = false } = {}) {
             return titleMatch && yearMatch;
           }
 
-          if (['NUM', 'YEAR', 'LENGTH', 'FILESIZE'].includes(column)) {
-            return Number(movieVal) === Number.parseInt(term, 10);
+          if (NUMERIC_FILTER_COLUMNS.includes(column)) {
+            return matchesNumericFilter(movieVal, term, column);
           }
 
           if (isFuzzy && !['FILEPATH', 'PATH'].includes(column)) {

@@ -143,6 +143,33 @@ thead th {
     box-shadow: 0 0 2px var(--primary);
 }
 
+/* Programmatic scrolls that land on a row (scrollIntoView, anchors) must
+   clear the two-row sticky header (column headers + filter inputs)
+   instead of parking the row behind it. */
+#movies tbody tr {
+    scroll-margin-top: 84px;
+}
+
+/* ==========================
+   Selected row (analytics jump destination)
+   Stays marked until the next jump or table re-render.
+========================== */
+#movies tbody tr.row-selected td {
+    background-color: var(--row-active-bg);
+    animation: rowSelectedFlash 1.2s ease;
+}
+
+/* Accent bar on the sticky first column so the selection stays visible
+   while scrolling horizontally too. */
+#movies tbody tr.row-selected td:first-child:not([colspan]) {
+    box-shadow: inset 3px 0 0 var(--primary);
+}
+
+@keyframes rowSelectedFlash {
+    from { background-color: var(--row-flash); }
+    to   { background-color: var(--row-active-bg); }
+}
+
 .hidden-col {
     opacity: 0;
     max-width: 0;

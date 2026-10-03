@@ -1,6 +1,10 @@
 import {
     createLanguageCountryViewModel
 } from './stats-language-country.js';
+import {
+    getFacetTableFilter,
+    makeSliceInteractive
+} from './stats-table-filters.js';
 
 function toNonNegativeNumber(value) {
     const number = Number(value);
@@ -52,7 +56,13 @@ function appendEmptyState(container, message) {
     container.appendChild(empty);
 }
 
-function renderFacetList(container, facet, singularLabel) {
+function renderFacetList(
+    container,
+    facet,
+    singularLabel,
+    column,
+    onSliceSelect
+) {
     container.innerHTML = '';
 
     if (facet.items.length === 0) {
@@ -67,6 +77,14 @@ function renderFacetList(container, facet, singularLabel) {
             'aria-label',
             `${item.label}: ${formatMovieCount(item.count)}, ` +
             `${item.shareLabel} of tagged movies`
+        );
+
+        makeSliceInteractive(
+            row,
+            getFacetTableFilter(column, item.label),
+            `Filter the table to ${item.label} ` +
+            `${singularLabel} movies`,
+            onSliceSelect
         );
 
         const label = document.createElement('strong');
@@ -118,7 +136,11 @@ function renderFacetSummary(facet, config) {
     );
 }
 
-export function renderTechnicalFormatAnalytics(analytics, totalMovies) {
+export function renderTechnicalFormatAnalytics(
+    analytics,
+    totalMovies,
+    onSliceSelect
+) {
     const resolutionContainer = document.getElementById(
         'resolution-distribution'
     );
@@ -152,12 +174,16 @@ export function renderTechnicalFormatAnalytics(analytics, totalMovies) {
     renderFacetList(
         resolutionContainer,
         model.resolutions,
-        'resolution'
+        'resolution',
+        'RESOLUTION',
+        onSliceSelect
     );
     renderFacetList(
         audioContainer,
         model.audioFormats,
-        'audio format'
+        'audio format',
+        'AUDIOFORMAT',
+        onSliceSelect
     );
 
     return true;

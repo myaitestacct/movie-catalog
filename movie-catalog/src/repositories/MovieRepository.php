@@ -39,6 +39,34 @@ class MovieRepository
         'DESCRIPTION'
     ];
 
+    // Columns that can filter but are not table headers, so they are not
+    // sortable. Analytics drill-down applies them (for example clicking a
+    // director bar), and they show up as removable filter pills.
+    private array $filterOnlyColumns = [
+        'DIRECTOR',
+        'ACTORS',
+        'COUNTRY'
+    ];
+
+    // Numeric columns whose filter value understands the range grammar
+    // `A-B` (inclusive), `A+` (at least), `<B` (below), or an exact number.
+    // Analytics clicks use it for decades, rating/runtime bands, and sizes.
+    private array $numericFilterColumns = [
+        'NUM',
+        'YEAR',
+        'LENGTH',
+        'FILESIZE',
+        'RATING'
+    ];
+
+    // These columns treat 0 as "unknown" (matching the analytics), so
+    // range/comparison forms exclude zero values. Exact matches do not.
+    private array $zeroMeansUnknownColumns = [
+        'RATING',
+        'LENGTH',
+        'FILESIZE'
+    ];
+
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
@@ -132,6 +160,133 @@ class MovieRepository
             ['==', '=%', '=_'],
             $value
         );
+    }
+
+    /**
+     * Parse a numeric column filter value.
+     *
+     * Supported forms: `2005` (exact), `2000-2009` (inclusive range),
+     * `150+` (at least), `<90` (below, exclusive). Returns null when the
+     * value matches none of them, so callers keep their legacy behavior.
+     *
+     * @return array{type: string, min?: float, max?: float}|null
+     */
+    private function parseNumericFilterValue(string $value): ?array
+    {
+        $value = trim($value);
+
+        if (preg_match(
+            '/^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)$/',
+            $value,
+            $match
+        )) {
+            $min = (float)$match[1];
+            $max = (float)$match[2];
+
+            if ($min > $max) {
+                [$min, $max] = [$max, $min];
+            }
+
+            return [
+                'type' => 'range',
+                'min' => $min,
+                'max' => $max
+            ];
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)\+$/', $value, $match)) {
+            return [
+                'type' => 'min',
+                'min' => (float)$match[1]
+            ];
+        }
+
+        if (preg_match('/^<\s*(\d+(?:\.\d+)?)$/', $value, $match)) {
+            return [
+                'type' => 'max',
+                'max' => (float)$match[1]
+            ];
+        }
+
+        if (preg_match('/^\d+(?:\.\d+)?$/', $value)) {
+            return [
+                'type' => 'exact',
+                'min' => (float)$value
+            ];
+        }
+
+        return null;
+    }
+
+    private function isIntegerValue(float $value): bool
+    {
+        return floor($value) === $value &&
+            $value >= PHP_INT_MIN &&
+            $value <= PHP_INT_MAX;
+    }
+
+    /**
+     * Build the SQL fragment and bound parameters for a parsed numeric
+     * filter (`exact`, `range`, `min`, or `max` form).
+     *
+     * @param array{type: string, min?: float, max?: float} $numericFilter
+     * @return array{0: string, 1: array<string, int|float>}
+     */
+    private function buildNumericCondition(
+        string $col,
+        array $numericFilter
+    ): array {
+        $type = $numericFilter['type'];
+        $fragment = '';
+        $params = [];
+
+        $boundValue = function (float $value) {
+            return $this->isIntegerValue($value)
+                ? (int)$value
+                : $value;
+        };
+
+        if ($type === 'exact') {
+            return [
+                "`$col` = :$col",
+                [$col => $boundValue($numericFilter['min'])]
+            ];
+        }
+
+        if ($type === 'range') {
+            $fragment =
+                "`$col` BETWEEN :{$col}_min AND :{$col}_max";
+
+            $params = [
+                "{$col}_min" => $boundValue($numericFilter['min']),
+                "{$col}_max" => $boundValue($numericFilter['max'])
+            ];
+        } elseif ($type === 'min') {
+            $fragment = "`$col` >= :{$col}_min";
+
+            $params = [
+                "{$col}_min" => $boundValue($numericFilter['min'])
+            ];
+        } else {
+            $fragment = "`$col` < :{$col}_max";
+
+            $params = [
+                "{$col}_max" => $boundValue($numericFilter['max'])
+            ];
+        }
+
+        // Ratings, runtimes, and file sizes treat 0 as "unknown", exactly
+        // like the analytics banding, so comparison forms skip zero rows.
+        if (
+            in_array(
+                $col,
+                $this->zeroMeansUnknownColumns
+            )
+        ) {
+            $fragment = "(`$col` > 0 AND $fragment)";
+        }
+
+        return [$fragment, $params];
     }
 
     private function buildLikePattern(
@@ -365,6 +520,10 @@ class MovieRepository
                 !in_array(
                     $col,
                     $this->sortableColumns
+                ) &&
+                !in_array(
+                    $col,
+                    $this->filterOnlyColumns
                 )
             ) {
                 continue;
@@ -433,28 +592,59 @@ class MovieRepository
             if (
                 in_array(
                     $col,
-                    [
-                        'NUM',
-                        'YEAR',
-                        'LENGTH',
-                        'FILESIZE'
-                    ]
+                    $this->numericFilterColumns
                 )
             ) {
-                $conditions[] =
-                    "`$col` = :$col";
-
-                $params[$col] = (int)$val;
-            } else {
-                $conditions[] =
-                    "`$col` LIKE :$col ESCAPE '='";
-
-                $params[$col] =
-                    $this->buildLikePattern(
-                        (string)$val,
-                        $fuzzy
+                $numericFilter =
+                    $this->parseNumericFilterValue(
+                        (string)$val
                     );
+
+                if ($numericFilter === null) {
+                    if ($col === 'RATING') {
+                        // Non-numeric rating input keeps the legacy
+                        // contains matching.
+                        $conditions[] =
+                            "`$col` LIKE :$col ESCAPE '='";
+
+                        $params[$col] =
+                            $this->buildLikePattern(
+                                (string)$val,
+                                $fuzzy
+                            );
+                    } else {
+                        $conditions[] =
+                            "`$col` = :$col";
+
+                        $params[$col] = (int)$val;
+                    }
+
+                    continue;
+                }
+
+                [$fragment, $rangeParams] =
+                    $this->buildNumericCondition(
+                        $col,
+                        $numericFilter
+                    );
+
+                $conditions[] = $fragment;
+
+                foreach ($rangeParams as $key => $rangeValue) {
+                    $params[$key] = $rangeValue;
+                }
+
+                continue;
             }
+
+            $conditions[] =
+                "`$col` LIKE :$col ESCAPE '='";
+
+            $params[$col] =
+                $this->buildLikePattern(
+                    (string)$val,
+                    $fuzzy
+                );
         }
 
         $whereSql = $conditions

@@ -1,6 +1,10 @@
 import {
     createLanguageCountryViewModel
 } from './stats-language-country.js';
+import {
+    getFacetTableFilter,
+    makeSliceInteractive
+} from './stats-table-filters.js';
 
 function toNonNegativeNumber(value) {
     const number = Number(value);
@@ -51,7 +55,7 @@ function appendEmptyState(container, message) {
     container.appendChild(empty);
 }
 
-function renderCertificationList(container, model) {
+function renderCertificationList(container, model, onSliceSelect) {
     container.innerHTML = '';
 
     if (model.items.length === 0) {
@@ -66,6 +70,13 @@ function renderCertificationList(container, model) {
             'aria-label',
             `${item.label}: ${formatMovieCount(item.count)}, ` +
             `${item.shareLabel} of certified movies`
+        );
+
+        makeSliceInteractive(
+            row,
+            getFacetTableFilter('CERTIFICATION', item.label),
+            `Filter the table to movies certified ${item.label}`,
+            onSliceSelect
         );
 
         const label = document.createElement('strong');
@@ -91,7 +102,11 @@ function renderCertificationList(container, model) {
     });
 }
 
-export function renderCertificationAnalytics(analytics, totalMovies) {
+export function renderCertificationAnalytics(
+    analytics,
+    totalMovies,
+    onSliceSelect
+) {
     const distribution = document.getElementById(
         'certification-distribution'
     );
@@ -130,6 +145,6 @@ export function renderCertificationAnalytics(analytics, totalMovies) {
             : 'No certification data'
     );
 
-    renderCertificationList(distribution, model);
+    renderCertificationList(distribution, model, onSliceSelect);
     return true;
 }

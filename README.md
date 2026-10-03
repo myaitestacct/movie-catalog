@@ -203,6 +203,58 @@ Highlighting follows the same literal matching rule, and sorting File orders
 by the displayed filename. The API keeps the `FILEPATH` parameter name for
 compatibility, but its search/sort semantics now match the File column.
 
+Numeric columns (`NUM`, `YEAR`, `LENGTH`, `FILESIZE`, `RATING`) accept a
+range grammar in addition to an exact value:
+
+| Value | Meaning |
+| --- | --- |
+| `2005` | Exact match |
+| `2000-2009` | Inclusive range (bounds are swapped if inverted) |
+| `150+` | At least 150 |
+| `<90` | Below 90 (exclusive) |
+
+For `RATING`, `LENGTH`, and `FILESIZE`, zero means "unknown" (as in the
+analytics), so the range/comparison forms skip zero values; exact matches
+do not. A numeric `RATING` value now matches exactly (like the other
+numeric columns), bringing rating filtering in line with `YEAR`;
+non-numeric `RATING` input keeps the legacy contains-matching.
+
+`DIRECTOR`, `ACTORS`, and `COUNTRY` are **filter-only** API columns: they
+can filter results (used by the analytics drill-down) but have no table
+header, so they are not sortable and appear only as removable filter pills.
+
+## Analytics drill-down: click a chart to filter the table
+
+Every analytics chart slice in the Analytics panel is clickable and applies
+the matching filter to the main movie table — the same idea as the Metadata
+Completeness rows, but targeting the table instead of a dialog:
+
+| Analytics slice | Applied filter |
+| --- | --- |
+| Decade Distribution row | `YEAR` decade range, e.g. `2000-2009` |
+| Collection Timeline year | exact `YEAR` |
+| Genre bar / donut legend item | `CATEGORY` contains the genre |
+| Rating / Runtime / File-Size band | `RATING`, `LENGTH`, or `FILESIZE` range |
+| Certification row | `CERTIFICATION` |
+| Director / Actor row | `DIRECTOR` / `ACTORS` (filter-only columns) |
+| Language / Country row | `LANGUAGES` / `COUNTRY` |
+| Resolution / Audio row | `RESOLUTION` / `AUDIOFORMAT` |
+| Top-item insight cards (Top Director, Peak Year, ...) | same mapping as their chart |
+| Largest Movie card | jumps to that row in the table |
+
+Clicking a slice closes the drawer, resets to page one, and reloads the
+table with the filter applied. The result behaves exactly like a typed
+toolbar filter: the column input (when the column has one) shows the value,
+a removable pill appears for filter-only columns such as Director, and the
+Clear Filters chip clears it. Drill-downs switch the filter mode to **AND**
+so the clicked slice is always satisfied alongside any other active
+filters; reopen Analytics to stack more slices. Metadata Completeness and
+Library Health keep their existing "open the list of movies" dialogs.
+
+Band boundaries in the table filter match the analytics banding exactly
+(ratings are one decimal, runtimes whole minutes, file sizes the stored MiB
+value), so the filtered row count equals the bar's count.
+
 A File search for `missing` still legitimately includes both the `MISSING`
 marker and a filename such as `Missing.Pieces.mkv`. To list **only records marked
 as unavailable**, use **Analytics → Library Health → Missing Files**. If other
