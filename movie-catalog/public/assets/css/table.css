@@ -918,13 +918,22 @@ input:focus-visible {
     table-layout: auto;
 }
 
-#movies th,
 #movies td {
     min-width: 0;
     white-space: normal;
     overflow-wrap: anywhere;
     word-break: normal;
     vertical-align: top;
+}
+
+#movies thead th {
+    white-space: nowrap;
+    overflow: visible;
+}
+
+#movies th,
+#movies td {
+    min-width: 0;
 }
 
 #movies th:not(.hidden-col),

@@ -24,6 +24,7 @@ import {
   isStatsLoaded,
   setMovieLoader
 } from './stats/stats.js';
+import { initSidebar } from './table/sidebar.js';
 import {
   FILTER_COLUMN_LABELS
 } from './stats/stats-table-filters.js';
@@ -543,8 +544,12 @@ function scheduleIdleStatsPreload() {
     );
 
   if (searchModeBtn) {
-    searchModeBtn.textContent =
-      state.searchMode;
+    const textSpan = searchModeBtn.querySelector('.search-mode-text');
+    if (textSpan) {
+      textSpan.textContent = state.searchMode;
+    } else {
+      searchModeBtn.textContent = state.searchMode;
+    }
 
     searchModeBtn.onclick = () => {
       state.searchMode =
@@ -552,8 +557,11 @@ function scheduleIdleStatsPreload() {
           ? 'OR'
           : 'AND';
 
-      searchModeBtn.textContent =
-        state.searchMode;
+      if (textSpan) {
+        textSpan.textContent = state.searchMode;
+      } else {
+        searchModeBtn.textContent = state.searchMode;
+      }
 
       searchModeBtn.classList.toggle(
         'or',
@@ -570,6 +578,41 @@ function scheduleIdleStatsPreload() {
     document.getElementById(
       'title-search-mode'
     );
+  const titleSearchModeBtn =
+    document.getElementById(
+      'title-search-mode-btn'
+    );
+  const titleSearchModeBadge =
+    document.getElementById(
+      'title-search-mode-badge'
+    );
+
+  const syncTitleSearchModeUI = (mode) => {
+    const badges = {
+      EXACT: 'EX',
+      CONTAINS: 'CT',
+      FUZZY: 'FZ'
+    };
+    const labels = {
+      EXACT: 'Exact',
+      CONTAINS: 'Contains',
+      FUZZY: 'Fuzzy'
+    };
+    const label = labels[mode] || mode;
+    const badge = badges[mode] || mode.slice(0, 2);
+
+    if (titleSearchMode && titleSearchMode.value !== mode) {
+      titleSearchMode.value = mode;
+    }
+    if (titleSearchModeBadge) {
+      titleSearchModeBadge.textContent = badge;
+    }
+    if (titleSearchModeBtn) {
+      const tooltip = `Title search mode: ${label} (click to cycle: Exact, Contains, Fuzzy)`;
+      titleSearchModeBtn.title = tooltip;
+      titleSearchModeBtn.setAttribute('aria-label', tooltip);
+    }
+  };
 
   if (titleSearchMode) {
     titleSearchMode.value =
@@ -578,6 +621,8 @@ function scheduleIdleStatsPreload() {
       )
         ? state.titleSearchMode
         : 'CONTAINS';
+
+    syncTitleSearchModeUI(titleSearchMode.value);
 
     titleSearchMode.onchange = () => {
       if (
@@ -590,6 +635,28 @@ function scheduleIdleStatsPreload() {
 
       state.titleSearchMode =
         titleSearchMode.value;
+      syncTitleSearchModeUI(state.titleSearchMode);
+
+      state.page = 1;
+      loadMovies();
+    };
+  }
+
+  if (titleSearchModeBtn) {
+    titleSearchModeBtn.onclick = () => {
+      const current =
+        TITLE_SEARCH_MODES.includes(state.titleSearchMode)
+          ? state.titleSearchMode
+          : 'CONTAINS';
+      const currentIndex = TITLE_SEARCH_MODES.indexOf(current);
+      const nextIndex =
+        currentIndex >= 0
+          ? (currentIndex + 1) % TITLE_SEARCH_MODES.length
+          : 0;
+      const nextMode = TITLE_SEARCH_MODES[nextIndex];
+
+      state.titleSearchMode = nextMode;
+      syncTitleSearchModeUI(nextMode);
 
       state.page = 1;
       loadMovies();
@@ -621,9 +688,10 @@ function scheduleIdleStatsPreload() {
           'theme-dark'
         );
 
+      const labelSpan = '<span class="sidebar-label">Theme</span>';
       themeToggle.innerHTML = dark
-        ? '<i class="fa-solid fa-sun" aria-hidden="true"></i>'
-        : '<i class="fa-solid fa-moon" aria-hidden="true"></i>';
+        ? `<i class="fa-solid fa-sun" aria-hidden="true"></i>${labelSpan}`
+        : `<i class="fa-solid fa-moon" aria-hidden="true"></i>${labelSpan}`;
 
       themeToggle.setAttribute(
         'aria-pressed',
@@ -683,6 +751,9 @@ function scheduleIdleStatsPreload() {
 
   // 2.7️⃣ Mini-poster toggle (thumbnails inside the Title cell): initialised
   // up in step 1️⃣, because the bulk Hide All / Show All button drives it too.
+
+  // 2.8️⃣ Adaptable Left Sidebar & edge toggle
+  initSidebar(document, globalThis.localStorage);
 
   /* ==============================
      Keyboard shortcuts
