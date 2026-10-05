@@ -59,6 +59,16 @@
                         <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                     </button>
                 </div>
+
+                <button
+                    type="button"
+                    id="sidebar-header-expand-btn"
+                    class="sidebar-header-expand-btn"
+                    title="Expand sidebar"
+                    aria-label="Expand sidebar"
+                >
+                    <i class="fa-solid fa-angles-right" aria-hidden="true"></i>
+                </button>
             </div>
 
             <!-- Scrollable container for control tool groups -->
@@ -76,7 +86,7 @@
                                 aria-label="Table view"
                                 title="Table view"
                             >
-                                <i class="fa-solid fa-table-list" aria-hidden="true"></i>
+                                <i class="fa-solid fa-table" aria-hidden="true"></i>
                                 <span class="sidebar-label">Table</span>
                             </button>
 
@@ -87,7 +97,7 @@
                                 aria-label="Grid view"
                                 title="Grid view"
                             >
-                                <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i>
+                                <i class="fa-solid fa-border-all" aria-hidden="true"></i>
                                 <span class="sidebar-label">Grid</span>
                             </button>
                         </div>
@@ -120,6 +130,17 @@
                                     </option>
                                 </select>
                             </label>
+
+                            <button
+                                type="button"
+                                id="title-search-mode-btn"
+                                class="title-search-mode-btn"
+                                title="Title search mode: Contains (click to cycle: Exact, Contains, Fuzzy)"
+                                aria-label="Title search mode: Contains. Click to cycle"
+                            >
+                                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                                <span class="title-search-mode-badge" id="title-search-mode-badge">CT</span>
+                            </button>
                         </div>
 
                         <div class="tool-group">

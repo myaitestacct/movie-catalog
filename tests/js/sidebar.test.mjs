@@ -213,3 +213,30 @@ test('handle.setMode directly sets mode and notifies listeners', () => {
   assert.equal(storage.getItem(SIDEBAR_STORAGE_KEY), 'hidden');
   assert.equal(notifiedMode, 'hidden');
 });
+
+test('sidebar-header-expand-btn expands sidebar to full mode', () => {
+  const root = {
+    documentElement: new MockElement('html'),
+    getElementById(id) {
+      if (id === 'app-sidebar') return sidebarEl;
+      if (id === 'sidebar-edge-toggle') return toggleEl;
+      if (id === 'sidebar-header-expand-btn') return expandBtn;
+      return null;
+    },
+    querySelectorAll() {
+      return [];
+    }
+  };
+  const sidebarEl = new MockElement('aside');
+  const toggleEl = new MockElement('button');
+  const expandBtn = new MockElement('button');
+  const storage = new MockStorage({ [SIDEBAR_STORAGE_KEY]: 'partial' });
+
+  const handle = initSidebar(root, storage);
+  assert.equal(handle.getMode(), SIDEBAR_MODES.PARTIAL);
+
+  expandBtn.click();
+  assert.equal(handle.getMode(), SIDEBAR_MODES.FULL);
+  assert.equal(storage.getItem(SIDEBAR_STORAGE_KEY), 'full');
+  assert.equal(root.documentElement.classList.contains('sidebar-mode-full'), true);
+});

@@ -154,6 +154,68 @@
     flex-shrink: 0;
 }
 
+/* Sidebar Header Expand Button (Only shown in partial mode) */
+.sidebar-header-expand-btn {
+    display: none;
+    width: 36px;
+    height: 32px;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.sidebar-header-expand-btn:hover {
+    background: var(--button-hover);
+    color: var(--primary);
+    border-color: var(--primary-soft);
+}
+
+.sidebar-header-expand-btn i {
+    font-size: 13px;
+}
+
+/* Title search mode cycle button */
+.title-search-mode-btn {
+    display: none;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 4px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--button-text);
+    cursor: pointer;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.title-search-mode-btn:hover {
+    background: var(--button-hover);
+}
+
+.title-search-mode-btn i {
+    font-size: 12px;
+}
+
+.title-search-mode-badge {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 1px 3px;
+    border-radius: 3px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    line-height: 1;
+}
+
 /* Mode Switcher Buttons (Full, Partial, Hidden) */
 .sidebar-mode-selector {
     display: inline-flex;
@@ -347,6 +409,11 @@
     padding: 10px 0;
 }
 
+.app-sidebar.sidebar-partial .sidebar-header-expand-btn,
+.app-sidebar.sidebar-mode-partial .sidebar-header-expand-btn {
+    display: inline-flex !important;
+}
+
 .app-sidebar.sidebar-partial .sidebar-label,
 .app-sidebar.sidebar-mode-partial .sidebar-label,
 .app-sidebar.sidebar-partial .sidebar-header-title,
@@ -427,26 +494,37 @@
 
 .app-sidebar.sidebar-partial .title-search-mode,
 .app-sidebar.sidebar-mode-partial .title-search-mode {
+    display: none !important;
+}
+
+.app-sidebar.sidebar-partial .title-search-mode-btn,
+.app-sidebar.sidebar-mode-partial .title-search-mode-btn {
     width: 36px;
     height: 32px;
     padding: 0;
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
     margin: 0 auto;
+    position: relative;
 }
 
-.app-sidebar.sidebar-partial .title-search-mode i,
-.app-sidebar.sidebar-mode-partial .title-search-mode i {
+.app-sidebar.sidebar-partial .title-search-mode-btn i,
+.app-sidebar.sidebar-mode-partial .title-search-mode-btn i {
     width: auto;
     margin: 0;
     font-size: 13px;
     text-align: center;
 }
 
-.app-sidebar.sidebar-partial .title-search-mode select,
-.app-sidebar.sidebar-mode-partial .title-search-mode select {
-    display: none;
+.app-sidebar.sidebar-partial .title-search-mode-btn .title-search-mode-badge,
+.app-sidebar.sidebar-mode-partial .title-search-mode-btn .title-search-mode-badge {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    font-size: 8px;
+    padding: 1px 2px;
+    line-height: 1;
 }
 
 .app-sidebar.sidebar-partial .search-mode,

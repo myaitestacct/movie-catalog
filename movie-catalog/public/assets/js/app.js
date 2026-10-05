@@ -578,6 +578,41 @@ function scheduleIdleStatsPreload() {
     document.getElementById(
       'title-search-mode'
     );
+  const titleSearchModeBtn =
+    document.getElementById(
+      'title-search-mode-btn'
+    );
+  const titleSearchModeBadge =
+    document.getElementById(
+      'title-search-mode-badge'
+    );
+
+  const syncTitleSearchModeUI = (mode) => {
+    const badges = {
+      EXACT: 'EX',
+      CONTAINS: 'CT',
+      FUZZY: 'FZ'
+    };
+    const labels = {
+      EXACT: 'Exact',
+      CONTAINS: 'Contains',
+      FUZZY: 'Fuzzy'
+    };
+    const label = labels[mode] || mode;
+    const badge = badges[mode] || mode.slice(0, 2);
+
+    if (titleSearchMode && titleSearchMode.value !== mode) {
+      titleSearchMode.value = mode;
+    }
+    if (titleSearchModeBadge) {
+      titleSearchModeBadge.textContent = badge;
+    }
+    if (titleSearchModeBtn) {
+      const tooltip = `Title search mode: ${label} (click to cycle: Exact, Contains, Fuzzy)`;
+      titleSearchModeBtn.title = tooltip;
+      titleSearchModeBtn.setAttribute('aria-label', tooltip);
+    }
+  };
 
   if (titleSearchMode) {
     titleSearchMode.value =
@@ -586,6 +621,8 @@ function scheduleIdleStatsPreload() {
       )
         ? state.titleSearchMode
         : 'CONTAINS';
+
+    syncTitleSearchModeUI(titleSearchMode.value);
 
     titleSearchMode.onchange = () => {
       if (
@@ -598,6 +635,28 @@ function scheduleIdleStatsPreload() {
 
       state.titleSearchMode =
         titleSearchMode.value;
+      syncTitleSearchModeUI(state.titleSearchMode);
+
+      state.page = 1;
+      loadMovies();
+    };
+  }
+
+  if (titleSearchModeBtn) {
+    titleSearchModeBtn.onclick = () => {
+      const current =
+        TITLE_SEARCH_MODES.includes(state.titleSearchMode)
+          ? state.titleSearchMode
+          : 'CONTAINS';
+      const currentIndex = TITLE_SEARCH_MODES.indexOf(current);
+      const nextIndex =
+        currentIndex >= 0
+          ? (currentIndex + 1) % TITLE_SEARCH_MODES.length
+          : 0;
+      const nextMode = TITLE_SEARCH_MODES[nextIndex];
+
+      state.titleSearchMode = nextMode;
+      syncTitleSearchModeUI(nextMode);
 
       state.page = 1;
       loadMovies();

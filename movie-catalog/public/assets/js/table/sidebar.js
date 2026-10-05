@@ -57,6 +57,7 @@ export function initSidebar(
 ) {
   const sidebar = root?.getElementById?.('app-sidebar');
   const edgeToggle = root?.getElementById?.('sidebar-edge-toggle');
+  const headerExpandBtn = root?.getElementById?.('sidebar-header-expand-btn');
   const modeButtons = root?.querySelectorAll?.('[data-sidebar-mode]') || [];
   const html = root?.documentElement ?? null;
 
@@ -140,6 +141,13 @@ export function initSidebar(
     edgeToggle.addEventListener('click', (e) => {
       e.preventDefault();
       cycleNextMode();
+    });
+  }
+
+  if (headerExpandBtn) {
+    headerExpandBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      applyMode(SIDEBAR_MODES.FULL);
     });
   }
 
