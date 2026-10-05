@@ -544,8 +544,12 @@ function scheduleIdleStatsPreload() {
     );
 
   if (searchModeBtn) {
-    searchModeBtn.textContent =
-      state.searchMode;
+    const textSpan = searchModeBtn.querySelector('.search-mode-text');
+    if (textSpan) {
+      textSpan.textContent = state.searchMode;
+    } else {
+      searchModeBtn.textContent = state.searchMode;
+    }
 
     searchModeBtn.onclick = () => {
       state.searchMode =
@@ -553,8 +557,11 @@ function scheduleIdleStatsPreload() {
           ? 'OR'
           : 'AND';
 
-      searchModeBtn.textContent =
-        state.searchMode;
+      if (textSpan) {
+        textSpan.textContent = state.searchMode;
+      } else {
+        searchModeBtn.textContent = state.searchMode;
+      }
 
       searchModeBtn.classList.toggle(
         'or',
@@ -622,9 +629,10 @@ function scheduleIdleStatsPreload() {
           'theme-dark'
         );
 
+      const labelSpan = '<span class="sidebar-label">Theme</span>';
       themeToggle.innerHTML = dark
-        ? '<i class="fa-solid fa-sun" aria-hidden="true"></i>'
-        : '<i class="fa-solid fa-moon" aria-hidden="true"></i>';
+        ? `<i class="fa-solid fa-sun" aria-hidden="true"></i>${labelSpan}`
+        : `<i class="fa-solid fa-moon" aria-hidden="true"></i>${labelSpan}`;
 
       themeToggle.setAttribute(
         'aria-pressed',

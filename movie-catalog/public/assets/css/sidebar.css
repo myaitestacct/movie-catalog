@@ -66,14 +66,17 @@
 
 /* Default state: full */
 .app-sidebar,
+.app-sidebar.sidebar-full,
 .app-sidebar.sidebar-mode-full {
     width: var(--sidebar-width-full);
 }
 
+.app-sidebar.sidebar-partial,
 .app-sidebar.sidebar-mode-partial {
     width: var(--sidebar-width-partial);
 }
 
+.app-sidebar.sidebar-hidden,
 .app-sidebar.sidebar-mode-hidden {
     width: var(--sidebar-width-hidden);
     border-right-color: transparent;
@@ -91,11 +94,13 @@
     transition: opacity 0.15s ease;
 }
 
+.app-sidebar.sidebar-partial .sidebar-inner,
 .app-sidebar.sidebar-mode-partial .sidebar-inner {
     width: var(--sidebar-width-partial);
     min-width: var(--sidebar-width-partial);
 }
 
+.app-sidebar.sidebar-hidden .sidebar-inner,
 .app-sidebar.sidebar-mode-hidden .sidebar-inner {
     opacity: 0;
     visibility: hidden;
@@ -320,43 +325,53 @@
 /* ============================================================
    Partial Mode (Icons Only, collapsed to 56px)
    ============================================================ */
+.app-sidebar.sidebar-partial .sidebar-header,
 .app-sidebar.sidebar-mode-partial .sidebar-header {
     justify-content: center;
     padding: 10px 6px;
 }
 
+.app-sidebar.sidebar-partial .sidebar-label,
 .app-sidebar.sidebar-mode-partial .sidebar-label,
+.app-sidebar.sidebar-partial .sidebar-header-title,
 .app-sidebar.sidebar-mode-partial .sidebar-header-title,
+.app-sidebar.sidebar-partial .sidebar-mode-selector,
 .app-sidebar.sidebar-mode-partial .sidebar-mode-selector {
     display: none !important;
 }
 
+.app-sidebar.sidebar-partial .sidebar-content,
 .app-sidebar.sidebar-mode-partial .sidebar-content {
     padding: 8px 6px 72px;
     align-items: center;
 }
 
+.app-sidebar.sidebar-partial .sidebar-section,
 .app-sidebar.sidebar-mode-partial .sidebar-section {
     align-items: center;
 }
 
+.app-sidebar.sidebar-partial .tool-group,
 .app-sidebar.sidebar-mode-partial .tool-group {
     align-items: center;
     padding: 4px 2px;
 }
 
+.app-sidebar.sidebar-partial .view-toggle,
 .app-sidebar.sidebar-mode-partial .view-toggle {
     flex-direction: column;
     align-items: center;
     gap: 4px;
 }
 
+.app-sidebar.sidebar-partial .view-toggle button,
 .app-sidebar.sidebar-mode-partial .view-toggle button {
     width: 38px;
     height: 32px;
     padding: 0;
 }
 
+.app-sidebar.sidebar-partial .column-toggles button,
 .app-sidebar.sidebar-mode-partial .column-toggles button {
     width: 38px;
     height: 32px;
@@ -364,21 +379,25 @@
     justify-content: center;
 }
 
+.app-sidebar.sidebar-partial .title-search-mode,
 .app-sidebar.sidebar-mode-partial .title-search-mode {
     justify-content: center;
     padding: 6px 0;
 }
 
+.app-sidebar.sidebar-partial .title-search-mode select,
 .app-sidebar.sidebar-mode-partial .title-search-mode select {
     display: none;
 }
 
+.app-sidebar.sidebar-partial .search-mode,
 .app-sidebar.sidebar-mode-partial .search-mode {
     width: 38px;
     height: 32px;
     padding: 0;
 }
 
+.app-sidebar.sidebar-partial #theme-toggle,
 .app-sidebar.sidebar-mode-partial #theme-toggle {
     width: 38px;
     height: 32px;
@@ -409,7 +428,7 @@
     color: var(--text-muted);
     cursor: pointer;
     z-index: 30;
-    pointer-events: auto;
+    pointer-events: auto !important;
     transition:
         background-color 0.15s ease,
         color 0.15s ease,
@@ -433,11 +452,13 @@
 }
 
 /* Edge toggle icon flips when hidden */
+.app-sidebar.sidebar-hidden .sidebar-edge-toggle,
 .app-sidebar.sidebar-mode-hidden .sidebar-edge-toggle {
     right: -24px;
     border-left: 1px solid var(--border-light);
 }
 
+.app-sidebar.sidebar-hidden .sidebar-edge-toggle i,
 .app-sidebar.sidebar-mode-hidden .sidebar-edge-toggle i {
     transform: rotate(180deg);
 }

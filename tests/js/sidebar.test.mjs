@@ -63,8 +63,9 @@ class MockElement {
   }
 
   click() {
-    this.onclick?.();
-    (this.listeners.get('click') || []).forEach(fn => fn());
+    const event = { preventDefault() {} };
+    this.onclick?.(event);
+    (this.listeners.get('click') || []).forEach(fn => fn(event));
   }
 
   appendChild(child) {

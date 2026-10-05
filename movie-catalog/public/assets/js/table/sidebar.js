@@ -78,9 +78,16 @@ export function initSidebar(
     }
 
     if (sidebar) {
-      sidebar.classList.toggle('sidebar-full', mode === SIDEBAR_MODES.FULL);
-      sidebar.classList.toggle('sidebar-partial', mode === SIDEBAR_MODES.PARTIAL);
-      sidebar.classList.toggle('sidebar-hidden', mode === SIDEBAR_MODES.HIDDEN);
+      sidebar.classList.remove(
+        'sidebar-full',
+        'sidebar-partial',
+        'sidebar-hidden',
+        'sidebar-mode-full',
+        'sidebar-mode-partial',
+        'sidebar-mode-hidden'
+      );
+      sidebar.classList.add(`sidebar-${mode}`);
+      sidebar.classList.add(`sidebar-mode-${mode}`);
       sidebar.setAttribute('aria-hidden', String(mode === SIDEBAR_MODES.HIDDEN));
     }
 
@@ -130,14 +137,18 @@ export function initSidebar(
   }
 
   if (edgeToggle) {
-    edgeToggle.onclick = () => cycleNextMode();
+    edgeToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      cycleNextMode();
+    });
   }
 
   modeButtons.forEach(btn => {
-    btn.onclick = () => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
       const targetMode = btn.dataset.sidebarMode;
       if (targetMode) applyMode(targetMode);
-    };
+    });
   });
 
   // Apply initial mode
