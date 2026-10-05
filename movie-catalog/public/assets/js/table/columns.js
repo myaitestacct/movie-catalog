@@ -87,13 +87,13 @@ export function initColumnToggles(table, toggleContainer, posterToggle = null) {
         toggleAllButton.innerHTML = '<i class="fa-solid fa-eye" aria-hidden="true"></i><span class="sidebar-label">Hide All</span>';
 
         // Keep the theme toggle as the right-most toolbar control:
-        // insert "Hide All" before it when present.
+        // insert "Hide All" before it when present and a direct child.
         const anchorButton = toggleContainer.querySelector(
             '#theme-toggle, #stats-toggle'
         );
 
-        if (anchorButton) {
-            toggleContainer.insertBefore(toggleAllButton, anchorButton);
+        if (anchorButton && anchorButton.parentNode) {
+            anchorButton.parentNode.insertBefore(toggleAllButton, anchorButton);
         } else {
             toggleContainer.appendChild(toggleAllButton);
         }
