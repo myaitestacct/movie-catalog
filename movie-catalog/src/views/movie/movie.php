@@ -263,6 +263,7 @@
     <main class="main-viewport">
         <!-- Top legend & Analytics bar (retained at the top with reclaimed height) -->
         <header class="table-legend-bar" aria-label="Library Status and Analytics">
+            <!-- First row: Status legend chips, keyboard shortcuts, library summary, and Analytics toggle -->
             <div class="table-legend">
                 <span class="legend-chip">
                     <span
@@ -285,17 +286,6 @@
                     <kbd>&uarr;</kbd><kbd>&darr;</kbd> browse &middot;
                     <kbd>Enter</kbd> open
                 </span>
-
-                <!-- Active filter pills and clear-filters controls placed next to legend chips -->
-                <div
-                    id="filter-pills"
-                    aria-live="polite"
-                ></div>
-
-                <div
-                    id="search-group-info"
-                    class="search-group-info hidden"
-                ></div>
 
                 <span
                     class="app-summary"
@@ -330,6 +320,19 @@
                     <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
                     <span class="stats-ribbon-label">Analytics</span>
                 </button>
+            </div>
+
+            <!-- Second row: Search details (active filter pills, clear controls, match counts) -->
+            <div class="search-details-bar" aria-label="Active search and filter details">
+                <div
+                    id="filter-pills"
+                    aria-live="polite"
+                ></div>
+
+                <div
+                    id="search-group-info"
+                    class="search-group-info hidden"
+                ></div>
             </div>
         </header>
 
