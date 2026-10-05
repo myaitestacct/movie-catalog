@@ -254,16 +254,6 @@
                             </button>
                         </div>
                     </div>
-
-                    <div
-                        id="filter-pills"
-                        aria-live="polite"
-                    ></div>
-
-                    <div
-                        id="search-group-info"
-                        class="search-group-info hidden"
-                    ></div>
                 </div>
             </div>
         </div>
@@ -295,6 +285,17 @@
                     <kbd>&uarr;</kbd><kbd>&darr;</kbd> browse &middot;
                     <kbd>Enter</kbd> open
                 </span>
+
+                <!-- Active filter pills and clear-filters controls placed next to legend chips -->
+                <div
+                    id="filter-pills"
+                    aria-live="polite"
+                ></div>
+
+                <div
+                    id="search-group-info"
+                    class="search-group-info hidden"
+                ></div>
 
                 <span
                     class="app-summary"
