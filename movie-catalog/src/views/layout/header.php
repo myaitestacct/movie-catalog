@@ -12,7 +12,7 @@
     // Source stylesheets get the same mtime cache key as the bundle. Without
     // it a browser can pair freshly rendered view markup with a stale cached
     // stylesheet — e.g. a toolbar control whose CSS rule it has never seen.
-    $sourceCss = ['variables', 'base', 'table', 'pagination', 'modal', 'responsive', 'stats'];
+    $sourceCss = ['variables', 'base', 'sidebar', 'table', 'pagination', 'modal', 'responsive', 'stats'];
     if ($hasBundleCss):
     ?>
     <link rel="stylesheet" href="assets/dist/bundle.css?v=<?= filemtime($bundleCss) ?>">

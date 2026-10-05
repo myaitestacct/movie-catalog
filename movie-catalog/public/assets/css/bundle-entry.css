@@ -1,6 +1,7 @@
 /* Bundled entry – order matters: variables first, then base, then components */
 @import "./variables.css";
 @import "./base.css";
+@import "./sidebar.css";
 @import "./table.css";
 @import "./pagination.css";
 @import "./modal.css";

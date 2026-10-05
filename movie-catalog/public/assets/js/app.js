@@ -24,6 +24,7 @@ import {
   isStatsLoaded,
   setMovieLoader
 } from './stats/stats.js';
+import { initSidebar } from './table/sidebar.js';
 import {
   FILTER_COLUMN_LABELS
 } from './stats/stats-table-filters.js';
@@ -683,6 +684,9 @@ function scheduleIdleStatsPreload() {
 
   // 2.7️⃣ Mini-poster toggle (thumbnails inside the Title cell): initialised
   // up in step 1️⃣, because the bulk Hide All / Show All button drives it too.
+
+  // 2.8️⃣ Adaptable Left Sidebar & edge toggle
+  initSidebar(document, globalThis.localStorage);
 
   /* ==============================
      Keyboard shortcuts

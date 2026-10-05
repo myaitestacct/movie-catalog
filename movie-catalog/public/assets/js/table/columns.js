@@ -84,6 +84,7 @@ export function initColumnToggles(table, toggleContainer, posterToggle = null) {
     if (!existingToggleAllButton) {
         toggleAllButton.type = 'button';
         toggleAllButton.className = 'toggle-all-columns';
+        toggleAllButton.innerHTML = '<i class="fa-solid fa-eye" aria-hidden="true"></i><span class="sidebar-label">Hide All</span>';
 
         // Keep the theme toggle as the right-most toolbar control:
         // insert "Hide All" before it when present.
@@ -167,10 +168,22 @@ export function initColumnToggles(table, toggleContainer, posterToggle = null) {
 
     function updateToggleAllButton() {
         const anyVisible = anythingVisible();
+        const text = anyVisible ? 'Hide All' : 'Show All';
+        const iconClass = anyVisible ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
 
-        toggleAllButton.textContent = anyVisible
-            ? 'Hide All'
-            : 'Show All';
+        const labelSpan = toggleAllButton.querySelector('.sidebar-label');
+        const iconEl = toggleAllButton.querySelector('i');
+
+        if (labelSpan && iconEl) {
+            labelSpan.textContent = text;
+            iconEl.className = iconClass;
+        } else {
+            toggleAllButton.textContent = text;
+        }
+
+        toggleAllButton.title = anyVisible
+            ? 'Hide all optional columns and poster thumbnails'
+            : 'Show all optional columns and poster thumbnails';
         toggleAllButton.setAttribute(
             'aria-label',
             anyVisible

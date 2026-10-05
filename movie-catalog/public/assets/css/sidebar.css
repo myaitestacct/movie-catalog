@@ -1,0 +1,454 @@
+/* ============================================================
+   Sidebar & App Layout Styles
+   Three display modes:
+     - Full (icons + text labels, width ~220px)
+     - Partial (icons only, width ~56px)
+     - Hidden (completely collapsed, width 0px, edge toggle available)
+   ============================================================ */
+
+:root {
+    --sidebar-width-full: 230px;
+    --sidebar-width-partial: 56px;
+    --sidebar-width-hidden: 0px;
+    --sidebar-transition-duration: 0.22s;
+    --sidebar-transition-easing: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* App layout wrapper holds sidebar + main viewport side-by-side */
+.app-layout {
+    display: flex;
+    flex-direction: row;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Main Viewport contains the legend bar, table/grid content area, and pagination */
+.main-viewport {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Top table legend bar */
+.table-legend-bar {
+    flex: 0 0 auto;
+    padding: 10px 18px 0;
+}
+
+/* ============================================================
+   Sidebar Component
+   ============================================================ */
+.app-sidebar {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    height: 100%;
+    background: var(--surface-2);
+    border-right: 1px solid var(--border-light);
+    box-shadow: 1px 0 3px rgba(0, 0, 0, 0.03);
+    z-index: 20;
+    box-sizing: border-box;
+    transition:
+        width var(--sidebar-transition-duration) var(--sidebar-transition-easing),
+        transform var(--sidebar-transition-duration) var(--sidebar-transition-easing),
+        opacity var(--sidebar-transition-duration) var(--sidebar-transition-easing);
+}
+
+/* Default state: full */
+.app-sidebar,
+.app-sidebar.sidebar-mode-full {
+    width: var(--sidebar-width-full);
+}
+
+.app-sidebar.sidebar-mode-partial {
+    width: var(--sidebar-width-partial);
+}
+
+.app-sidebar.sidebar-mode-hidden {
+    width: var(--sidebar-width-hidden);
+    border-right-color: transparent;
+    pointer-events: none;
+}
+
+.sidebar-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: var(--sidebar-width-full);
+    min-width: var(--sidebar-width-full);
+    overflow: hidden;
+    box-sizing: border-box;
+    transition: opacity 0.15s ease;
+}
+
+.app-sidebar.sidebar-mode-partial .sidebar-inner {
+    width: var(--sidebar-width-partial);
+    min-width: var(--sidebar-width-partial);
+}
+
+.app-sidebar.sidebar-mode-hidden .sidebar-inner {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* Sidebar Header */
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border-light);
+    background: var(--surface-2);
+    flex-shrink: 0;
+    gap: 8px;
+    min-height: 48px;
+    box-sizing: border-box;
+}
+
+.sidebar-header-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-color);
+    letter-spacing: var(--tracking-tight);
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar-header-title i {
+    color: var(--primary);
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+/* Mode Switcher Buttons (Full, Partial, Hidden) */
+.sidebar-mode-selector {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--table-bg);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 2px;
+}
+
+.sidebar-mode-selector .mode-btn {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 11px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-mode-selector .mode-btn:hover {
+    color: var(--text-color);
+    background: var(--button-hover);
+}
+
+.sidebar-mode-selector .mode-btn.active {
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-weight: 700;
+}
+
+/* Sidebar Scrollable Body */
+.sidebar-content {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px 10px 72px; /* Bottom padding so bottom items aren't occluded */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Sections inside sidebar */
+.sidebar-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.sidebar-section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0 4px;
+    user-select: none;
+}
+
+/* Adapt column-toggles container inside sidebar */
+.app-sidebar .column-toggles {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+    width: 100%;
+}
+
+/* Adapt tool-groups inside sidebar */
+.app-sidebar .tool-group {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    padding: 4px;
+    gap: 4px;
+    box-sizing: border-box;
+    background: var(--table-bg);
+}
+
+/* View toggle group */
+.app-sidebar .view-toggle {
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 2px;
+    background: var(--table-bg);
+}
+
+.app-sidebar .view-toggle button {
+    flex: 1 1 50%;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Column toggle buttons & chip items inside sidebar */
+.app-sidebar .column-toggles button {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    box-sizing: border-box;
+    text-align: left;
+}
+
+.app-sidebar .column-toggles button i {
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Search mode & title select */
+.app-sidebar .title-search-mode {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 5px 8px;
+    font-size: 12px;
+    box-sizing: border-box;
+}
+
+.app-sidebar .title-search-mode select {
+    flex: 1 1 auto;
+    max-width: 100px;
+    margin-left: 6px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    padding: 3px 4px;
+    font-size: 11.5px;
+    color: var(--text-color);
+}
+
+.app-sidebar .search-mode {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 8px;
+    font-size: 12px;
+    box-sizing: border-box;
+}
+
+.app-sidebar .display-options-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.app-sidebar #theme-toggle {
+    width: 100%;
+    height: auto;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    background: transparent;
+    font-size: 12px;
+    color: var(--button-text);
+}
+
+.app-sidebar #theme-toggle:hover {
+    background: var(--button-hover);
+}
+
+/* ============================================================
+   Partial Mode (Icons Only, collapsed to 56px)
+   ============================================================ */
+.app-sidebar.sidebar-mode-partial .sidebar-header {
+    justify-content: center;
+    padding: 10px 6px;
+}
+
+.app-sidebar.sidebar-mode-partial .sidebar-label,
+.app-sidebar.sidebar-mode-partial .sidebar-header-title,
+.app-sidebar.sidebar-mode-partial .sidebar-mode-selector {
+    display: none !important;
+}
+
+.app-sidebar.sidebar-mode-partial .sidebar-content {
+    padding: 8px 6px 72px;
+    align-items: center;
+}
+
+.app-sidebar.sidebar-mode-partial .sidebar-section {
+    align-items: center;
+}
+
+.app-sidebar.sidebar-mode-partial .tool-group {
+    align-items: center;
+    padding: 4px 2px;
+}
+
+.app-sidebar.sidebar-mode-partial .view-toggle {
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.app-sidebar.sidebar-mode-partial .view-toggle button {
+    width: 38px;
+    height: 32px;
+    padding: 0;
+}
+
+.app-sidebar.sidebar-mode-partial .column-toggles button {
+    width: 38px;
+    height: 32px;
+    padding: 0;
+    justify-content: center;
+}
+
+.app-sidebar.sidebar-mode-partial .title-search-mode {
+    justify-content: center;
+    padding: 6px 0;
+}
+
+.app-sidebar.sidebar-mode-partial .title-search-mode select {
+    display: none;
+}
+
+.app-sidebar.sidebar-mode-partial .search-mode {
+    width: 38px;
+    height: 32px;
+    padding: 0;
+}
+
+.app-sidebar.sidebar-mode-partial #theme-toggle {
+    width: 38px;
+    height: 32px;
+    padding: 0;
+    justify-content: center;
+}
+
+/* ============================================================
+   Floating Edge Toggle Button
+   Anchored right at the boundary of the sidebar and main viewport.
+   When hidden, it rests cleanly at the left edge of the screen.
+   ============================================================ */
+.sidebar-edge-toggle {
+    position: absolute;
+    top: 50%;
+    right: -14px;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 48px;
+    border-radius: 0 8px 8px 0;
+    background: var(--table-bg);
+    border: 1px solid var(--border-light);
+    border-left: none;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    cursor: pointer;
+    z-index: 30;
+    pointer-events: auto;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease,
+        right var(--sidebar-transition-duration) var(--sidebar-transition-easing),
+        transform 0.15s ease;
+}
+
+.sidebar-edge-toggle:hover {
+    background: var(--surface-3);
+    color: var(--primary);
+}
+
+.sidebar-edge-toggle:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.sidebar-edge-toggle i {
+    font-size: 11px;
+    transition: transform 0.2s ease;
+}
+
+/* Edge toggle icon flips when hidden */
+.app-sidebar.sidebar-mode-hidden .sidebar-edge-toggle {
+    right: -24px;
+    border-left: 1px solid var(--border-light);
+}
+
+.app-sidebar.sidebar-mode-hidden .sidebar-edge-toggle i {
+    transform: rotate(180deg);
+}
+
+/* Responsive considerations */
+@media (max-width: 768px) {
+    :root {
+        --sidebar-width-full: 200px;
+    }
+
+    .table-legend-bar {
+        padding: 8px 12px 0;
+    }
+}

@@ -1051,11 +1051,12 @@ async function renderApplication() {
       )
     );
 
-  const headerCss =
+    const headerCss =
     hasBundleCss
       ? '    <link rel="stylesheet" href="assets/dist/bundle.css">'
       : `    <link rel="stylesheet" href="assets/css/variables.css">
     <link rel="stylesheet" href="assets/css/base.css">
+    <link rel="stylesheet" href="assets/css/sidebar.css">
     <link rel="stylesheet" href="assets/css/table.css">
     <link rel="stylesheet" href="assets/css/pagination.css">
     <link rel="stylesheet" href="assets/css/modal.css">
