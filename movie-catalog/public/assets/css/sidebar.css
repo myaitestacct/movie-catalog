@@ -8,7 +8,7 @@
 
 :root {
     --sidebar-width-full: 230px;
-    --sidebar-width-partial: 56px;
+    --sidebar-width-partial: 60px;
     --sidebar-width-hidden: 0px;
     --sidebar-transition-duration: 0.22s;
     --sidebar-transition-easing: cubic-bezier(0.2, 0, 0, 1);
@@ -323,12 +323,12 @@
 }
 
 /* ============================================================
-   Partial Mode (Icons Only, collapsed to 56px)
+   Partial Mode (Icons Only, collapsed to 60px)
    ============================================================ */
 .app-sidebar.sidebar-partial .sidebar-header,
 .app-sidebar.sidebar-mode-partial .sidebar-header {
     justify-content: center;
-    padding: 10px 6px;
+    padding: 10px 0;
 }
 
 .app-sidebar.sidebar-partial .sidebar-label,
@@ -342,47 +342,90 @@
 
 .app-sidebar.sidebar-partial .sidebar-content,
 .app-sidebar.sidebar-mode-partial .sidebar-content {
-    padding: 8px 6px 72px;
+    padding: 8px 0 72px;
     align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.app-sidebar.sidebar-partial .column-toggles,
+.app-sidebar.sidebar-mode-partial .column-toggles {
+    align-items: center;
+    width: 100%;
 }
 
 .app-sidebar.sidebar-partial .sidebar-section,
 .app-sidebar.sidebar-mode-partial .sidebar-section {
     align-items: center;
+    width: 100%;
 }
 
 .app-sidebar.sidebar-partial .tool-group,
 .app-sidebar.sidebar-mode-partial .tool-group {
     align-items: center;
-    padding: 4px 2px;
+    justify-content: center;
+    width: 44px;
+    padding: 4px 0;
+    margin: 0 auto;
 }
 
 .app-sidebar.sidebar-partial .view-toggle,
 .app-sidebar.sidebar-mode-partial .view-toggle {
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    width: 44px;
+    padding: 3px 0;
+    margin: 0 auto;
     gap: 4px;
 }
 
 .app-sidebar.sidebar-partial .view-toggle button,
 .app-sidebar.sidebar-mode-partial .view-toggle button {
-    width: 38px;
+    width: 36px;
     height: 32px;
     padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .app-sidebar.sidebar-partial .column-toggles button,
 .app-sidebar.sidebar-mode-partial .column-toggles button {
-    width: 38px;
+    width: 36px;
     height: 32px;
     padding: 0;
+    display: flex;
+    align-items: center;
     justify-content: center;
+    margin: 0 auto;
+}
+
+.app-sidebar.sidebar-partial .column-toggles button i,
+.app-sidebar.sidebar-mode-partial .column-toggles button i {
+    width: auto;
+    margin: 0;
+    font-size: 13px;
+    text-align: center;
 }
 
 .app-sidebar.sidebar-partial .title-search-mode,
 .app-sidebar.sidebar-mode-partial .title-search-mode {
+    width: 36px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
     justify-content: center;
-    padding: 6px 0;
+    margin: 0 auto;
+}
+
+.app-sidebar.sidebar-partial .title-search-mode i,
+.app-sidebar.sidebar-mode-partial .title-search-mode i {
+    width: auto;
+    margin: 0;
+    font-size: 13px;
+    text-align: center;
 }
 
 .app-sidebar.sidebar-partial .title-search-mode select,
@@ -392,17 +435,45 @@
 
 .app-sidebar.sidebar-partial .search-mode,
 .app-sidebar.sidebar-mode-partial .search-mode {
-    width: 38px;
+    width: 36px;
     height: 32px;
     padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.app-sidebar.sidebar-partial .search-mode .search-mode-text,
+.app-sidebar.sidebar-mode-partial .search-mode .search-mode-text {
+    display: none;
+}
+
+.app-sidebar.sidebar-partial .search-mode i,
+.app-sidebar.sidebar-mode-partial .search-mode i {
+    width: auto;
+    margin: 0;
+    font-size: 13px;
+    text-align: center;
 }
 
 .app-sidebar.sidebar-partial #theme-toggle,
 .app-sidebar.sidebar-mode-partial #theme-toggle {
-    width: 38px;
+    width: 36px;
     height: 32px;
     padding: 0;
+    display: flex;
+    align-items: center;
     justify-content: center;
+    margin: 0 auto;
+}
+
+.app-sidebar.sidebar-partial #theme-toggle i,
+.app-sidebar.sidebar-mode-partial #theme-toggle i {
+    width: auto;
+    margin: 0;
+    font-size: 13px;
+    text-align: center;
 }
 
 /* ============================================================
