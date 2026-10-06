@@ -547,6 +547,21 @@ test.describe('movie catalog', () => {
       const themeToggle =
         page.locator('#theme-toggle');
 
+      // The toggle belongs to the sidebar header: top of the left panel and
+      // outside the scrollable body, so it stays reachable at any scroll
+      // position and in every sidebar display mode.
+      await expect(
+        page.locator('.sidebar-header #theme-toggle')
+      ).toHaveCount(1);
+
+      await expect(
+        themeToggle
+      ).toBeVisible();
+
+      await expect(
+        themeToggle.locator('.sidebar-label')
+      ).toHaveText('Theme');
+
       await themeToggle.click();
 
       await expect(

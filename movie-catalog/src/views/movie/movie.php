@@ -21,6 +21,16 @@
         <div class="sidebar-inner">
             <!-- Sidebar Header with Mode Switcher (Full, Partial/Icons, Hide) -->
             <div class="sidebar-header">
+                <button
+                    type="button"
+                    id="sidebar-header-expand-btn"
+                    class="sidebar-header-expand-btn"
+                    title="Expand sidebar"
+                    aria-label="Expand sidebar"
+                >
+                    <i class="fa-solid fa-angles-right" aria-hidden="true"></i>
+                </button>
+
                 <span class="sidebar-header-title">
                     <i class="fa-solid fa-sliders" aria-hidden="true"></i>
                     <span class="sidebar-label">Controls</span>
@@ -62,12 +72,13 @@
 
                 <button
                     type="button"
-                    id="sidebar-header-expand-btn"
-                    class="sidebar-header-expand-btn"
-                    title="Expand sidebar"
-                    aria-label="Expand sidebar"
+                    id="theme-toggle"
+                    aria-pressed="false"
+                    aria-label="Switch to dark theme"
+                    title="Switch to dark theme"
                 >
-                    <i class="fa-solid fa-angles-right" aria-hidden="true"></i>
+                    <i class="fa-solid fa-moon" aria-hidden="true"></i>
+                    <span class="sidebar-label">Theme</span>
                 </button>
             </div>
 
@@ -249,7 +260,7 @@
 
                     <!-- Visual / Display options -->
                     <div class="sidebar-section">
-                        <span class="sidebar-section-title sidebar-label">Display &amp; Theme</span>
+                        <span class="sidebar-section-title sidebar-label">Display</span>
                         <div class="tool-group display-options-group">
                             <button
                                 type="button"
@@ -261,17 +272,6 @@
                             >
                                 <i class="fa-solid fa-image" aria-hidden="true"></i>
                                 <span class="sidebar-label">Poster</span>
-                            </button>
-
-                            <button
-                                type="button"
-                                id="theme-toggle"
-                                aria-pressed="false"
-                                aria-label="Switch to dark theme"
-                                title="Switch to dark theme"
-                            >
-                                <i class="fa-solid fa-moon" aria-hidden="true"></i>
-                                <span class="sidebar-label">Theme</span>
                             </button>
                         </div>
                     </div>

@@ -665,6 +665,8 @@ function scheduleIdleStatsPreload() {
 
   /* ==============================
      Theme System
+     The toggle itself sits in the sidebar header (top of the left panel);
+     its label is static markup and only the icon/state swap here.
   ============================== */
 
   const themeToggle =
@@ -688,10 +690,14 @@ function scheduleIdleStatsPreload() {
           'theme-dark'
         );
 
-      const labelSpan = '<span class="sidebar-label">Theme</span>';
-      themeToggle.innerHTML = dark
-        ? `<i class="fa-solid fa-sun" aria-hidden="true"></i>${labelSpan}`
-        : `<i class="fa-solid fa-moon" aria-hidden="true"></i>${labelSpan}`;
+      // Swap only the icon: the markup owns the "Theme" label, exactly like
+      // the other sidebar chips, so rewriting innerHTML here would delete it.
+      const icon = themeToggle.querySelector('i');
+
+      if (icon) {
+        icon.className = dark
+          ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+      }
 
       themeToggle.setAttribute(
         'aria-pressed',
