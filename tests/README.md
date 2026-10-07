@@ -60,6 +60,10 @@ On constrained machines use `npm run test:browser -- --workers=2`.
 - Explicit `true`/`false` load completion for analytics page jumps.
 - Multi-column edits inside one debounce interval without losing a filter.
 - Literal File/Path highlighting even when title fuzzy search is enabled.
+- Theme-toggle placement: the view's `#theme-toggle` must stay inside the
+  sidebar header (pinned above the scrollable controls) and there must be
+  exactly one, and `app.js` must swap only the icon so the markup label
+  survives a re-render.
 - Dashboard animations, issue grouping, and selected analytics view models.
 
 Movie-loader tests use deferred promises, including a transport that deliberately
@@ -92,9 +96,10 @@ setup and File-filter examples. Browser mock tests are not a substitute for this
 - Analytics and issue drill-down; cross-page jumps reveal and highlight the movie.
 - File filter examples: the `MISSING` marker, real substring matches, fuzzy-only
   filenames, hidden folder matches, wildcard characters, and OR semantics.
-- Theme/column preferences, the `Poster` chip across a re-render and a reload,
-  the clear-filters chip appearing only while a filter is active, and
-  error/retry recovery.
+- Theme/column preferences — including that the theme toggle is still inside
+  `.sidebar-header` and keeps its `Theme` label — the `Poster` chip across a
+  re-render and a reload, the clear-filters chip appearing only while a filter
+  is active, and error/retry recovery.
 
 `playwright.config.mjs` automatically starts
 `tests/browser/support/mock-server.mjs`. It serves the current view fragments,
