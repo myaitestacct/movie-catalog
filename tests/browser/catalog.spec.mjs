@@ -66,6 +66,62 @@ test.describe('movie catalog', () => {
   );
 
   test(
+    'shows the title-mode control appropriate to each sidebar mode',
+    async ({ page }) => {
+      await page.setViewportSize({ width: 600, height: 600 });
+      await openCatalog(page);
+
+      const dropdown = page.locator('#title-search-mode');
+      const badgeButton = page.locator('#title-search-mode-btn');
+      const sidebarContent = page.locator('.sidebar-content');
+
+      const expectSidebarToFit = async () => {
+        const { scrollHeight, clientHeight } = await sidebarContent.evaluate(element => ({
+          scrollHeight: element.scrollHeight,
+          clientHeight: element.clientHeight
+        }));
+        expect(scrollHeight).toBeLessThanOrEqual(clientHeight);
+      };
+
+      await expect(dropdown).toBeVisible();
+      await expect(badgeButton).toBeHidden();
+      await expectSidebarToFit();
+
+      // At the narrow full-sidebar width, the Controls label must retain its
+      // own space rather than being clipped beside the icon.
+      const headerLayout = await page.locator('.sidebar-header').evaluate(header => {
+        const title = header.querySelector('.sidebar-header-title');
+        const icon = title.querySelector('i');
+        const label = title.querySelector('.sidebar-label');
+        const modeSelector = header.querySelector('.sidebar-mode-selector');
+        const range = document.createRange();
+        range.selectNodeContents(label);
+
+        return {
+          label: label.textContent.trim(),
+          iconRight: icon.getBoundingClientRect().right,
+          labelLeft: range.getBoundingClientRect().left,
+          labelRight: range.getBoundingClientRect().right,
+          modesLeft: modeSelector.getBoundingClientRect().left
+        };
+      });
+
+      expect(headerLayout.label).toBe('Controls');
+      expect(headerLayout.labelLeft).toBeGreaterThanOrEqual(headerLayout.iconRight);
+      expect(headerLayout.labelRight).toBeLessThanOrEqual(headerLayout.modesLeft);
+
+      await page.locator('[data-sidebar-mode="partial"]').click();
+      await expect(dropdown).toBeHidden();
+      await expect(badgeButton).toBeVisible();
+      await expectSidebarToFit();
+
+      await page.locator('#sidebar-header-expand-btn').click();
+      await expect(dropdown).toBeVisible();
+      await expect(badgeButton).toBeHidden();
+    }
+  );
+
+  test(
     'debounces title filtering and separates exact from fuzzy matches',
     async ({ page }) => {
       await openCatalog(page);
