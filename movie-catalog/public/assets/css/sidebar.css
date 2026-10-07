@@ -127,11 +127,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    /* Row 1: title + display-mode switcher. Row 2: the theme toggle, which
+       spans the full width so it keeps its text label (see below). */
     padding: 12px 14px;
     border-bottom: 1px solid var(--border-light);
     background: var(--surface-2);
     flex-shrink: 0;
-    gap: 8px;
+    gap: 6px 8px;
     min-height: 48px;
     box-sizing: border-box;
 }
@@ -157,6 +159,9 @@
 /* Sidebar Header Expand Button (Only shown in partial mode) */
 .sidebar-header-expand-btn {
     display: none;
+    /* First child of the header: in full mode it is hidden, and in partial
+       mode the header stacks, so this keeps its column left-aligned. */
+    margin-right: auto;
     width: 36px;
     height: 32px;
     padding: 0;
@@ -381,10 +386,19 @@
     gap: 4px;
 }
 
-.app-sidebar #theme-toggle {
+/* ------------------------------------------------------------
+   Theme (light/dark) toggle
+   Lives in the sidebar header, i.e. at the very top of the left
+   panel, next to the sidebar display-mode switcher.
+   ------------------------------------------------------------ */
+.app-sidebar .sidebar-header #theme-toggle {
+    /* `flex-basis: 100%` always pushes the toggle onto its own header row:
+       the first row (title + switcher) is already ~171px of the 202px
+       available, so a third control there would clip the "Controls" title. */
+    flex: 1 1 100%;
     width: 100%;
-    height: auto;
-    padding: 6px 8px;
+    height: 30px;
+    padding: 0 8px;
     border-radius: 6px;
     border: 1px solid transparent;
     display: inline-flex;
@@ -394,10 +408,43 @@
     background: transparent;
     font-size: 12px;
     color: var(--button-text);
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease,
+        border-color 0.15s ease;
 }
 
-.app-sidebar #theme-toggle:hover {
+.app-sidebar .sidebar-header #theme-toggle:hover {
     background: var(--button-hover);
+}
+
+.app-sidebar .sidebar-header #theme-toggle i {
+    width: 18px;
+    font-size: 13px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Font Awesome swaps the icon glyph before its final layout pass; while the
+   lazy webfont is still loading, pin the swap's box so the chip cannot jitter. */
+.app-sidebar .sidebar-header #theme-toggle svg {
+    width: 13px;
+    height: 13px;
+}
+
+/* Dark theme is on: the chip stays visibly "pressed", matching the base
+   #theme-toggle[aria-pressed] treatment (base.css loses to the rule above
+   on specificity, so the state is restated here). */
+.app-sidebar .sidebar-header #theme-toggle[aria-pressed="true"] {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.app-sidebar .sidebar-header #theme-toggle:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
 }
 
 /* ============================================================
@@ -405,13 +452,17 @@
    ============================================================ */
 .app-sidebar.sidebar-partial .sidebar-header,
 .app-sidebar.sidebar-mode-partial .sidebar-header {
-    justify-content: center;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 6px;
     padding: 10px 0;
+    min-height: 0;
 }
 
 .app-sidebar.sidebar-partial .sidebar-header-expand-btn,
 .app-sidebar.sidebar-mode-partial .sidebar-header-expand-btn {
     display: inline-flex !important;
+    margin-right: 0;
 }
 
 .app-sidebar.sidebar-partial .sidebar-label,
@@ -553,6 +604,9 @@
 
 .app-sidebar.sidebar-partial #theme-toggle,
 .app-sidebar.sidebar-mode-partial #theme-toggle {
+    /* Reset the full-mode full-width row: in the stacked partial header the
+       flex main axis is still the row, but the button must not stretch. */
+    flex: 0 0 auto;
     width: 36px;
     height: 32px;
     padding: 0;
