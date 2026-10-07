@@ -86,17 +86,10 @@ export function initColumnToggles(table, toggleContainer, posterToggle = null) {
         toggleAllButton.className = 'toggle-all-columns';
         toggleAllButton.innerHTML = '<i class="fa-solid fa-eye" aria-hidden="true"></i><span class="sidebar-label">Hide All</span>';
 
-        // Keep the theme toggle as the right-most toolbar control:
-        // insert "Hide All" before it when present and a direct child.
-        const anchorButton = toggleContainer.querySelector(
-            '#theme-toggle, #stats-toggle'
-        );
-
-        if (anchorButton && anchorButton.parentNode) {
-            anchorButton.parentNode.insertBefore(toggleAllButton, anchorButton);
-        } else {
-            toggleContainer.appendChild(toggleAllButton);
-        }
+        // Append "Hide All" as the last chip of the display group, directly
+        // under the Poster chip it bulk-toggles. (The theme toggle used to
+        // anchor this insert, but it now lives in the sidebar header.)
+        toggleContainer.appendChild(toggleAllButton);
     }
 
     // Single-owner handler, same reasoning as the column chips above.
