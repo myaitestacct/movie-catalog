@@ -121,6 +121,10 @@ This repository includes **comprehensive documentation** to help you understand,
 
 ## 📋 Document Summaries
 
+### DOCUMENTATION.md
+**Purpose**: Index of the documentation set and a reading guide
+**Best for**: Finding which document covers a topic
+
 ### SUMMARY.md
 **Purpose**: Executive overview and quick introduction
 **Length**: ~5 minutes read
@@ -301,13 +305,11 @@ This repository includes **comprehensive documentation** to help you understand,
 
 | Metric | Value |
 |--------|-------|
-| **Total Documents** | 7 |
-| **Total Words** | ~25,000+ |
-| **Total Lines** | ~2,000+ |
-| **Code Examples** | 50+ |
-| **Diagrams** | 10+ |
-| **Tables** | 20+ |
-| **Cross-References** | 100+ |
+| **Total Documents** | 8 |
+| **Total Words** | ~15,800 |
+| **Total Lines** | ~3,700 |
+| **Fenced Code Blocks** | ~79 |
+| **Tables** | 30 |
 
 ---
 
@@ -479,11 +481,11 @@ This repository now includes **comprehensive, multi-level documentation** that s
 - **Architects** who want to understand the design
 - **Managers** who want a high-level overview
 
-**Total documentation**: ~25,000 words across 7 documents, covering every aspect of the project.
+**Total documentation**: ~15,800 words across 8 documents, covering every aspect of the project.
 
 ---
 
 *Last Updated: 2026-10-09*
-*Branch: arena/e20bd155-movie-catalog*
+*Snapshot: `main` at commit `47a9cd6`*
 
 *Happy reading! 📖*

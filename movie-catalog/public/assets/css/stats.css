@@ -362,6 +362,9 @@
 }
 
 .stat-card-action {
+    /* Count padding and border inside the 100% width. Without this, the
+       clickable cards overflow their grid columns and overlap neighbours. */
+    box-sizing: border-box;
     width: 100%;
     font: inherit;
     cursor: pointer;

@@ -10,10 +10,10 @@
 |--------|---------|
 | **Type** | Web Application (PHP Backend + JavaScript Frontend) |
 | **Purpose** | Movie library browser and analytics dashboard |
-| **License** | Check repository (includes Font Awesome 6.5.0) |
-| **Maturity** | Production-ready with complete test suite |
-| **Lines of Code** | ~15,000+ (PHP, JS, CSS, SQL) |
-| **Files** | ~80+ files across all components |
+| **License** | No project LICENSE file in the repository; the bundled Font Awesome 6.5.0 is licensed separately (see its LICENSE.txt) |
+| **Maturity** | Working read-only application with JS, PHP, and browser test suites; needs external authentication before any non-private deployment |
+| **Lines of Code** | ~17,800 (JS 8,804; CSS 4,646; PHP 4,316; SQL 46), excluding tests, docs, and vendored fonts |
+| **Files** | 121 tracked files (including tests, docs, and vendored Font Awesome) |
 
 ## Why This Project Exists
 
@@ -38,10 +38,10 @@ This project solves the common problem of **managing and exploring large movie c
    - Deferred-join pagination for efficient database queries
    - Stats caching (300s TTL) to reduce database load
    - Lazy loading of analytics data
-   - Minimal bundle size (~50-100 KB)
+   - Small bundles: ~108 KB minified JS (~29 KB gzipped) and ~72 KB CSS (~13 KB gzipped)
 
 3. **Well-Tested**
-   - JavaScript unit tests (15 files)
+   - JavaScript unit tests (26 files, 135 tests)
    - PHP unit tests
    - Playwright browser tests (E2E)
    - Mock server for UI development
@@ -78,8 +78,8 @@ This project solves the common problem of **managing and exploring large movie c
 |---------|--------|
 | Movie Listing | ✅ Yes |
 | Advanced Filtering | ✅ Yes (AND/OR, exact/fuzzy/contains) |
-| Sorting | ✅ Yes (all columns) |
-| Pagination | ✅ Yes (50-200 items/page) |
+| Sorting | ✅ Yes (all 13 visible table columns; filter-only columns have no header) |
+| Pagination | ✅ Yes (25, 50, 100, or 200 items/page) |
 | Table View | ✅ Yes |
 | Grid View | ✅ Yes |
 | Movie Details Modal | ✅ Yes |
@@ -113,11 +113,11 @@ This project solves the common problem of **managing and exploring large movie c
 | Export Functionality | ❌ No | Use browser print/export |
 | Real-time Updates | ❌ No | Refresh or clear cache |
 | Mobile App | ❌ No | Responsive web works on mobile |
-| API Documentation | ❌ No | See code and this docs |
+| API Documentation | ⚠️ Partial | Endpoints and parameters are described in ANALYSIS.md; there is no OpenAPI spec |
 
 ## Database Schema
 
-The application works with a single `movies` table containing **22 columns**:
+The application works with a single `movies` table containing **21 columns**:
 
 - **Identifiers**: NUM (PK), URL, PICTURENAME
 - **Titles**: FORMATTEDTITLE, ORIGINALTITLE, TRANSLATEDTITLE
@@ -128,7 +128,7 @@ The application works with a single `movies` table containing **22 columns**:
 - **Files**: FILEPATH, SUBTITLES
 - **Categories**: CATEGORY (genres)
 
-**Total**: ~100 lines of SQL for schema, ~16 lines for sample data
+**Total**: 31 lines of SQL for the schema and 15 lines for sample data (8 fictional movies)
 
 ## API Endpoints
 
@@ -155,7 +155,7 @@ The application works with a single `movies` table containing **22 columns**:
    b. Switch between AND/OR filter logic
    c. Change title search mode (Exact/Contains/Fuzzy)
    d. Sort by any column
-   e. Change page size (50-200)
+   e. Change page size (25, 50, 100, or 200)
    f. Navigate pages
    g. Switch to grid view
    h. Toggle dark/light theme
@@ -194,14 +194,14 @@ npm run dev
 ### Build Process
 - **Bundler**: esbuild (fast, modern)
 - **Build Time**: < 1 second
-- **Hot Reload**: Yes (watch mode)
+- **Rebuild on change**: Yes (watch mode); the browser must be reloaded manually
 - **Source Maps**: Yes (for debugging)
 
 ### Testing
-- **JS Tests**: 15 files, Node.js native test runner
+- **JS Tests**: 26 files (135 tests), Node.js native test runner
 - **PHP Tests**: Custom test runner
 - **Browser Tests**: Playwright with mock server
-- **Total Test Time**: ~10-30 seconds
+- **JS suite time**: about 2 seconds; browser and PHP suite times were not measured
 
 ### Debugging
 - Browser DevTools (for frontend)
@@ -213,15 +213,11 @@ npm run dev
 
 | Metric | Value |
 |--------|-------|
-| Initial Page Load | ~100-200ms |
-| Filter/Sort Response | ~50-100ms |
-| Stats Load (cached) | ~10ms |
-| Stats Load (uncached) | ~200-500ms |
-| Bundle Size (JS) | ~50-80 KB |
-| Bundle Size (CSS) | ~20-40 KB |
-| Total Assets | ~100-150 KB |
+| Bundle Size (JS, minified) | 107.6 KB (28.9 KB gzipped) |
+| Bundle Size (CSS, minified) | 71.8 KB (12.9 KB gzipped) |
+| Source Size (JS / CSS, unminified) | 246.5 KB / 104.9 KB |
 | Database Queries per Page | 2 (deferred join) |
-| Max Recommended Movies | 10,000+ |
+| Response times and scale | Not benchmarked (the test fixtures contain 55 movies) |
 
 ## Security Posture
 
@@ -258,7 +254,7 @@ npm run dev
 ### ❌ Not Ideal For
 - **Public Websites**: No authentication, read-only
 - **Large Teams**: No user management or permissions
-- **Commercial Products**: License may not allow redistribution
+- **Commercial Products**: No project license is declared, so redistribution rights are unclear
 - **Non-Technical Users**: Requires PHP/MySQL setup
 - **Mobile-Only Users**: Web-based, not a native app
 
@@ -321,7 +317,7 @@ Based on [UI-ENHANCEMENTS.md](UI-ENHANCEMENTS.md) and [UI-MODERNIZATION.md](UI-M
 
 ## Conclusion
 
-**Movie Catalog** is a **mature, production-ready application** that provides an excellent solution for browsing and analyzing movie collections. It's particularly well-suited for:
+**Movie Catalog** is a **working, read-only application** that provides an excellent solution for browsing and analyzing movie collections. It's particularly well-suited for:
 
 - Personal use (home media servers)
 - Learning and education (clean codebase)
