@@ -154,7 +154,7 @@ Edit `movie-catalog/src/config/config.json` to customize:
 ### Development Mode
 
 ```bash
-# Start with hot reload and PHP server
+# Rebuild assets on change and start the PHP server
 npm run dev
 
 # Or start individually:
@@ -223,12 +223,9 @@ npm run build
 | `Esc` | Close modal |
 | `Tab` / `Shift+Tab` | Navigate between controls |
 
-### URL Parameters
+### Saved Preferences
 
-You can bookmark or share filtered views:
-```
-http://localhost:8080/?FORMATTEDTITLE=Inception&YEAR=2010&sort=YEAR&dir=DESC
-```
+Filters, sorting, and the current page are not stored in the URL, so a filtered view cannot be bookmarked or shared. The browser's `localStorage` keeps these display preferences: theme, sidebar mode, visible columns, table or grid view, page size, and the mini-poster toggle.
 
 ---
 
@@ -351,7 +348,8 @@ npm run build
 
 # 4. Create cache directory
 mkdir -p movie-catalog/var/cache
-chmod 777 movie-catalog/var/cache
+sudo chown www-data:www-data movie-catalog/var/cache
+chmod 750 movie-catalog/var/cache   # only the web-server user may write here (replace www-data)
 
 # 5. Add poster images to movie-catalog/public/movies/antexport/
 ```
@@ -364,7 +362,7 @@ chmod 777 movie-catalog/var/cache
     DocumentRoot /path/to/movie-catalog/public
     
     <Directory /path/to/movie-catalog/public>
-        Options Indexes FollowSymLinks
+        Options -Indexes +FollowSymLinks
         AllowOverride All
         Require all granted
     </Directory>
@@ -423,7 +421,7 @@ server {
 
 | Command | Purpose |
 |---------|---------|
-| `npm run dev` | Start dev server with hot reload |
+| `npm run dev` | Rebuild assets on change and start the PHP server |
 | `npm run dev:demo` | Start mock server (no DB needed) |
 | `npm run build` | Build minified assets |
 | `npm run build:watch` | Build and watch for changes |
@@ -481,7 +479,7 @@ movie-catalog/
 ## Version Info
 
 - **Application**: Movie Catalog
-- **Branch**: arena/e20bd155-movie-catalog
+- **Snapshot**: `main` at commit `47a9cd6`
 - **Last Updated**: 2026-10-09
 - **PHP Version**: 8.3+
 - **Node Version**: 20+
@@ -491,7 +489,7 @@ movie-catalog/
 ## License
 
 This project includes:
-- Custom code: Check repository license
+- Custom code: the repository contains no LICENSE file, so no project license is declared
 - Font Awesome 6.5.0: SIL OFL 1.1 license (fonts), MIT license (CSS/JS)
 
 ---

@@ -10,7 +10,7 @@
 > common path (details in §5).
 
 Preview: `npm run dev:demo` (no database needed). Try: the **Grid** toggle in
-the toolbar, the **Analytics** ribbon (top right), the theme toggle (top of
+the sidebar, the **Analytics** ribbon (top right), the theme toggle (top of
 the left sidebar), and search `Arrival` for the exact/fuzzy grouping.
 
 ---
@@ -109,10 +109,10 @@ No PHP API/SQL changes. No new npm/Composer dependencies.
 
 ## 4. Verification
 
-- `npm run test:js` — **88/88 pass** (incl. 4 new grid-view tests: card
+- `npm run test:js` — **88/88 pass** at the time of this round (incl. 4 new grid-view tests: card
   rendering + XSS escaping, status ribbons, rating tiers, empty state, view
   persistence).
-- `npm run build` — clean; bundle 88.8 KB JS / 57.8 KB CSS minified.
+- `npm run build` — clean; bundle 88.8 KB JS / 57.8 KB CSS minified at the time of this round (the current build is about 108 KB / 72 KB).
 - Full-app smoke (jsdom against `dev:demo`): initial render + summary chips,
   status rows on both pages, grid render/toggle, modal from grid, exact/fuzzy
   grouping, filter pills + clear, pagination windowing/ellipses, stats drawer

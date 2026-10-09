@@ -3,7 +3,7 @@
 ## Overview
 
 **Repository**: `myaitestacct/movie-catalog`  
-**Branch**: `arena/e20bd155-movie-catalog`  
+**Snapshot**: `main` at commit `47a9cd6`  
 **Analysis Date**: 2026-10-09  
 
 This is a **read-only PHP/MySQL movie-library browser** with a vanilla JavaScript frontend. It provides a comprehensive interface for browsing, filtering, and analyzing a movie collection without the ability to import, edit, stream, or delete movies.
@@ -21,7 +21,7 @@ This is a **read-only PHP/MySQL movie-library browser** with a vanilla JavaScrip
 | **Frontend** | Vanilla JavaScript (ES Modules) | ES2020 | Table/grid rendering, filtering, analytics |
 | **CSS** | Custom Properties (CSS Variables) | - | Theming, responsive design |
 | **Bundler** | esbuild | 0.23.1+ | JS/CSS bundling with source maps |
-| **Testing** | Playwright, Node.js, PHPUnit-style | - | Browser, JS, PHP tests |
+| **Testing** | Node.js test runner, custom PHP runner, Playwright | - | JS, PHP, and browser tests |
 | **Icons** | Font Awesome 6.5.0 | - | Self-hosted icon library |
 
 ### Project Structure
@@ -57,7 +57,7 @@ movie-catalog/
 │   │   │   │   │   ├── request.js     # HTTP requests
 │   │   │   │   │   └── state.js       # Application state
 │   │   │   │   ├── modal/            # Modal dialogs
-│   │   │   │   ├── stats/            # Analytics modules (12 files)
+│   │   │   │   ├── stats/            # Analytics modules (15 files)
 │   │   │   │   ├── table/            # Table view modules
 │   │   │   │   └── utils/            # Utility functions
 │   │   │   └── vendor/              # Third-party libraries
@@ -97,7 +97,7 @@ movie-catalog/
 │   │   └── support/                # Test support files
 │   │       └── mock-server.mjs     # Mock API server for UI demo
 │   ├── js/                         # Node.js unit tests
-│   │   └── *.test.mjs              # JS module tests (15 files)
+│   │   └── *.test.mjs              # JS module tests (26 files)
 │   └── php/                        # PHP unit tests
 │       └── run.php                 # PHP test runner
 ├── package.json                    # Node.js dependencies & scripts
@@ -394,7 +394,7 @@ Database configuration is loaded from multiple sources (in priority order):
 
 1. **JavaScript Tests** (`npm run test:js`)
    - Unit tests for core modules
-   - 15 test files covering: columns, entry cycles, grid view, highlighting, modals, movie loading, pagination, posters, search, sidebar, state defaults, stats animations, stats API, stats directors
+   - 26 test files covering: columns, entry cycles, grid view, highlighting, modal numbers, movie loading, pagination, posters and poster toggle, search, sidebar, state defaults, table separators, theme toggle, URL helpers, and the stats modules (animations, API, directors, drill-down, genres, issues, pagination, rating/runtime, storage, table filters, technical formats)
 
 2. **PHP Tests** (`npm run test:php`)
    - Unit tests for PHP helpers and query construction
@@ -511,7 +511,8 @@ npx playwright install --with-deps chromium
 4. **Set up cache directory:**
    ```bash
    mkdir -p movie-catalog/var/cache
-   chmod 777 movie-catalog/var/cache  # Ensure PHP can write to it
+   sudo chown www-data:www-data movie-catalog/var/cache   # only the web-server user may write here (replace www-data)
+   chmod 750 movie-catalog/var/cache
    ```
 
 5. **Deploy poster images** to `movie-catalog/public/movies/antexport/`
@@ -552,7 +553,7 @@ All theming uses CSS variables:
 - Consistent styling across components
 
 ### 5. Self-Hosted Font Awesome
-- Only `fa-solid-900.woff2` (~153 KB) is fetched on demand
+- Only `fa-solid-900.woff2` (~157 KB) is fetched on demand
 - No third-party requests
 - No FOUT (Flash of Unstyled Text)
 - Subset includes only needed icons
@@ -573,38 +574,42 @@ All theming uses CSS variables:
 ## File Counts and Sizes
 
 ### PHP Files
-- API endpoints: 6 files
+- API endpoints (`public/api/`): 6 files
+- Entry point (`public/index.php`): 1 file
 - Controllers: 1 file
 - Repositories: 1 file
-- Helpers: 5 files
+- Helpers: 4 files
 - Views: 4 files
-- Config: 4 files
-- **Total**: ~17 PHP files
+- Database connection (`src/db/connection.php`): 1 file
+- **Total**: 18 application PHP files (plus the `tests/php/run.php` test runner)
+
+`src/config/` contains JSON and Markdown files only, not PHP.
 
 ### JavaScript Files
 - Core modules: 5 files
 - Modal modules: 3 files
-- Stats modules: 12 files
+- Stats modules: 15 files (`stats.js` plus 14 `stats-*.js` modules)
 - Table modules: 8 files
-- Utility modules: 1 file
-- **Total**: ~29 JS files
+- Utility modules: 5 files
+- Entry point: `app.js`
+- **Total**: 37 JS files
 
 ### CSS Files
 - 9 stylesheet files
-- ~100 KB total (unminified)
+- ~105 KB total (unminified)
 
 ### Test Files
-- JavaScript tests: 15 files
-- PHP tests: 1 runner + test files
-- Browser tests: 3 spec files + support
-- **Total**: ~20 test files
+- JavaScript tests: 26 files (135 tests)
+- PHP tests: 1 runner
+- Browser tests: 3 spec files plus `tests/browser/support/mock-server.mjs`
+- **Total**: 31 test-related files, including the mock server
 
 ---
 
 ## Performance Characteristics
 
 ### Frontend
-- **Bundle size**: ~50-100 KB (minified JS + CSS)
+- **Bundle size**: ~108 KB JS + ~72 KB CSS minified (~42 KB gzipped together)
 - **Initial load**: Single HTTP request for bundled assets
 - **Lazy loading**: Analytics load after page render
 - **No framework overhead**: Vanilla JS keeps runtime minimal
@@ -690,7 +695,7 @@ All theming uses CSS variables:
 
 ## Conclusion
 
-This is a **well-architected, production-ready movie catalog browser** with:
+This is a **well-architected, read-only movie catalog browser** that is ready for private use once it sits behind external authentication, with:
 - Clean separation of concerns (PHP backend, JS frontend)
 - Comprehensive filtering and analytics capabilities
 - Modern, responsive UI with dark/light theme support

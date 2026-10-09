@@ -9,7 +9,7 @@
 │                                                                         │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐   │
 │  │   HTML/CSS       │  │   JavaScript     │  │   Font Awesome   │   │
-│  │   (9 CSS files)  │  │   (29 JS files)  │  │   (Self-hosted)  │   │
+│  │   (9 CSS files)  │  │   (37 JS files)  │  │   (Self-hosted)  │   │
 │  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘   │
 │           │                     │                       │               │
 │           └─────────────────────┼───────────────────────┘               │
@@ -20,7 +20,7 @@
 │  │  app.js (entry) → imports all modules                           │   │
 │  │  ├── core/        : API client, state, DOM utils                │   │
 │  │  ├── modal/       : Movie detail dialogs                        │   │
-│  │  ├── stats/       : 12 analytics modules                        │   │
+│  │  ├── stats/       : 14 analytics modules                        │   │
 │  │  ├── table/       : Table rendering, filtering, sorting         │   │
 │  │  └── utils/       : Helper functions                           │   │
 │  └─────────────────────────────────────────────────────────────┘   │
@@ -54,7 +54,7 @@
 │  │                                     │                             │   │
 │  │  ┌─────────────────┐  ┌─────────────────┐                    │   │
 │  │  │  src/repositories/│  │  src/helpers/    │                    │   │
-│  │  │  (MovieRepo)     │  │  (5 helpers)     │                    │   │
+│  │  │  (MovieRepo)     │  │  (4 helpers)     │                    │   │
 │  │  └────────┬────────┘  └────────┬────────┘                    │   │
 │  │           │                     │                             │   │
 │  │           └─────────────────────┼─────────────────────┐         │   │
@@ -105,7 +105,7 @@ User Action: Load movie table
        ▼
 ┌─────────────────────┐
 │  Browser: app.js      │
-│  - Parse URL params   │
+│  - Restore prefs      │
 │  - Load from state    │
 │  - Trigger fetch      │
 └────────┬────────────┘
@@ -306,7 +306,7 @@ User Action: Click genre bar in analytics
     │         │           │   │         │           │   │         │           │
     │  ┌──────▼──────┐   │   │  ┌──────▼──────┐   │   │  ┌──────▼──────┐    │
     │  │ search.js   │   │   │  │ stats-*.js │   │   │  │ modal.dom.js│    │
-    │  └──────┬──────┘   │   │  │ (12 files) │   │   │  └─────────────┘    │
+    │  └──────┬──────┘   │   │  │ (14 files) │   │   │  └─────────────┘    │
     │         │           │   │  └─────────────┘   │   │                     │
     │  ┌──────▼──────┐   │   │                    │   │  ┌─────────────┐    │
     │  │ sorting.js  │   │   │                    │   │  │modal.utils.js│    │
@@ -576,7 +576,7 @@ StatsController.getStats()
 JSON response with all analytics data
     │
     ▼
-stats.js distributes data to 12 modules
+stats.js distributes data to 14 modules
     │
     ▼
 Each module renders its charts/cards
@@ -851,7 +851,7 @@ Prevents browser from caching stale assets with fresh markup
 │    })                                                                 │
 │                                                                         │
 │  Output:                                                              │
-│    - public/assets/dist/bundle.js (minified, ~50-100 KB)             │
+│    - public/assets/dist/bundle.js (minified, ~108 KB)                │
 │    - public/assets/dist/bundle.css (minified)                       │
 │    - public/assets/dist/bundle.js.map (source map)                  │
 │    - public/assets/dist/bundle.css.map (source map)                  │
@@ -875,7 +875,7 @@ Prevents browser from caching stale assets with fresh markup
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                         │
 │  1. JAVASCRIPT TESTS (Node.js)                                       │
-│     ├─ tests/js/*.test.mjs (15 files)                                │
+│     ├─ tests/js/*.test.mjs (26 files)                                │
 │     ├─ Run: npm run test:js                                          │
 │     └─ Covers: modules, utilities, state, search, pagination, etc.    │
 │                                                                         │
