@@ -1,12 +1,18 @@
 import { state } from '../core/state.js';
 
 /*
- * Analytics drill-down: clicking a chart slice (decade bar, director row,
- * rating band, ...) applies the matching filter to the main movie table.
+ * Analytics slice filters.
  *
- * The filter is written into the same `state.search` map the toolbar inputs
- * use, so it shows up as a normal, editable, removable filter: the column
- * input (when the column has one) receives the value and a filter pill is
+ * Every chart slice (decade bar, director row, rating band, ...) resolves to
+ * a filter spec: the column and value that select exactly the movies behind
+ * that number. The spec is what the movie-list overlay uses to fetch its
+ * rows; it is also what the overlay's "Filter the table" button applies when
+ * the visitor wants the result in the main table instead.
+ *
+ * applyTableFilter() therefore keeps the older drill-down behavior: the
+ * filter is written into the same `state.search` map the toolbar inputs use,
+ * so it shows up as a normal, editable, removable filter: the column input
+ * (when the column has one) receives the value and a filter pill is
  * rendered. Numeric columns understand the range grammar shared with the
  * backend: `2000-2009` (inclusive), `8+` (at least), `<90` (below), or an
  * exact number.
@@ -194,12 +200,14 @@ export function applyTableFilter(spec) {
 /**
  * Make an analytics chart element behave like the Metadata Completeness
  * rows: keyboard-operable, announced as a button, with an explanatory
- * tooltip. The click invokes `onSelect(spec)`.
+ * tooltip. The click invokes `onSelect(spec, title)`; stats.js opens the
+ * movie-list overlay with it (and keeps the slice available as a table
+ * filter through that overlay).
  *
  * @param {HTMLElement} element
  * @param {{column: string, value: string}|null} spec
- * @param {string} title e.g. "Filter the table to movies from the 2000s"
- * @param {(spec: object) => void} onSelect
+ * @param {string} title e.g. "Movies from the 2000s"
+ * @param {(spec: object, title: string) => void} onSelect
  * @param {{keepRole?: boolean}} [options]
  * @returns {boolean} whether the element became interactive
  */
@@ -239,7 +247,7 @@ export function makeSliceInteractive(
         element.setAttribute('aria-label', title);
     }
 
-    element.addEventListener('click', () => onSelect(spec));
+    element.addEventListener('click', () => onSelect(spec, title));
 
     element.addEventListener('keydown', event => {
         if (event.key !== 'Enter' && event.key !== ' ') return;

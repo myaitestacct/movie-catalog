@@ -231,38 +231,47 @@ numeric columns), bringing rating filtering in line with `YEAR`;
 non-numeric `RATING` input keeps the legacy contains-matching.
 
 `DIRECTOR`, `ACTORS`, and `COUNTRY` are **filter-only** API columns: they
-can filter results (used by the analytics drill-down) but have no table
-header, so they are not sortable and appear only as removable filter pills.
+can filter results (used by the analytics movie lists and their filter
+action) but have no table header, so they are not sortable and appear only
+as removable filter pills.
 
-## Analytics drill-down: click a chart to filter the table
+## Analytics movie lists: click a chart to see its movies
 
-Every analytics chart slice in the Analytics panel is clickable and applies
-the matching filter to the main movie table — the same idea as the Metadata
-Completeness rows, but targeting the table instead of a dialog:
+Every analytics chart slice in the Analytics panel is clickable and opens a
+movie-list overlay with the movies behind that number — the same idea as the
+Metadata Completeness rows, which open the same overlay for the movies
+missing a field:
 
-| Analytics slice | Applied filter |
-| --- | --- |
-| Decade Distribution row | `YEAR` decade range, e.g. `2000-2009` |
-| Collection Timeline year | exact `YEAR` |
-| Genre bar / donut legend item | `CATEGORY` contains the genre |
-| Rating / Runtime / File-Size band | `RATING`, `LENGTH`, or `FILESIZE` range |
-| Certification row | `CERTIFICATION` |
-| Director / Actor row | `DIRECTOR` / `ACTORS` (filter-only columns) |
-| Language / Country row | `LANGUAGES` / `COUNTRY` |
-| Resolution / Audio row | `RESOLUTION` / `AUDIOFORMAT` |
-| Top-item insight cards (Top Director, Peak Year, ...) | same mapping as their chart |
-| Largest Movie card | jumps to that row in the table |
+| Analytics slice | Movies listed | Filter action |
+| --- | --- | --- |
+| Decade Distribution row | `YEAR` decade range, e.g. `2000-2009` | same |
+| Collection Timeline year | exact `YEAR` | same |
+| Genre bar / donut legend item | `CATEGORY` contains the genre | same |
+| Rating / Runtime / File-Size band | `RATING`, `LENGTH`, or `FILESIZE` range | same |
+| Certification row | `CERTIFICATION` | same |
+| Director / Actor row | `DIRECTOR` / `ACTORS` (filter-only columns) | same |
+| Language / Country row | `LANGUAGES` / `COUNTRY` | same |
+| Resolution / Audio row | `RESOLUTION` / `AUDIOFORMAT` | same |
+| Top-item insight cards (Top Director, Peak Year, ...) | same as their chart | same |
+| Metadata Completeness field row | movies missing that field | — (no table filter) |
+| Largest Movie card | jumps to that row in the table | — |
 
-Clicking a slice closes the drawer, resets to page one, and reloads the
-table with the filter applied. The result behaves exactly like a typed
-toolbar filter: the column input (when the column has one) shows the value,
-a removable pill appears for filter-only columns such as Director, and the
-Clear Filters chip clears it. Drill-downs switch the filter mode to **AND**
-so the clicked slice is always satisfied alongside any other active
-filters; reopen Analytics to stack more slices. Metadata Completeness and
-Library Health keep their existing "open the list of movies" dialogs.
+The overlay lists each movie with minimal details: title, number (`NUM`),
+year, rating, stored file size, and the external IMDb link, 25 rows per
+page. The number jumps to that movie's row in the main table. The list is
+read-only: the table and the active filters stay untouched, and the drawer
+stays open behind the overlay.
 
-Band boundaries in the table filter match the analytics banding exactly
+The **Filter the table** button in the overlay footer applies the slice as a
+normal toolbar filter instead (the older drill-down): the overlay and drawer
+close, the table resets to page one with the filter applied, the column
+input (when the column has one) shows the value, a removable pill appears
+for filter-only columns such as Director, and the Clear Filters chip clears
+it. The filter mode switches to **AND** so the clicked slice is always
+satisfied alongside any other active filters. Library Health keeps its own
+"open the list of movies" dialog.
+
+Band boundaries in the filter action match the analytics banding exactly
 (ratings are one decimal, runtimes whole minutes, file sizes the stored MiB
 value), so the filtered row count equals the bar's count.
 

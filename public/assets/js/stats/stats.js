@@ -28,11 +28,18 @@ import {
     setTableFilterLoader
 } from './stats-table-filters.js';
 import {
+    closeMovieListOverlay,
+    openMovieListOverlay,
+    setMovieJumper,
+    MOVIE_LIST_PAGE_SIZE
+} from './stats-movie-list.js';
+import {
     fetchBetterCopyRows,
     fetchDuplicates,
     fetchLibraryIssueRows,
     fetchMetadataIssueRows,
     fetchMoviePage,
+    fetchMovies,
     fetchStats
 } from '../core/api.js';
 import { createLatestRequest, isAbortError } from '../core/request.js';
@@ -57,6 +64,9 @@ let movieLoader = null;
 export function setMovieLoader(loader) {
     movieLoader = typeof loader === 'function' ? loader : null;
     setTableFilterLoader(movieLoader);
+    // The movie-list overlay's No links jump to the same table row as the
+    // other analytics dialogs.
+    setMovieJumper(jumpToMovie);
 }
 
 let panel, loaded = false;
@@ -362,7 +372,7 @@ export async function refreshStats() {
         metadataCompleteness.renderMetadataCompleteness?.(
             data.metadata_completeness,
             data.total_movies,
-            loadMetadataIssues
+            openMetadataFieldMovies
         );
 
         bindInsightDrillDowns();
@@ -469,17 +479,67 @@ function closePanel(restoreFocus = false) {
 }
 
 /**
- * Analytics drill-down: apply the clicked chart slice as a filter on the
- * main movie table, then close the drawer so the filtered results are
- * visible. The filter behaves like any toolbar filter (editable input and
- * removable pill), so further slices stack as AND filters.
+ * Analytics slice click: open the movie-list overlay with the movies
+ * behind the clicked slice. The overlay keeps the main table untouched and
+ * offers the older drill-down as a secondary "Filter the table" action.
  * @param {{column: string, value: string}} spec
+ * @param {string} [title] e.g. "Movies certified PG-13"
  */
-function handleSliceSelect(spec) {
-    if (!applyTableFilter(spec)) return;
+function handleSliceSelect(spec, title) {
+    const column = String(spec?.column ?? '').trim();
+    const value = String(spec?.value ?? '').trim();
 
-    // Reveal the filtered table behind the drawer.
-    closePanel(true);
+    if (!column || value === '') return;
+
+    openMovieListOverlay({
+        title: title || `${value} movies`,
+        source: {
+            fetchPage: (page, signal) =>
+                fetchMovies(
+                    new URLSearchParams({
+                        [column]: value,
+                        page: String(page),
+                        limit: String(MOVIE_LIST_PAGE_SIZE)
+                    }),
+                    { signal }
+                ).then(data => ({
+                    rows: data.data,
+                    total: data.total
+                }))
+        },
+        spec: { column, value },
+        onFilter: spec => {
+            if (applyTableFilter(spec)) closePanel(true);
+        }
+    });
+}
+
+/**
+ * Metadata Completeness field click: open the movie-list overlay with the
+ * movies missing that field. The field has no table filter, so there is no
+ * "Filter the table" action.
+ * @param {{key: string, label: string}} field
+ */
+function openMetadataFieldMovies(field) {
+    if (!field?.key || !field?.label) return;
+
+    openMovieListOverlay({
+        title: `Missing ${field.label}`,
+        source: {
+            fetchPage: async (page, signal) => {
+                const rows = await fetchMetadataIssueRows(
+                    field.key,
+                    { signal }
+                );
+                const start = (page - 1) * MOVIE_LIST_PAGE_SIZE;
+
+                return {
+                    rows: rows.slice(start, start + MOVIE_LIST_PAGE_SIZE),
+                    total: rows.length
+                };
+            }
+        }
+    });
 }
 
 /* =============================
@@ -499,7 +559,7 @@ const INSIGHT_DRILL_DOWNS = [
         getSpec: data => getYearTableFilter(
             data?.release_year_analytics?.peak_year?.year
         ),
-        title: (spec, data) => `Filter the table to movies from ` +
+        title: (spec, data) => `Movies from ` +
             `${data?.release_year_analytics?.peak_year?.year}`
     },
     {
@@ -507,7 +567,7 @@ const INSIGHT_DRILL_DOWNS = [
         getSpec: data => getDecadeTableFilter(
             data?.release_year_analytics?.busiest_decade?.start_year
         ),
-        title: (spec, data) => `Filter the table to movies from the ` +
+        title: (spec, data) => `Movies from the ` +
             `${data?.release_year_analytics?.busiest_decade?.label}`
     },
     {
@@ -516,7 +576,7 @@ const INSIGHT_DRILL_DOWNS = [
             'CATEGORY',
             data?.genre_analytics?.top_genre?.label
         ),
-        title: spec => `Filter the table to ${spec.value} movies`
+        title: spec => `${spec.value} movies`
     },
     {
         valueId: 'top-rating-band',
@@ -524,7 +584,7 @@ const INSIGHT_DRILL_DOWNS = [
             'rating',
             data?.rating_runtime_analytics?.top_rating_band?.key
         ),
-        title: (spec, data) => `Filter the table to movies rated ` +
+        title: (spec, data) => `Movies rated ` +
             `${data?.rating_runtime_analytics?.top_rating_band?.label}`
     },
     {
@@ -533,7 +593,7 @@ const INSIGHT_DRILL_DOWNS = [
             'runtime',
             data?.rating_runtime_analytics?.common_runtime_band?.key
         ),
-        title: (spec, data) => `Filter the table to movies running ` +
+        title: (spec, data) => `Movies running ` +
             `${data?.rating_runtime_analytics?.common_runtime_band?.label}`
     },
     {
@@ -542,7 +602,7 @@ const INSIGHT_DRILL_DOWNS = [
             'CERTIFICATION',
             data?.certification_analytics?.top_item?.label
         ),
-        title: spec => `Filter the table to movies certified ${spec.value}`
+        title: spec => `Movies certified ${spec.value}`
     },
     {
         valueId: 'top-director',
@@ -550,7 +610,7 @@ const INSIGHT_DRILL_DOWNS = [
             'DIRECTOR',
             data?.director_analytics?.top_item?.label
         ),
-        title: spec => `Filter the table to movies directed by ` +
+        title: spec => `Movies directed by ` +
             `${spec.value}`
     },
     {
@@ -559,7 +619,7 @@ const INSIGHT_DRILL_DOWNS = [
             'ACTORS',
             data?.cast_analytics?.top_actor?.label
         ),
-        title: spec => `Filter the table to movies with ${spec.value}`
+        title: spec => `Movies with ${spec.value}`
     },
     {
         valueId: 'top-language',
@@ -567,7 +627,7 @@ const INSIGHT_DRILL_DOWNS = [
             'LANGUAGES',
             data?.language_country_analytics?.languages?.top_item?.label
         ),
-        title: spec => `Filter the table to ${spec.value} movies`
+        title: spec => `${spec.value} movies`
     },
     {
         valueId: 'top-country',
@@ -575,7 +635,7 @@ const INSIGHT_DRILL_DOWNS = [
             'COUNTRY',
             data?.language_country_analytics?.countries?.top_item?.label
         ),
-        title: spec => `Filter the table to movies from ${spec.value}`
+        title: spec => `Movies from ${spec.value}`
     },
     {
         valueId: 'top-resolution',
@@ -583,7 +643,7 @@ const INSIGHT_DRILL_DOWNS = [
             'RESOLUTION',
             data?.technical_format_analytics?.resolutions?.top_item?.label
         ),
-        title: spec => `Filter the table to ${spec.value} movies`
+        title: spec => `${spec.value} movies`
     },
     {
         valueId: 'top-audio-format',
@@ -591,7 +651,7 @@ const INSIGHT_DRILL_DOWNS = [
             'AUDIOFORMAT',
             data?.technical_format_analytics?.audio_formats?.top_item?.label
         ),
-        title: spec => `Filter the table to ${spec.value} movies`
+        title: spec => `${spec.value} movies`
     }
 ];
 
@@ -619,7 +679,12 @@ function bindInsightDrillDowns() {
             card.addEventListener('click', () => {
                 const spec = binding.getSpec(latestStatsData);
 
-                if (spec) handleSliceSelect(spec);
+                if (spec) {
+                    handleSliceSelect(
+                        spec,
+                        binding.title(spec, latestStatsData)
+                    );
+                }
             });
 
             card.addEventListener('keydown', event => {
@@ -866,23 +931,6 @@ function loadLibraryIssues(issueType) {
         fetchRows: signal =>
             fetchLibraryIssueRows(issueType, { signal }),
         retry: () => loadLibraryIssues(issueType)
-    });
-}
-
-function loadMetadataIssues(field) {
-    if (!field?.key || !field?.label) return;
-
-    const title = `Missing ${field.label}`;
-
-    return loadIssueRows({
-        title,
-        emptyMessage:
-            `No movies missing ${field.label.toLowerCase()} were found.`,
-        paginationLabel: `${title} pagination`,
-        scope: `metadata-field-${field.key}`,
-        fetchRows: signal =>
-            fetchMetadataIssueRows(field.key, { signal }),
-        retry: () => loadMetadataIssues(field)
     });
 }
 
@@ -1413,6 +1461,7 @@ async function jumpToMovie(num) {
         duplicateModal?.classList.add('hidden');
         getBetterCopyModal?.classList.add('hidden');
         closeLibraryIssueModal(false);
+        closeMovieListOverlay(false);
         closePanel();
         row.querySelector('.movie-title-link')?.focus({ preventScroll: true });
 

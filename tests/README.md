@@ -65,6 +65,13 @@ On constrained machines use `npm run test:browser -- --workers=2`.
   exactly one, and `app.js` must swap only the icon so the markup label
   survives a re-render.
 - Dashboard animations, issue grouping, and selected analytics view models.
+- The analytics movie-list overlay: minimal rows (title fallback, rating
+  tiers, dashes for unknown values, safe external links), paging through the
+  source, empty and failed-request states, the jump-to-movie link, the
+  optional "Filter the table" action, and closing via button/backdrop/Escape.
+- Slice wiring: chart slices and insight cards open that overlay with the
+  right filter spec without touching the table state, and Metadata
+  Completeness field rows open it with the missing-movies rows.
 
 Movie-loader tests use deferred promises, including a transport that deliberately
 ignores abort. They verify freshness independently of network cancellation.
@@ -93,7 +100,10 @@ setup and File-filter examples. Browser mock tests are not a substitute for this
 - Multi-field debounce behavior and out-of-order response protection.
 - Movie-detail content, poster paths, keyboard navigation, wrap confirmation,
   background isolation, and focus restoration.
-- Analytics and issue drill-down; cross-page jumps reveal and highlight the movie.
+- Analytics movie lists (decade, director, rating band, timeline, insight
+  card, metadata field) and the filter action inside them, which keeps the
+  table untouched until clicked; library-issue dialogs; cross-page jumps
+  reveal and highlight the movie.
 - File filter examples: the `MISSING` marker, real substring matches, fuzzy-only
   filenames, hidden folder matches, wildcard characters, and OR semantics.
 - Theme/column preferences — including that the theme toggle is still inside

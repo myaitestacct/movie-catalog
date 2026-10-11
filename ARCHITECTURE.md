@@ -20,7 +20,7 @@
 │  │  app.js (entry) → imports all modules                           │   │
 │  │  ├── core/        : API client, state, DOM utils                │   │
 │  │  ├── modal/       : Movie detail dialogs                        │   │
-│  │  ├── stats/       : 14 analytics modules                        │   │
+│  │  ├── stats/       : 15 analytics modules                        │   │
 │  │  ├── table/       : Table rendering, filtering, sorting         │   │
 │  │  └── utils/       : Helper functions                           │   │
 │  └─────────────────────────────────────────────────────────────┘   │
@@ -231,44 +231,51 @@ User Action: Open analytics panel
 └─────────────────────┘
 ```
 
-### Drill-Down Flow (Analytics → Filter)
+### Movie-List Overlay Flow (Analytics → Movie List)
 
 ```
 User Action: Click genre bar in analytics
        │
        ▼
-┌─────────────────────┐
-│  stats/stats-genres.js│
-│  - Handle click       │
-│  - Extract filter     │
-│  - Close panel        │
-│  - Apply filter       │
-└────────┬────────────┘
+┌──────────────────────────┐
+│  stats/stats-genres.js    │
+│  - Handle click           │
+│  - Extract filter spec    │
+│  - onSelect(spec, title)  │
+└────────┬─────────────────┘
          │
          ▼
-┌─────────────────────┐
-│  core/state.js       │
-│  - Update search     │
-│    filters           │
-│  - Set mode=AND      │
-│  - Persist state     │
-└────────┬────────────┘
+┌──────────────────────────┐
+│  stats/stats.js           │
+│  - handleSliceSelect()    │
+│  - Open the overlay       │
+└────────┬─────────────────┘
          │
          ▼
-┌─────────────────────┐
-│  table/search.js     │
-│  - Update inputs     │
-│  - Add filter pill   │
-│  - Trigger reload    │
-└────────┬────────────┘
+┌──────────────────────────┐
+│  stats/stats-movie-list.js│
+│  - Show dialog + title    │
+│  - Fetch page via         │
+│    /api/movies.php with   │
+│    the slice as a column  │
+│    filter (25 per page)   │
+│  - Render minimal rows    │
+│  - Paginate               │
+└────────┬─────────────────┘
          │
+         │  Optional: "Filter the table" footer action
          ▼
-┌─────────────────────┐
-│  table/table.js      │
-│  - Reset to page 1   │
-│  - Fetch movies      │
-│  - Re-render table   │
-└─────────────────────┘
+┌──────────────────────────┐
+│  stats-table-filters.js   │
+│  - applyTableFilter(spec) │
+│  - Write state.search     │
+│  - Force AND mode         │
+│  - Reload page 1          │
+└──────────────────────────┘
+
+Metadata Completeness field rows open the same overlay, fed by
+/api/library-issues.php?type=metadata-field&field=...
+(no table filter, so no filter action).
 ```
 
 ---

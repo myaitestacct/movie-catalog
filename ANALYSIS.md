@@ -56,7 +56,7 @@ movie-catalog/                    # Repository root
 │   │   │   │   ├── request.js    # HTTP requests
 │   │   │   │   └── state.js      # Application state
 │   │   │   ├── modal/            # Modal dialogs
-│   │   │   ├── stats/            # Analytics modules (15 files)
+│   │   │   ├── stats/            # Analytics modules (16 files)
 │   │   │   ├── table/            # Table view modules
 │   │   │   └── utils/            # Utility functions
 │   │   └── vendor/               # Third-party libraries
@@ -96,7 +96,7 @@ movie-catalog/                    # Repository root
 │   │   └── support/              # Test support files
 │   │       └── mock-server.mjs   # Mock API server for UI demo
 │   ├── js/                       # Node.js unit tests
-│   │   └── *.test.mjs            # JS module tests (26 files)
+│   │   └── *.test.mjs            # JS module tests (27 files)
 │   └── php/                      # PHP unit tests
 │       └── run.php               # PHP test runner
 ├── package.json                  # Node.js dependencies & scripts
@@ -144,7 +144,7 @@ Comprehensive collection analytics with **12 sections**:
 | Metadata | Field-by-field completeness analysis |
 | Library Health | Health score, missing files/posters, duplicates |
 
-**Interactive Feature**: Click any chart element to filter the main table to matching movies.
+**Interactive Feature**: Click any chart element to open an overlay listing the movies behind it (title, number, year, rating, stored size, external link); the overlay's "Filter the table" action applies the slice as a normal table filter.
 
 ### 4. Special Features
 - **Theme Toggle**: Light/Dark mode with localStorage persistence
@@ -291,6 +291,7 @@ app.js (entry point)
 │   ├── stats-issues.js        # Library health issues
 │   ├── stats-language-country.js # Language/country analytics
 │   ├── stats-metadata-completeness.js # Metadata completeness
+│   ├── stats-movie-list.js    # Slice/field movie-list overlay
 │   ├── stats-pagination.js    # Stats panel pagination
 │   ├── stats-rating-runtime.js # Rating/runtime analytics
 │   ├── stats-release-years.js # Release year analytics
@@ -393,7 +394,7 @@ Database configuration is loaded from multiple sources (in priority order):
 
 1. **JavaScript Tests** (`npm run test:js`)
    - Unit tests for core modules
-   - 26 test files covering: columns, entry cycles, grid view, highlighting, modal numbers, movie loading, pagination, posters and poster toggle, search, sidebar, state defaults, table separators, theme toggle, URL helpers, and the stats modules (animations, API, directors, drill-down, genres, issues, pagination, rating/runtime, storage, table filters, technical formats)
+   - 27 test files covering: columns, entry cycles, grid view, highlighting, modal numbers, movie loading, pagination, posters and poster toggle, search, sidebar, state defaults, table separators, theme toggle, URL helpers, and the stats modules (animations, API, directors, movie list, genres, issues, pagination, rating/runtime, storage, table filters, technical formats)
 
 2. **PHP Tests** (`npm run test:php`)
    - Unit tests for PHP helpers and query construction
@@ -402,7 +403,7 @@ Database configuration is loaded from multiple sources (in priority order):
 3. **Browser Tests** (`npm run test:browser`)
    - Playwright-based end-to-end tests
    - Tests against mock API server
-   - Covers: analytics drill-down, catalog browsing, coordination
+   - Covers: analytics movie lists and drill-down, catalog browsing, coordination
 
 **Full test suite:** `npm test` (runs all three suites in sequence)
 
@@ -587,18 +588,18 @@ All theming uses CSS variables:
 ### JavaScript Files
 - Core modules: 5 files
 - Modal modules: 3 files
-- Stats modules: 15 files (`stats.js` plus 14 `stats-*.js` modules)
+- Stats modules: 16 files (`stats.js` plus 15 `stats-*.js` modules, including `stats-movie-list.js` for the slice/field movie-list overlay)
 - Table modules: 8 files
 - Utility modules: 5 files
 - Entry point: `app.js`
-- **Total**: 37 JS files
+- **Total**: 38 JS files
 
 ### CSS Files
 - 9 stylesheet files
 - ~105 KB total (unminified)
 
 ### Test Files
-- JavaScript tests: 26 files (135 tests)
+- JavaScript tests: 27 files (148 tests)
 - PHP tests: 1 runner
 - Browser tests: 3 spec files plus `tests/browser/support/mock-server.mjs`
 - **Total**: 31 test-related files, including the mock server
@@ -608,7 +609,7 @@ All theming uses CSS variables:
 ## Performance Characteristics
 
 ### Frontend
-- **Bundle size**: ~108 KB JS + ~72 KB CSS minified (~42 KB gzipped together)
+- **Bundle size**: ~109 KB JS + ~72 KB CSS minified (~43 KB gzipped together)
 - **Initial load**: Single HTTP request for bundled assets
 - **Lazy loading**: Analytics load after page render
 - **No framework overhead**: Vanilla JS keeps runtime minimal
@@ -664,7 +665,7 @@ All theming uses CSS variables:
    - Numeric columns support range grammar (`2000-2009`, `150+`, `<90`)
    - Zero values treated as "unknown" for RATING, LENGTH, FILESIZE
 
-3. **Analytics drill-down**: Click any chart element to filter the main table
+3. **Analytics movie lists**: Click any chart element to open an overlay listing the movies behind it (title, number, year, rating, size, external link); the overlay's "Filter the table" action applies the slice to the main table
 
 ### UI Modernization (Implemented)
 1. **App identity**: Clapperboard brand mark, wordmark, tagline

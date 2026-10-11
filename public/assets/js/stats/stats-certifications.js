@@ -75,7 +75,7 @@ function renderCertificationList(container, model, onSliceSelect) {
         makeSliceInteractive(
             row,
             getFacetTableFilter('CERTIFICATION', item.label),
-            `Filter the table to movies certified ${item.label}`,
+            `Movies certified ${item.label}`,
             onSliceSelect
         );
 

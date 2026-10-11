@@ -1372,3 +1372,101 @@
         justify-content: center;
     }
 }
+
+/* ==========================
+   Analytics movie-list overlay
+   (slices, insight cards, and Metadata Completeness fields)
+========================== */
+
+.stats-modal-content.stats-movie-list {
+    width: min(720px, 92vw);
+    min-width: min(520px, 92vw);
+}
+
+.stats-movie-list .stats-modal-body {
+    min-height: 140px;
+}
+
+.stats-movie-table td.stats-movie-cell-title {
+    white-space: normal;
+    min-width: 180px;
+}
+
+.stats-movie-table td.stats-movie-cell-num,
+.stats-movie-table td.stats-movie-cell-year,
+.stats-movie-table td.stats-movie-cell-size {
+    font-variant-numeric: tabular-nums;
+}
+
+.stats-movie-table .rating-badge {
+    padding: 2px 9px;
+    font-size: 0.72rem;
+}
+
+.stats-movie-list-status {
+    margin: 0 0 10px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.stats-movie-list-status[hidden] {
+    display: none;
+}
+
+.stats-movie-list-retry {
+    margin-left: 10px;
+    padding: 5px 12px;
+    border: 1px solid var(--border-panel);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    color: var(--text-main);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.stats-movie-list-retry:hover,
+.stats-movie-list-filter:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.stats-movie-list-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.stats-movie-list-footer .pagination {
+    flex: 1 1 320px;
+}
+
+.stats-movie-list-filter {
+    padding: 7px 14px;
+    border: 1px solid var(--border-panel);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.stats-movie-list-filter[hidden] {
+    display: none;
+}
+
+@media (max-width: 520px) {
+    .stats-movie-list-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .stats-movie-list-filter {
+        width: 100%;
+    }
+}

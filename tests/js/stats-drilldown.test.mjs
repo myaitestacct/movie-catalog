@@ -31,25 +31,71 @@ class FakeClassList {
     contains(name) {
         return this.classes.has(name);
     }
+
+    setFrom(value) {
+        this.classes = new Set(
+            String(value).split(/\s+/).filter(Boolean)
+        );
+    }
+
+    join() {
+        return [...this.classes].join(' ');
+    }
 }
 
 class FakeElement {
-    constructor(tagName = 'div') {
+    constructor(tagName = 'div', ownerDocument = null) {
         this.tagName = tagName.toUpperCase();
+        this.ownerDocument = ownerDocument;
+        this.parentNode = null;
         this.children = [];
         this.dataset = {};
         this.style = {};
         this.attributes = new Map();
         this.listeners = new Map();
         this.classList = new FakeClassList(this);
-        this.textContent = '';
+        this._textContent = '';
         this.title = '';
         this.tabIndex = null;
         this.hidden = false;
         this.disabled = false;
         this.value = '';
+        this.selected = false;
         this.innerHTML = '';
         this.ariaLabel = null;
+        this.href = '';
+        this.rel = '';
+        this.target = '';
+        this.type = '';
+    }
+
+    get className() {
+        return this.classList.join();
+    }
+
+    set className(value) {
+        this.classList.setFrom(value);
+    }
+
+    get textContent() {
+        return this._textContent +
+            this.children.map(child => child.textContent ?? '').join('');
+    }
+
+    set textContent(value) {
+        this._textContent = String(value);
+        this.children = [];
+    }
+
+    get isConnected() {
+        let node = this;
+
+        while (node) {
+            if (node.tagName === 'BODY') return true;
+            node = node.parentNode;
+        }
+
+        return false;
     }
 
     setAttribute(name, value) {
@@ -87,19 +133,40 @@ class FakeElement {
         this.dispatchEvent({ type: 'click', preventDefault() {} });
     }
 
-    focus() {}
+    focus() {
+        if (this.ownerDocument) this.ownerDocument.activeElement = this;
+    }
+
+    remove() {
+        if (!this.parentNode) return;
+
+        this.parentNode.children = this.parentNode.children.filter(
+            child => child !== this
+        );
+        this.parentNode = null;
+    }
 
     appendChild(child) {
+        child.parentNode = this;
         this.children.push(child);
         return child;
     }
 
     append(...nodes) {
-        this.children.push(...nodes);
+        nodes.forEach(node => this.appendChild(node));
     }
 
     replaceChildren(...nodes) {
-        this.children = [...nodes];
+        this.children.forEach(child => {
+            child.parentNode = null;
+        });
+
+        this.children = [];
+        this.append(...nodes);
+    }
+
+    get firstChild() {
+        return this.children[0] ?? null;
     }
 
     set innerHTML(value) {
@@ -128,18 +195,34 @@ function register(id, element = new FakeElement()) {
     return element;
 }
 
+const documentListeners = new Map();
+
 globalThis.document = {
     body: new FakeElement('body'),
+    activeElement: null,
     getElementById(id) {
         return registry.get(id) ?? null;
     },
     createElement(tagName) {
-        return new FakeElement(tagName);
+        return new FakeElement(tagName, globalThis.document);
     },
     querySelector() {
         return null;
     },
-    addEventListener() {}
+    querySelectorAll() {
+        return [];
+    },
+    addEventListener(type, listener) {
+        if (!documentListeners.has(type)) {
+            documentListeners.set(type, []);
+        }
+
+        documentListeners.get(type).push(listener);
+    },
+    dispatch(type, event) {
+        (documentListeners.get(type) ?? [])
+            .forEach(listener => listener(event));
+    }
 };
 
 globalThis.CSS = { escape: value => String(value) };
@@ -322,12 +405,131 @@ const statsPayload = {
     }
 };
 
-globalThis.fetch = async () => ({
-    ok: true,
-    status: 200,
-    headers: { get: () => 'application/json' },
-    text: async () => JSON.stringify(statsPayload)
-});
+
+// Fixture rows returned for movie-list overlay requests: the overlay asks
+// /api/movies.php with the clicked slice as an ordinary column filter.
+const sliceRows = [
+    {
+        NUM: '1',
+        FORMATTEDTITLE: 'Arrival',
+        ORIGINALTITLE: 'Arrival',
+        YEAR: '2016',
+        RATING: '7.9',
+        FILESIZE: '1200',
+        URL: 'https://www.imdb.com/title/tt2543164/'
+    },
+    {
+        NUM: '4',
+        FORMATTEDTITLE: 'Arrival: Directors Cut',
+        ORIGINALTITLE: 'Arrival: Directors Cut',
+        YEAR: '2017',
+        RATING: '6.5',
+        FILESIZE: '1400',
+        URL: 'https://www.imdb.com/title/tt2543165/'
+    }
+];
+
+// Fixture rows for Metadata Completeness field clicks
+// (/api/library-issues.php?type=metadata-field&field=...). Only the first
+// page is used; the overlay pages them client-side.
+const metadataRows = Array.from({ length: 30 }, (_, index) => ({
+    NUM: String(100 + index),
+    FORMATTEDTITLE: `Metadata Movie ${index}`,
+    ORIGINALTITLE: `Metadata Movie ${index}`,
+    YEAR: '1999',
+    RATING: '6.4',
+    FILESIZE: '900',
+    URL: 'https://www.imdb.com/title/tt0100001/'
+}));
+
+const requestedUrls = [];
+
+globalThis.fetch = async url => {
+    const text = String(url);
+
+    requestedUrls.push(text);
+
+    let payload;
+
+    if (text.includes('stats.php')) {
+        payload = statsPayload;
+    } else if (text.includes('library-issues.php')) {
+        payload = metadataRows;
+    } else if (text.includes('movies.php')) {
+        const params = new URL(text, 'http://localhost').searchParams;
+
+        payload = {
+            data: sliceRows,
+            page: Number(params.get('page') || 1),
+            limit: Number(params.get('limit') || 25),
+            pages: 1,
+            total: sliceRows.length
+        };
+    } else {
+        payload = { error: true, message: `Unexpected request: ${text}` };
+    }
+
+    return {
+        ok: true,
+        status: 200,
+        headers: { get: () => 'application/json' },
+        text: async () => JSON.stringify(payload)
+    };
+};
+
+const flush = () => new Promise(resolve => setImmediate(resolve));
+
+function lastRequestMatching(fragment) {
+    const matches = requestedUrls.filter(url => url.includes(fragment));
+
+    return new URL(matches[matches.length - 1], 'http://localhost');
+}
+
+function findAll(root, predicate, results = []) {
+    root.children.forEach(child => {
+        if (predicate(child)) results.push(child);
+        findAll(child, predicate, results);
+    });
+
+    return results;
+}
+
+function findOverlay() {
+    return document.body.children.find(
+        child => child.classList.contains('stats-modal')
+    ) ?? null;
+}
+
+function overlayIsOpen() {
+    const overlay = findOverlay();
+
+    return Boolean(overlay) && !overlay.classList.contains('hidden');
+}
+
+function overlayTitle() {
+    const heading = findAll(
+        document.body,
+        element => element.classList.contains('stats-movie-list-title')
+    )[0];
+
+    return heading?.textContent ?? null;
+}
+
+function overlayRows() {
+    const tbody = findAll(
+        document.body,
+        element => element.tagName === 'TBODY'
+    )[0];
+
+    return tbody ? tbody.children : [];
+}
+
+function overlayFilterButton() {
+    return findAll(
+        document.body,
+        element => element.classList.contains('stats-movie-list-filter')
+    )[0] ?? null;
+}
 
 // Elements refreshStats() touches without null-guards (they always exist
 // in the rendered view).
@@ -350,7 +552,7 @@ const countryContainer = register('country-distribution');
 const resolutionContainer = register('resolution-distribution');
 const audioContainer = register('audio-format-distribution');
 const storageContainer = register('storage-size-distribution');
-register('metadata-completeness-fields');
+const metadataContainer = register('metadata-completeness-fields');
 
 // Insight cards: value span inside an article.
 function registerInsightCard(valueId) {
@@ -399,64 +601,80 @@ test.before(async () => {
     assert.equal(loaded, true, 'refreshStats renders the payload');
 });
 
-test('decade rows become clickable and filter YEAR by decade range', () => {
+test('decade rows open the movie-list overlay with the slice movies', async () => {
     const row = findSlice(decadeContainer, '2010s');
     assert.ok(row, 'renders the 2010s decade row');
     assert.equal(row.dataset.filterColumn, 'YEAR');
     assert.equal(row.dataset.filterValue, '2010-2019');
 
     state.search = {};
+    state.page = 3;
     row.click();
 
-    assert.equal(state.search.YEAR, '2010-2019');
-    assert.equal(state.page, 1);
-    assert.equal(loadCount, 1);
+    assert.equal(overlayIsOpen(), true, 'the overlay opens');
+    assert.equal(overlayTitle(), 'Movies from the 2010s');
+
+    await flush();
+
+    const request = lastRequestMatching('movies.php');
+    assert.equal(request.searchParams.get('YEAR'), '2010-2019');
+    assert.equal(request.searchParams.get('page'), '1');
+    assert.equal(request.searchParams.get('limit'), '25');
+
+    // The overlay never touches the table state.
+    assert.deepEqual(state.search, {});
+    assert.equal(state.page, 3);
+
+    const rows = overlayRows();
+    assert.equal(rows.length, sliceRows.length);
+    assert.equal(rows[0].children[0].textContent, 'Arrival');
+    assert.equal(rows[0].children[1].textContent, '1');
+    assert.equal(rows[0].children[2].textContent, '2016');
+    assert.equal(rows[0].children[3].textContent, '7.9');
+    assert.equal(rows[0].children[4].textContent, '1200');
+    assert.equal(rows[0].children[5].textContent, 'IMDB');
 });
 
-test('genre rows filter the CATEGORY column', () => {
+test('genre rows request the CATEGORY column', async () => {
     const row = findSlice(genreContainer, 'Romance');
     assert.ok(row, 'renders the Romance genre row');
 
-    state.search = {};
     row.click();
+    await flush();
 
-    assert.equal(state.search.CATEGORY, 'Romance');
+    assert.equal(
+        lastRequestMatching('movies.php').searchParams.get('CATEGORY'),
+        'Romance'
+    );
+    assert.equal(overlayTitle(), 'Romance movies');
+    assert.deepEqual(state.search, {});
 });
 
-test('rating and runtime band rows map to range filters', () => {
-    const ratingRow = findSlice(ratingContainer, '7–7.9');
-    assert.ok(ratingRow, 'renders the 7–7.9 rating band');
-
-    state.search = {};
-    ratingRow.click();
-    assert.equal(state.search.RATING, '7-7.9');
-
-    const runtimeRow = findSlice(runtimeContainer, 'Under 90 min');
-    assert.ok(runtimeRow, 'renders the Under 90 min runtime band');
-
-    state.search = {};
-    runtimeRow.click();
-    assert.equal(state.search.LENGTH, '<90');
-});
-
-test('director and cast rows filter the filter-only columns', () => {
-    const directorRow = findSlice(directorContainer, 'Denis Villeneuve');
-    assert.ok(directorRow, 'renders the director row');
-
-    state.search = {};
-    directorRow.click();
-    assert.equal(state.search.DIRECTOR, 'Denis Villeneuve');
-
-    const castRow = findSlice(castContainer, 'Amy Adams');
-    assert.ok(castRow, 'renders the actor row');
-
-    state.search = {};
-    castRow.click();
-    assert.equal(state.search.ACTORS, 'Amy Adams');
-});
-
-test('language, country, certification, resolution, and audio rows map to their columns', () => {
+test('rating, runtime, and size bands request range values', async () => {
     const cases = [
+        [ratingContainer, '7–7.9', 'RATING', '7-7.9'],
+        [runtimeContainer, 'Under 90 min', 'LENGTH', '<90'],
+        [storageContainer, 'Under 700 MB', 'FILESIZE', '<700']
+    ];
+
+    for (const [container, label, column, value] of cases) {
+        const row = findSlice(container, label);
+        assert.ok(row, `renders the ${label} band`);
+
+        row.click();
+        await flush();
+
+        assert.equal(
+            lastRequestMatching('movies.php').searchParams.get(column),
+            value
+        );
+    }
+});
+
+test('facet rows request their columns', async () => {
+    const cases = [
+        [directorContainer, 'Denis Villeneuve', 'DIRECTOR', 'Denis Villeneuve'],
+        [castContainer, 'Amy Adams', 'ACTORS', 'Amy Adams'],
         [languageContainer, 'English', 'LANGUAGES', 'English'],
         [countryContainer, 'Canada', 'COUNTRY', 'Canada'],
         [certificationContainer, 'PG-13', 'CERTIFICATION', 'PG-13'],
@@ -468,60 +686,65 @@ test('language, country, certification, resolution, and audio rows map to their 
         const row = findSlice(container, label);
         assert.ok(row, `renders the ${label} row`);
 
-        state.search = {};
         row.click();
-        assert.equal(state.search[column], value);
+        await flush();
+
+        assert.equal(
+            lastRequestMatching('movies.php').searchParams.get(column),
+            value
+        );
     }
 });
 
-test('size band rows map to MiB FILESIZE ranges', () => {
-    const compactRow = findSlice(storageContainer, 'Under 700 MB');
-    assert.ok(compactRow, 'renders the compact size band');
-
-    state.search = {};
-    compactRow.click();
-    assert.equal(state.search.FILESIZE, '<700');
-
-    const largeRow = findSlice(storageContainer, '6 GB+');
-
-    state.search = {};
-    largeRow.click();
-    assert.equal(state.search.FILESIZE, '6144+');
-});
-
-test('timeline years filter the exact YEAR', () => {
+test('timeline years open the overlay for the exact YEAR', async () => {
     const timeline = registry.get('release-year-timeline');
     const item = timeline.children.find(
-        child => child.title?.includes('Filter the table to movies from 2016')
+        child => child.title?.includes('Movies from 2016')
     );
     assert.ok(item, 'renders the interactive 2016 timeline item');
 
-    state.search = {};
     item.click();
-    assert.equal(state.search.YEAR, '2016');
+    await flush();
+
+    assert.equal(
+        lastRequestMatching('movies.php').searchParams.get('YEAR'),
+        '2016'
+    );
+    assert.equal(overlayTitle(), 'Movies from 2016');
 });
 
-test('insight cards become actionable drill-downs', () => {
+test('insight cards open the overlay with the same slice', async () => {
     assert.ok(
         topDirectorCard.classList.contains('stat-card-action'),
         'top director card is styled actionable'
     );
     assert.equal(topDirectorCard.getAttribute('role'), 'button');
 
-    state.search = {};
     topDirectorCard.click();
-    assert.equal(state.search.DIRECTOR, 'Denis Villeneuve');
+    await flush();
 
-    state.search = {};
+    assert.equal(
+        lastRequestMatching('movies.php').searchParams.get('DIRECTOR'),
+        'Denis Villeneuve'
+    );
+    assert.equal(
+        overlayTitle(),
+        'Movies directed by Denis Villeneuve'
+    );
+
     peakYearCard.click();
-    assert.equal(state.search.YEAR, '2016');
+    await flush();
+
+    assert.equal(
+        lastRequestMatching('movies.php').searchParams.get('YEAR'),
+        '2016'
+    );
+    assert.equal(overlayTitle(), 'Movies from 2016');
 });
 
-test('keyboard activation works on chart slices', () => {
+test('keyboard activation works on chart slices', async () => {
     const row = findSlice(decadeContainer, '1940s');
     assert.ok(row, 'renders the 1940s decade row');
-
-    state.search = {};
 
     row.dispatchEvent({
         type: 'keydown',
@@ -529,16 +752,80 @@ test('keyboard activation works on chart slices', () => {
         preventDefault() {}
     });
 
-    assert.equal(state.search.YEAR, '1940-1949');
+    await flush();
+
+    assert.equal(
+        lastRequestMatching('movies.php').searchParams.get('YEAR'),
+        '1940-1949'
+    );
+    assert.equal(overlayIsOpen(), true);
 });
 
-test('slices force AND mode when the table is in OR mode', () => {
+test('metadata completeness fields open the missing-movies overlay', async () => {
+    const row = findSlice(metadataContainer, 'File Size');
+    assert.ok(row, 'renders the File Size field row');
+
+    row.click();
+
+    assert.equal(overlayTitle(), 'Missing File Size');
+
+    await flush();
+
+    const request = lastRequestMatching('library-issues.php');
+    assert.equal(request.searchParams.get('type'), 'metadata-field');
+    assert.equal(request.searchParams.get('field'), 'file-size');
+
+    // 25 rows per page, the fixture holds 30.
+    assert.equal(overlayRows().length, 25);
+});
+
+test('the overlay keeps the old drill-down as a filter action', async () => {
+    const row = findSlice(genreContainer, 'Drama');
+    assert.ok(row, 'renders the Drama genre row');
+
     state.search = {};
+    state.page = 3;
+    loadCount = 0;
+
+    row.click();
+    await flush();
+
+    const filterButton = overlayFilterButton();
+    assert.ok(filterButton, 'the filter action is rendered');
+    assert.equal(filterButton.hidden, false);
+
+    filterButton.click();
+
+    assert.equal(state.search.CATEGORY, 'Drama');
+    assert.equal(state.page, 1);
+    assert.equal(loadCount, 1);
+    assert.equal(overlayIsOpen(), false, 'the overlay closes');
+});
+
+test('opening the overlay leaves the active filters and OR mode alone', async () => {
+    state.search = { FORMATTEDTITLE: 'Arrival' };
     state.searchMode = 'OR';
 
     const row = findSlice(genreContainer, 'Drama');
     row.click();
+    await flush();
 
-    assert.equal(state.searchMode, 'AND');
-    assert.equal(state.search.CATEGORY, 'Drama');
+    assert.deepEqual(state.search, { FORMATTEDTITLE: 'Arrival' });
+    assert.equal(state.searchMode, 'OR');
+    assert.equal(overlayFilterButton().hidden, false);
+
+    state.search = {};
+    state.searchMode = 'AND';
+});
+
+test('Escape closes the overlay', async () => {
+    const row = findSlice(genreContainer, 'Drama');
+    row.click();
+    await flush();
+
+    assert.equal(overlayIsOpen(), true);
+
+    document.dispatch('keydown', { key: 'Escape' });
+
+    assert.equal(overlayIsOpen(), false);
 });

@@ -149,10 +149,9 @@ test('a metadata completeness jump lands the row below the sticky header', async
   await fieldRow.click();
 
   const modal = page.locator('.stats-modal:not(.hidden)');
-  await expect(modal.locator('#library-issue-title')).toHaveText(
+  await expect(modal.locator('#stats-movie-list-title')).toHaveText(
     'Missing File Size'
   );
-  await modal.locator('.dup-group').click();
   await modal.locator('.jump-to-row[data-num="11"]').click();
 
   const row = page.locator('#movies tbody tr[data-num="11"]');

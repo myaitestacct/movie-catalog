@@ -52,7 +52,7 @@ This repository includes **comprehensive documentation** to help you understand,
 │  ├── UI-ENHANCEMENTS.md    ← UI bug fixes and improvements                   │
 │  │   ├── Row highlighting fixes                                           │
 │  │   ├── Search behavior improvements                                     │
-│  │   ├── Analytics drill-down feature                                     │
+│  │   ├── Analytics movie-list and drill-down features                     │
 │  │   └── Implementation summary                                            │
 │  │                                                                         │
 │  └── UI-MODERNIZATION.md   ← UI redesign and modernization                    │
@@ -175,7 +175,7 @@ This repository includes **comprehensive documentation** to help you understand,
 - Database configuration
 - Development workflow
 - Search behavior explanation
-- Analytics drill-down
+- Analytics movie lists (and the filter action)
 - Build and test commands
 - Deployment and troubleshooting
 - All features in detail
@@ -187,7 +187,7 @@ This repository includes **comprehensive documentation** to help you understand,
 
 **Contents:**
 - System architecture diagram
-- Data flow diagrams (movie listing, analytics, drill-down)
+- Data flow diagrams (movie listing, analytics, movie-list overlay)
 - Module dependency graph
 - Class/module responsibilities
 - Configuration hierarchy
@@ -232,7 +232,7 @@ This repository includes **comprehensive documentation** to help you understand,
 - UI audit (what was hurting)
 - Row highlighting fixes
 - Search behavior improvements
-- Analytics drill-down feature
+- Analytics movie-list overlay and the legacy drill-down filter action
 - Implementation summary
 - Preview instructions
 
