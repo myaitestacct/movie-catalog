@@ -17,8 +17,8 @@ const repositoryRoot = path.resolve(
 const readSource = relativePath =>
   readFileSync(path.join(repositoryRoot, relativePath), 'utf8');
 
-const movieView = readSource('movie-catalog/src/views/movie/movie.php');
-const appSource = readSource('movie-catalog/public/assets/js/app.js');
+const movieView = readSource('src/views/movie/movie.php');
+const appSource = readSource('public/assets/js/app.js');
 
 test('the theme toggle sits inside the sidebar header', () => {
   const headerIndex = movieView.indexOf('class="sidebar-header"');

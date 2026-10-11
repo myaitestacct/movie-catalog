@@ -8,7 +8,7 @@ import {
   highlightMatch,
   parseTitleSearch,
   shouldHighlight
-} from '../../movie-catalog/public/assets/js/utils/highlighttext.js';
+} from '../../public/assets/js/utils/highlighttext.js';
 
 test(
   'title search extracts only a trailing parenthesized year',

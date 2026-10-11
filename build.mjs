@@ -13,7 +13,7 @@ for (const arg of args) {
 const serve = args.has('--serve');
 const watch = args.has('--watch') || serve;
 const root = path.dirname(fileURLToPath(import.meta.url));
-const publicDir = path.join(root, 'movie-catalog/public');
+const publicDir = path.join(root, 'public');
 const outDir = path.join(publicDir, 'assets/dist');
 const options = [
   {

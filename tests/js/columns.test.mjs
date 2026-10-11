@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { state } from '../../movie-catalog/public/assets/js/core/state.js';
-import { initColumnToggles } from '../../movie-catalog/public/assets/js/table/columns.js';
+import { state } from '../../public/assets/js/core/state.js';
+import { initColumnToggles } from '../../public/assets/js/table/columns.js';
 
 class MockClassList {
   constructor() {

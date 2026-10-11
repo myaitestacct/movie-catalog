@@ -9,8 +9,7 @@ const repositoryRoot = path.resolve(
   '../../..'
 );
 
-const applicationRoot =
-  path.join(repositoryRoot, 'movie-catalog');
+const applicationRoot = repositoryRoot;
 
 const publicRoot =
   path.join(applicationRoot, 'public');

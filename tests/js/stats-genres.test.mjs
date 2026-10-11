@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   createGenreViewModel
-} from '../../movie-catalog/public/assets/js/stats/stats-genres.js';
+} from '../../public/assets/js/stats/stats-genres.js';
 
 test('genre view model calculates coverage, averages, and shares', () => {
   const model = createGenreViewModel({

@@ -33,7 +33,7 @@
 │                         WEB SERVER                                      │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                         │
-│  Document Root: movie-catalog/public/                                 │
+│  Document Root: public/                                               │
 │                                                                         │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐   │
 │  │  index.php       │  │  api/*.php       │  │  assets/         │   │
@@ -465,11 +465,11 @@ User Action: Click genre bar in analytics
 │     └── Path to custom JSON file outside project                      │
 │                                                                         │
 │  3. Local Config File                                                │
-│     └── movie-catalog/src/config/database.local.json                │
+│     └── src/config/database.local.json                              │
 │         (IGNORED by Git - must be created manually)                  │
 │                                                                         │
 │  4. Example Config File                                               │
-│     └── movie-catalog/src/config/database.example.json               │
+│     └── src/config/database.example.json                             │
 │         (Template for creating local config)                         │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────┘
@@ -478,7 +478,7 @@ User Action: Click genre bar in analytics
 │  APPLICATION CONFIGURATION                                            │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                         │
-│  movie-catalog/src/config/config.json                               │
+│  src/config/config.json                                             │
 │  {                                                                     │
 │    "pagination": { "default_limit": 50, "max_limit": 200 },         │
 │    "stats": { "cache_enabled": true, "cache_ttl": 300 }            │
@@ -490,7 +490,7 @@ User Action: Click genre bar in analytics
 │  SQL QUERIES                                                          │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                         │
-│  movie-catalog/src/config/sql.json                                    │
+│  src/config/sql.json                                                  │
 │  - Predefined SQL queries as templates                               │
 │  - Used by StatsController                                          │
 │  - Includes: stats, categories, languages, health, duplicates, etc.   │
@@ -835,8 +835,8 @@ Prevents browser from caching stale assets with fresh markup
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                         │
 │  Input:                                                                 │
-│    - movie-catalog/public/assets/js/app.js (entry)                   │
-│    - movie-catalog/public/assets/css/bundle-entry.css (entry)       │
+│    - public/assets/js/app.js (entry)                                 │
+│    - public/assets/css/bundle-entry.css (entry)                     │
 │    - All imported modules                                              │
 │                                                                         │
 │  Process:                                                              │

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
   configureExternalLink,
   safeExternalUrl
-} from '../../movie-catalog/public/assets/js/utils/url.js';
+} from '../../public/assets/js/utils/url.js';
 
 class MockLink {
   constructor() {

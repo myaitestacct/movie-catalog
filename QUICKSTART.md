@@ -16,11 +16,11 @@ npm ci
 # 2. Set up database (see below)
 
 # 3. Configure connection
-cp movie-catalog/src/config/database.example.json movie-catalog/src/config/database.local.json
+cp src/config/database.example.json src/config/database.local.json
 # Edit with your DB credentials
 
 # 4. Start development server
-mkdir -p movie-catalog/var/cache
+mkdir -p var/cache
 npm run dev
 # Open http://localhost:8080
 ```
@@ -104,8 +104,8 @@ Skip the SQL files above. Just configure the connection to point to your existin
 
 Create local config file:
 ```bash
-cp movie-catalog/src/config/database.example.json \
-  movie-catalog/src/config/database.local.json
+cp src/config/database.example.json \
+  src/config/database.local.json
 ```
 
 Edit with your credentials:
@@ -133,7 +133,7 @@ export MOVIE_DB_PASSWORD=local-development-only
 
 ### Application Configuration
 
-Edit `movie-catalog/src/config/config.json` to customize:
+Edit `src/config/config.json` to customize:
 ```json
 {
   "pagination": {
@@ -162,7 +162,7 @@ npm run dev
 npm run build:watch
 
 # Terminal 2: Start PHP server
-php -S 0.0.0.0:8080 -t movie-catalog/public
+php -S 0.0.0.0:8080 -t public
 ```
 
 Open: **http://localhost:8080**
@@ -188,7 +188,7 @@ Features:
 # Build minified assets
 npm run build
 
-# Assets will be in: movie-catalog/public/assets/dist/
+# Assets will be in: public/assets/dist/
 # - bundle.js
 # - bundle.css
 ```
@@ -240,11 +240,11 @@ With fallback: `/movies/antexport/movies_0000-coming_soon.jpg`
 
 Create directory and add images:
 ```bash
-mkdir -p movie-catalog/public/movies/antexport/
+mkdir -p public/movies/antexport/
 # Copy your poster images here
 # Ensure fallback image exists
 cp /path/to/coming_soon.jpg \
-  movie-catalog/public/movies/antexport/movies_0000-coming_soon.jpg
+  public/movies/antexport/movies_0000-coming_soon.jpg
 ```
 
 The `PICTURENAME` column in your database should match the filename (without path).
@@ -263,7 +263,7 @@ The `PICTURENAME` column in your database should match the filename (without pat
 | **Table 'movies' doesn't exist** | Run `dev/schema.sql` first, then `dev/seed.sql` |
 | **Assets not updating** | Run `npm run build` or `npm run build:watch` |
 | **Blank page** | Check browser console for errors. Verify PHP is running. |
-| **404 on /api/movies.php** | Ensure document root is `movie-catalog/public/` |
+| **404 on /api/movies.php** | Ensure document root is `public/` |
 | **Playwright tests fail** | Install Chromium: `npx playwright install chromium` |
 
 ### Debug Commands
@@ -291,7 +291,7 @@ tail -f /var/log/apache2/error.log
 
 ```bash
 # Clear stats cache
-rm -f movie-catalog/var/cache/stats.json
+rm -f var/cache/stats.json
 
 # Or request cache refresh
 curl 'http://localhost:8080/api/stats.php?refresh=true'
@@ -342,16 +342,16 @@ npx playwright install --with-deps chromium
 # 1. Build assets
 npm run build
 
-# 2. Set up web server with document root: movie-catalog/public/
+# 2. Set up web server with document root: public/
 
 # 3. Configure database (env vars or config file)
 
 # 4. Create cache directory
-mkdir -p movie-catalog/var/cache
-sudo chown www-data:www-data movie-catalog/var/cache
-chmod 750 movie-catalog/var/cache   # only the web-server user may write here (replace www-data)
+mkdir -p var/cache
+sudo chown www-data:www-data var/cache
+chmod 750 var/cache   # only the web-server user may write here (replace www-data)
 
-# 5. Add poster images to movie-catalog/public/movies/antexport/
+# 5. Add poster images to public/movies/antexport/
 ```
 
 ### Apache Configuration Example
@@ -359,9 +359,9 @@ chmod 750 movie-catalog/var/cache   # only the web-server user may write here (r
 ```apache
 <VirtualHost *:80>
     ServerName movies.example.com
-    DocumentRoot /path/to/movie-catalog/public
+    DocumentRoot /path/to/public
     
-    <Directory /path/to/movie-catalog/public>
+    <Directory /path/to/public>
         Options -Indexes +FollowSymLinks
         AllowOverride All
         Require all granted
@@ -378,7 +378,7 @@ chmod 750 movie-catalog/var/cache   # only the web-server user may write here (r
 server {
     listen 80;
     server_name movies.example.com;
-    root /path/to/movie-catalog/public;
+    root /path/to/public;
     index index.php;
     
     location / {
@@ -436,32 +436,31 @@ server {
 ## File Structure Cheat Sheet
 
 ```
-movie-catalog/
-├── movie-catalog/
-│   ├── public/               # Web root
-│   │   ├── api/              # API endpoints
-│   │   ├── assets/           # Frontend assets
-│   │   │   ├── css/          # Stylesheets
-│   │   │   ├── js/           # JavaScript modules
-│   │   │   └── vendor/       # Third-party (Font Awesome)
-│   │   └── index.php        # Entry point
-│   └── src/                 # PHP application
-│       ├── config/          # Configuration
-│       ├── controllers/     # Controllers
-│       ├── db/              # Database
-│       ├── helpers/         # Helpers
-│       ├── repositories/    # Repositories
-│       └── views/           # Templates
-├── dev/                    # Development files
-│   ├── schema.sql           # Database schema
-│   └── seed.sql             # Sample data
-├── tests/                  # Tests
-│   ├── browser/            # Playwright tests
-│   ├── js/                 # JS unit tests
-│   └── php/                # PHP unit tests
-├── package.json            # Node dependencies
-├── build.mjs              # Build script
-└── README.md              # Full documentation
+movie-catalog/         # Repository root
+├── public/            # Web root
+│   ├── api/           # API endpoints
+│   ├── assets/        # Frontend assets
+│   │   ├── css/       # Stylesheets
+│   │   ├── js/        # JavaScript modules
+│   │   └── vendor/    # Third-party (Font Awesome)
+│   └── index.php      # Entry point
+├── src/               # PHP application
+│   ├── config/        # Configuration
+│   ├── controllers/   # Controllers
+│   ├── db/            # Database
+│   ├── helpers/       # Helpers
+│   ├── repositories/  # Repositories
+│   └── views/         # Templates
+├── dev/               # Development files
+│   ├── schema.sql     # Database schema
+│   └── seed.sql       # Sample data
+├── tests/             # Tests
+│   ├── browser/       # Playwright tests
+│   ├── js/            # JS unit tests
+│   └── php/           # PHP unit tests
+├── package.json       # Node dependencies
+├── build.mjs          # Build script
+└── README.md          # Full documentation
 ```
 
 ---

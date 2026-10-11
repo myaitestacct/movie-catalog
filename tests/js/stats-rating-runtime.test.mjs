@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   createRatingRuntimeViewModel
-} from '../../movie-catalog/public/assets/js/stats/stats-rating-runtime.js';
+} from '../../public/assets/js/stats/stats-rating-runtime.js';
 
 test('rating/runtime view model calculates coverage and band shares', () => {
   const model = createRatingRuntimeViewModel({

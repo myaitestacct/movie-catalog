@@ -6,7 +6,8 @@ stream, or delete movies. The real application reads an existing `movies` table;
 a synthetic, database-free demo and a small development schema are also included.
 
 Run the commands below from the **repository root** (the directory containing
-`package.json`, not the nested `movie-catalog/` directory).
+`package.json`). The application lives in `public/` (web document root) and
+`src/` (PHP code).
 
 ## 1. Install the tooling
 
@@ -118,7 +119,7 @@ Important data conventions:
 Copy the ignored local configuration file:
 
 ```sh
-cp movie-catalog/src/config/database.example.json movie-catalog/src/config/database.local.json
+cp src/config/database.example.json src/config/database.local.json
 ```
 
 For Option A, replace its contents with:
@@ -141,19 +142,19 @@ this file. Environment variables (`MOVIE_DB_HOST`, `MOVIE_DB_PORT`,
 `MOVIE_DB_NAME`, `MOVIE_DB_USER`, `MOVIE_DB_PASSWORD`, `MOVIE_DB_CHARSET`) override
 JSON settings. `MOVIE_DB_CONFIG` can point to a JSON file outside the project.
 **`.env` files are not automatically loaded.** See the
-[database configuration reference](movie-catalog/src/config/README.md).
+[database configuration reference](src/config/README.md).
 
 ### Start development
 
 ```sh
-mkdir -p movie-catalog/var/cache
+mkdir -p var/cache
 npm run dev
 ```
 
 Open **http://localhost:8080**. This command builds JS/CSS, watches both, and
-starts PHP with `movie-catalog/public` as the document root. Reload the browser
+starts PHP with `public` as the document root. Reload the browser
 after edits; automatic browser reload is not included. Ctrl+C stops both PHP
-and the watchers. The PHP process needs write access to `movie-catalog/var/cache`.
+and the watchers. The PHP process needs write access to `var/cache`.
 
 The server binds to `0.0.0.0` so container/remote previews work. On a private
 workstation you can restrict it to loopback with `HOST=127.0.0.1 npm run dev`.
@@ -175,7 +176,7 @@ and 8**, not the fuzzy-only `Mission.Spring.mkv` or the hidden `/missing/` folde
 
 The current poster URL convention is `/movies/antexport/<PICTURENAME>` with
 fallback `/movies/antexport/movies_0000-coming_soon.jpg`. Put your exported images,
-including that fallback, under `movie-catalog/public/movies/antexport/`, or map
+including that fallback, under `public/movies/antexport/`, or map
 that URL to an existing poster directory in your web server. This directory is
 ignored by Git. Images are not included in the SQL fixtures; the real catalog
 can load without them, but posters will be missing until you supply the files.
@@ -309,7 +310,7 @@ by injection instead (`setMovieLoader()` in `stats/stats.js`), and
 
 ## Deployment and troubleshooting
 
-- Set the web document root to **`movie-catalog/public/`**, never the repository
+- Set the web document root to **`public/`**, never the repository
   root. `src/.htaccess` is only Apache defense in depth.
 - There is **no application authentication**. Keep the app private or protect it
   with web-server/reverse-proxy authentication; API responses expose catalog

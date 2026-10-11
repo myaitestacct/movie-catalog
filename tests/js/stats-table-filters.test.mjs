@@ -8,10 +8,10 @@ import {
     getFacetTableFilter,
     getYearTableFilter,
     setTableFilterLoader
-} from '../../movie-catalog/public/assets/js/stats/stats-table-filters.js';
+} from '../../public/assets/js/stats/stats-table-filters.js';
 import {
     state
-} from '../../movie-catalog/public/assets/js/core/state.js';
+} from '../../public/assets/js/core/state.js';
 
 const createdInputs = [];
 

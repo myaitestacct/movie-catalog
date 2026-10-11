@@ -5,7 +5,7 @@ import {
   animateBytes,
   animateMetric,
   animateNumber
-} from '../../movie-catalog/public/assets/js/stats/stats-animations.js';
+} from '../../public/assets/js/stats/stats-animations.js';
 
 const originalMatchMedia = globalThis.matchMedia;
 

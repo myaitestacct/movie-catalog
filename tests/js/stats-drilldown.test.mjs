@@ -146,13 +146,13 @@ globalThis.CSS = { escape: value => String(value) };
 globalThis.BASE_URL = '';
 
 const { state } = await import(
-    '../../movie-catalog/public/assets/js/core/state.js'
+    '../../public/assets/js/core/state.js'
 );
 const {
     refreshStats,
     setMovieLoader
 } = await import(
-    '../../movie-catalog/public/assets/js/stats/stats.js'
+    '../../public/assets/js/stats/stats.js'
 );
 
 // Stats payload mirroring the mock server (complete per the API

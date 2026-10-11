@@ -376,7 +376,7 @@ Use your code editor's or browser's **search function** to find specific terms:
 The documentation **references actual code files**. Open them alongside the docs:
 ```bash
 # Example: Reading about the MovieRepository
-# Open: movie-catalog/src/repositories/MovieRepository.php
+# Open: src/repositories/MovieRepository.php
 # Alongside: ANALYSIS.md (Repository section)
 ```
 
@@ -454,7 +454,8 @@ Documentation:
 └── UI-MODERNIZATION.md     # UI redesign
 
 Code:
-├── movie-catalog/          # Application root
+├── public/                # Web document root
+├── src/                   # PHP application code
 ├── dev/                   # Development files
 └── tests/                 # Test files
 ```
