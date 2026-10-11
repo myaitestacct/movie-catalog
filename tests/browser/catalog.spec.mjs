@@ -566,9 +566,10 @@ test.describe('movie catalog', () => {
         '#missing-files-card'
       ).click();
 
+      // The card opens the shared movie-list overlay.
       const issueModal =
         page.locator(
-          '#library-issue-title'
+          '#stats-movie-list-title'
         );
 
       await expect(
@@ -579,19 +580,30 @@ test.describe('movie catalog', () => {
 
       await expect(
         page.locator(
-          '#library-issue-pagination'
+          '.stats-modal:not(.hidden) .stats-pagination-info'
         )
       ).toContainText(
         'Page 1 of 1 • 1 movie'
       );
+
+      const issueRow = page.locator(
+        '.stats-modal:not(.hidden) .stats-movie-table tbody tr'
+      );
+
+      await expect(issueRow).toHaveCount(1);
+
+      // Minimal details: title, number, year, rating, size, IMDb link.
+      await expect(
+        issueRow.locator('.stats-movie-cell-imdb a')
+      ).toHaveText('IMDB');
 
       await page.locator(
         '.stats-modal:not(.hidden) .stats-close'
       ).click();
 
       await expect(
-        issueModal
-      ).toBeHidden();
+        page.locator('.stats-modal:not(.hidden)')
+      ).toHaveCount(0);
     }
   );
 

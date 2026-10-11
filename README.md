@@ -235,14 +235,15 @@ can filter results (used by the analytics movie lists and their filter
 action) but have no table header, so they are not sortable and appear only
 as removable filter pills.
 
-## Analytics movie lists: click a chart to see its movies
+## Movie lists: click any count to see its movies
 
-Every analytics chart slice in the Analytics panel is clickable and opens a
-movie-list overlay with the movies behind that number — the same idea as the
-Metadata Completeness rows, which open the same overlay for the movies
-missing a field:
+Every analytics count is clickable and opens the shared movie-list overlay
+with the movies behind that number. The same overlay covers the whole
+dashboard — chart slices, insight cards, Metadata Completeness rows, and the
+Library Health cards (Missing Files, Missing Posters, Incomplete Metadata),
+Duplicates, and Get Better Copy:
 
-| Analytics slice | Movies listed | Filter action |
+| Clicked item | Movies listed | Filter action |
 | --- | --- | --- |
 | Decade Distribution row | `YEAR` decade range, e.g. `2000-2009` | same |
 | Collection Timeline year | exact `YEAR` | same |
@@ -254,13 +255,20 @@ missing a field:
 | Resolution / Audio row | `RESOLUTION` / `AUDIOFORMAT` | same |
 | Top-item insight cards (Top Director, Peak Year, ...) | same as their chart | same |
 | Metadata Completeness field row | movies missing that field | — (no table filter) |
+| Missing Files / Missing Posters cards | `FILEPATH = 'MISSING'` / no poster | — |
+| Incomplete Metadata card | rows missing a required field | — |
+| Duplicates card | every row sharing a duplicate IMDb URL | — |
+| Get Better Copy card | rows marked `-Get.Better.Copy` | — |
 | Largest Movie card | jumps to that row in the table | — |
 
 The overlay lists each movie with minimal details: title, number (`NUM`),
 year, rating, stored file size, and the external IMDb link, 25 rows per
-page. The number jumps to that movie's row in the main table. The list is
-read-only: the table and the active filters stay untouched, and the drawer
-stays open behind the overlay.
+page (the library-issue, duplicate, and better-copy endpoints return the
+whole list at once, and the overlay pages it the same way). The number
+jumps to that movie's row in the main table; the previous grouped,
+expandable dialogs are gone. The list is read-only: the table and the
+active filters stay untouched, and the drawer stays open behind the
+overlay.
 
 The **Filter the table** button in the overlay footer applies the slice as a
 normal toolbar filter instead (the older drill-down): the overlay and drawer
@@ -268,8 +276,14 @@ close, the table resets to page one with the filter applied, the column
 input (when the column has one) shows the value, a removable pill appears
 for filter-only columns such as Director, and the Clear Filters chip clears
 it. The filter mode switches to **AND** so the clicked slice is always
-satisfied alongside any other active filters. Library Health keeps its own
-"open the list of movies" dialog.
+satisfied alongside any other active filters. The Library Health,
+Duplicates, and Get Better Copy lists have no table filter, so they show no
+footer action.
+
+When a list is empty the overlay reports it in place — a Library Health card
+whose count is 0 opens an empty list rather than firing an alert — and a
+failed request shows a Retry button. Metadata Completeness rows whose
+`missing_count` is 0 stay non-interactive.
 
 Band boundaries in the filter action match the analytics banding exactly
 (ratings are one decimal, runtimes whole minutes, file sizes the stored MiB

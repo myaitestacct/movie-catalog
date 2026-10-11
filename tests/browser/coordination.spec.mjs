@@ -125,7 +125,6 @@ test('an analytics link changes page, reveals the table, and highlights its movi
   await page.locator('#stats-toggle').click();
   await page.locator('#better-copy-card').click();
   const modal = page.locator('.stats-modal:not(.hidden)');
-  await modal.locator('.dup-group').click();
   await modal.locator('.jump-to-row[data-num="51"]').click();
 
   const row = page.locator('#movies tbody tr[data-num="51"]');
@@ -168,7 +167,6 @@ test('jumping from analytics reveals the table when the grid view is active', as
   await page.locator('#stats-toggle').click();
   await page.locator('#better-copy-card').click();
   const modal = page.locator('.stats-modal:not(.hidden)');
-  await modal.locator('.dup-group').click();
   await modal.locator('.jump-to-row[data-num="51"]').click();
 
   const row = page.locator('#movies tbody tr[data-num="51"]');
@@ -240,7 +238,6 @@ test('repeating a jump while its page is loading still highlights the destinatio
     await page.locator('#stats-toggle').click();
     await page.locator('#better-copy-card').click();
     const modal = page.locator('.stats-modal:not(.hidden)');
-    await modal.locator('.dup-group').click();
     const link = modal.locator('.jump-to-row[data-num="51"]');
     await link.click();
     await firstLoadStarted.promise;

@@ -9,8 +9,6 @@
     /* Aliases onto the shared design tokens */
     --bg-panel: var(--table-bg);
     --bg-card: var(--surface-2);
-    --bg-group-a: color-mix(in srgb, var(--primary) 7%, var(--table-bg));
-    --bg-group-b: color-mix(in srgb, var(--primary) 3%, var(--table-bg));
     --bg-hover: color-mix(in srgb, var(--primary) 9%, var(--table-bg));
 
     --text-main: var(--text-color);
@@ -1209,38 +1207,6 @@
     background: var(--bg-card);
     position: sticky;
     top: 0;
-}
-
-.dup-group {
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.dup-group-a {
-    background: var(--bg-group-a);
-}
-
-.dup-group-b {
-    background: var(--bg-group-b);
-}
-
-.dup-group:hover {
-    background: var(--bg-hover);
-}
-
-.dup-toggle {
-    display: inline-block;
-    width: 14px;
-    margin-right: 6px;
-    font-size: 12px;
-}
-
-.dup-child {
-    background: var(--bg-card);
-}
-
-.dup-child td {
-    padding-left: 36px;
 }
 
 .stats-modal tbody tr:hover {

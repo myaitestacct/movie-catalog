@@ -268,6 +268,13 @@ All status colors pass WCAG AA against their own backgrounds; hover/active use
 - Favicon added; `#filter-pills` container and legend added to the movie view.
 
 **JS**
+
+> Updated: every analytics count — chart slices, insight cards, Metadata
+> Completeness rows, Library Health cards, Duplicates, and Get Better
+> Copy — now opens the shared movie-list overlay (`stats/stats-movie-list.js`)
+> with minimal movie rows (title, number, year, rating, size, external link).
+> The older grouped/expandable dialogs and their `.dup-group` / `.dup-child`
+> styles were removed.
 - `sorting.js`: sets `aria-sort` + title on the sorted column.
 - `pagination.js`: 25/50/100/200 page-size selector persisted in `localStorage`, `role="status"` result line.
 - `table.js`: poster thumbnails (reuses the modal's `setPoster` fallback logic), rating tier classes, `data-col` on cells, empty-state row with a working "Clear all filters" action, row stagger indexes; removed the redundant hover handlers.

@@ -273,9 +273,11 @@ User Action: Click genre bar in analytics
 │  - Reload page 1          │
 └──────────────────────────┘
 
-Metadata Completeness field rows open the same overlay, fed by
-/api/library-issues.php?type=metadata-field&field=...
-(no table filter, so no filter action).
+Metadata Completeness field rows, the Library Health cards, and the
+Duplicates / Get Better Copy cards open the same overlay through
+createListSource(), fed by the unpaginated list endpoints
+(/api/library-issues.php, /api/duplicates.php, /api/better-copy.php);
+they have no table filter, so no filter action.
 ```
 
 ---
@@ -443,7 +445,7 @@ Metadata Completeness field rows open the same overlay, fed by
     │  - sidebar.js: Sidebar controls and interactions                 │
     ├─────────────────────────────────────────────────────────────┤
     │  STATS Layer                                                     │
-    │  - stats.js: Main initialization and coordination                │
+    │  - stats.js: Main initialization and coordination, list wiring   │
     │  - stats-*.js: Individual chart types and analytics              │
     │    - animations, cast, certifications, directors, genres       │
     │    - issues, language-country, metadata-completeness            │

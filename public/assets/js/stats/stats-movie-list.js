@@ -5,12 +5,13 @@ import { renderStatsPagination } from './stats-pagination.js';
 /*
  * Analytics movie-list overlay.
  *
- * Clicking a chart slice, an insight card, or a Metadata Completeness field
- * row opens this dialog with the movies behind that number instead of
- * filtering the main table. The list stays deliberately minimal -- title,
- * number, year, rating, stored size, and the external link -- and the slice
- * itself remains reachable through the footer's "Filter the table" button,
- * which reuses the normal table-filter code path.
+ * Clicking a chart slice, an insight card, a Metadata Completeness field
+ * row, or a Library Health / duplicate / better-copy card opens this dialog
+ * with the movies behind that number/issue instead of filtering the main
+ * table. The list stays deliberately minimal -- title, number, year, rating,
+ * stored size, and the external link. For chart slices the slice itself
+ * remains reachable through the footer's "Filter the table" button, which
+ * reuses the normal table-filter code path.
  *
  * The movie jumper (jumpToMovie, owned by stats.js) is injected through
  * setMovieJumper(); this module must never import the entry point (see the
@@ -18,6 +19,30 @@ import { renderStatsPagination } from './stats-pagination.js';
  */
 
 export const MOVIE_LIST_PAGE_SIZE = 25;
+
+/**
+ * Build an overlay source from an unpaginated list request -- the library
+ * issue, duplicate, and better-copy endpoints return every row at once.
+ * Pages are sliced client-side with the overlay's page size so every list
+ * behaves like the slice lists.
+ *
+ * @param {(signal: AbortSignal) => Promise<object[]>} fetchRows
+ */
+export function createListSource(fetchRows) {
+    return {
+        fetchPage: async (page, signal) => {
+            const rows = await fetchRows(signal);
+            const list = Array.isArray(rows) ? rows : [];
+            const start =
+                (Math.max(1, Number(page) || 1) - 1) * MOVIE_LIST_PAGE_SIZE;
+
+            return {
+                rows: list.slice(start, start + MOVIE_LIST_PAGE_SIZE),
+                total: list.length
+            };
+        }
+    };
+}
 
 const COLUMN_LABELS = Object.freeze([
     'Title',
@@ -37,6 +62,7 @@ let activeSource = null;
 let activeSpec = null;
 let activeFilter = null;
 let activePage = 1;
+let activeEmptyMessage = 'No movies match this selection.';
 let inFlight = null;
 
 /**
@@ -296,7 +322,7 @@ function renderPage(result) {
 
     if (rows.length === 0) {
         elements.table.hidden = true;
-        setStatus('No movies match this selection.');
+        setStatus(activeEmptyMessage);
         renderPager(0);
         return;
     }
@@ -349,12 +375,14 @@ function loadPage(page) {
  * @param {{column: string, value: string}|null} [options.spec] Slice filter;
  *   with `onFilter` it enables the "Filter the table" footer button.
  * @param {(spec: object) => void} [options.onFilter]
+ * @param {string} [options.emptyMessage] Shown when the list has no movies.
  */
 export function openMovieListOverlay({
     title = 'Movies',
     source,
     spec = null,
-    onFilter = null
+    onFilter = null,
+    emptyMessage = 'No movies match this selection.'
 } = {}) {
     if (typeof source?.fetchPage !== 'function') return;
 
@@ -368,6 +396,7 @@ export function openMovieListOverlay({
     activeSource = source;
     activeSpec = spec;
     activeFilter = typeof onFilter === 'function' ? onFilter : null;
+    activeEmptyMessage = String(emptyMessage || 'No movies match this selection.');
 
     heading.textContent = String(title || 'Movies');
     filterButton.hidden = !(activeSpec && activeFilter);

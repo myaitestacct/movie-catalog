@@ -3,7 +3,6 @@ import {
     animateMetric,
     animateNumber
 } from './stats-animations.js';
-import { renderStatsPagination } from './stats-pagination.js';
 import * as releaseYearAnalytics from './stats-release-years.js';
 import * as genreAnalytics from './stats-genres.js';
 import * as ratingRuntimeAnalytics from './stats-rating-runtime.js';
@@ -14,11 +13,7 @@ import * as languageCountryAnalytics from './stats-language-country.js';
 import * as technicalFormatAnalytics from './stats-technical-formats.js';
 import * as storageAnalytics from './stats-storage.js';
 import * as metadataCompleteness from './stats-metadata-completeness.js';
-import {
-    countGroupedRows,
-    groupMovieRows,
-    LIBRARY_ISSUE_CONFIG
-} from './stats-issues.js';
+import { LIBRARY_ISSUE_CONFIG } from './stats-issues.js';
 import {
     applyTableFilter,
     getBandTableFilter,
@@ -29,6 +24,7 @@ import {
 } from './stats-table-filters.js';
 import {
     closeMovieListOverlay,
+    createListSource,
     openMovieListOverlay,
     setMovieJumper,
     MOVIE_LIST_PAGE_SIZE
@@ -45,7 +41,6 @@ import {
 import { createLatestRequest, isAbortError } from '../core/request.js';
 import { state, getMovieStateSignature } from '../core/state.js';
 import { clearError, showError } from '../utils/feedback.js';
-import { configureExternalLink } from '../utils/url.js';
 import { formatBytes } from '../utils/format.js';
 
 // This module must never import from the entry point (../app.js).
@@ -72,31 +67,13 @@ export function setMovieLoader(loader) {
 let panel, loaded = false;
 let statsToggleButton;
 let statsBackdrop;
-let duplicateModal;
 
 export function isStatsLoaded() {
     return loaded;
 }
 
-// duplicate state
-let dupGroups = [];
-let dupPage = 1;
-
-// Declare getBetterCopyGroups globally, so it can be accessed in other functions
-let getBetterCopyGroups = [];
-let getBetterCopyPage = 1;
-
-let libraryIssueModal;
-let libraryIssueGroups = [];
-let libraryIssuePage = 1;
-let activeLibraryIssueConfig = null;
-let libraryIssueFocusReturn = null;
-
 const statsRequests = createLatestRequest();
-const statsDetailRequests = createLatestRequest();
 const movieJumpRequests = createLatestRequest();
-
-const REC_PER_PAGE = 10;
 
 function getLibraryIssueCard(config) {
     const card = document.getElementById(config.cardId);
@@ -125,65 +102,6 @@ function bindLibraryIssueCard(issueType, config) {
             card.click();
         });
     }
-}
-
-function createGroupHeader(group, colspan, alternate, itemLabel = 'copy') {
-    const header = document.createElement('tr');
-    header.className = `dup-group ${alternate ? 'dup-group-a' : 'dup-group-b'}`;
-
-    const cell = document.createElement('td');
-    cell.colSpan = colspan;
-
-    const toggle = document.createElement('span');
-    toggle.className = 'dup-toggle';
-    toggle.innerHTML = `<i class="fa-solid fa-chevron-${group.open ? 'down' : 'right'}" aria-hidden="true"></i>`;
-
-    const details = document.createTextNode(
-        ` ${String(group.title ?? '')} (${String(group.year ?? '')}) `
-    );
-
-    const count = Number(group.count) || 0;
-    const countLabel = document.createElement('small');
-    countLabel.textContent =
-        `— ${count} ${itemLabel}${count === 1 ? '' : 's'}`;
-
-    cell.append(toggle, details, countLabel);
-    header.appendChild(cell);
-
-    return header;
-}
-
-function createMovieReferenceRow(row) {
-    const tr = document.createElement('tr');
-    tr.className = 'dup-child';
-
-    const numCell = document.createElement('td');
-    const jumpLink = document.createElement('a');
-    jumpLink.href = '#';
-    jumpLink.className = 'jump-to-row';
-    jumpLink.dataset.num = String(row.NUM ?? '');
-    jumpLink.textContent = String(row.NUM ?? '');
-    jumpLink.onclick = e => {
-        e.preventDefault();
-        jumpToMovie(row.NUM);
-    };
-    numCell.appendChild(jumpLink);
-
-    const yearCell = document.createElement('td');
-    yearCell.textContent = String(row.YEAR ?? '');
-
-    const imdbCell = document.createElement('td');
-    const imdbLink = document.createElement('a');
-
-    if (configureExternalLink(imdbLink, row.URL)) {
-        imdbLink.textContent = 'IMDB';
-        imdbCell.appendChild(imdbLink);
-    } else {
-        imdbCell.textContent = 'IMDB';
-    }
-
-    tr.append(numCell, yearCell, imdbCell);
-    return tr;
 }
 
 export function initStats(toggleBtn, statsPanel) {
@@ -254,15 +172,9 @@ export function initStats(toggleBtn, statsPanel) {
     document.addEventListener('keydown', e => {
         if (e.key !== 'Escape') return;
 
-        const openModal = document.querySelector('.stats-modal:not(.hidden)');
-        if (openModal) {
-            if (openModal === libraryIssueModal) {
-                closeLibraryIssueModal();
-            } else {
-                openModal.classList.add('hidden');
-            }
-            return;
-        }
+        // Every stats dialog is a movie-list overlay; the overlay module
+        // owns its own Escape handling (abort, restore focus).
+        if (document.querySelector('.stats-modal:not(.hidden)')) return;
 
         if (panel.classList.contains('show')) {
             closePanel(true);
@@ -525,20 +437,11 @@ function openMetadataFieldMovies(field) {
 
     openMovieListOverlay({
         title: `Missing ${field.label}`,
-        source: {
-            fetchPage: async (page, signal) => {
-                const rows = await fetchMetadataIssueRows(
-                    field.key,
-                    { signal }
-                );
-                const start = (page - 1) * MOVIE_LIST_PAGE_SIZE;
-
-                return {
-                    rows: rows.slice(start, start + MOVIE_LIST_PAGE_SIZE),
-                    total: rows.length
-                };
-            }
-        }
+        emptyMessage:
+            `No movies missing ${field.label.toLowerCase()} were found.`,
+        source: createListSource(
+            signal => fetchMetadataIssueRows(field.key, { signal })
+        )
     });
 }
 
@@ -745,344 +648,38 @@ function bindLargestMovieDrillDown() {
    DUPLICATES
 ============================= */
 
-async function loadDuplicates() {
-    const request = statsDetailRequests.start();
-
-    try {
-        const rows = await fetchDuplicates({ signal: request.signal });
-        if (!request.isCurrent()) return;
-
-        clearError('duplicates');
-        dupGroups = groupDuplicates(rows);
-        dupPage = 1;
-        showDuplicateModal();
-    } catch (error) {
-        if (!request.isCurrent() || isAbortError(error)) return;
-
-        console.error('Duplicate load failed', error);
-        showError(error.message || 'Unable to load duplicate movies', {
-            scope: 'duplicates',
-            retry: loadDuplicates
-        });
-    } finally {
-        request.finish();
-    }
-}
-
-/* Group rows by the same IMDb URL used by the backend duplicate query. */
-function groupDuplicates(rows) {
-    const map = new Map();
-
-    rows.forEach(row => {
-        const key = row.URL;
-        if (!map.has(key)) {
-            map.set(key, {
-                key,
-                title: row.ORIGINALTITLE,
-                year: row.YEAR,
-                url: row.URL,
-                count: 0,
-                rows: [],
-                open: false
-            });
-        }
-
-        const group = map.get(key);
-        group.rows.push(row);
-        group.count = group.rows.length;
+/**
+ * Duplicate Movies card: open the shared movie-list overlay with every
+ * duplicate row (matches the backend's duplicate query).
+ */
+function loadDuplicates() {
+    openMovieListOverlay({
+        title: 'Duplicate Movies',
+        emptyMessage: 'No duplicate movies were found.',
+        source: createListSource(signal => fetchDuplicates({ signal }))
     });
-
-    return Array.from(map.values());
-}
-
-function showDuplicateModal() {
-    if (!duplicateModal) {
-        duplicateModal = document.createElement('div');
-        duplicateModal.className = 'stats-modal hidden';
-        duplicateModal.innerHTML = `
-            <div class="stats-modal-content">
-                <div class="stats-modal-header">
-                    <h2>Duplicate Movies</h2>
-                    <button type="button" class="stats-close" aria-label="Close duplicate movies dialog">&times;</button>
-                </div>
-
-                <div class="stats-modal-body">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Details</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <div class="pagination" id="dup-pagination"></div>
-            </div>
-        `;
-
-        document.body.appendChild(duplicateModal);
-
-        duplicateModal.querySelector('.stats-close').onclick =
-            () => duplicateModal.classList.add('hidden');
-
-        duplicateModal.onclick = e => {
-            if (e.target === duplicateModal) {
-                duplicateModal.classList.add('hidden');
-            }
-        };
-    }
-
-    renderDuplicatePage();
-    duplicateModal.classList.remove('hidden');
-}
-
-function renderDuplicatePage() {
-    const tbody = duplicateModal.querySelector('tbody');
-    const pager = duplicateModal.querySelector('#dup-pagination');
-
-    tbody.innerHTML = '';
-    pager.innerHTML = '';
-
-    const start = (dupPage - 1) * REC_PER_PAGE;
-    const pageGroups = dupGroups.slice(start, start + REC_PER_PAGE);
-
-    let alt = false;
-
-    pageGroups.forEach(group => {
-        alt = !alt;
-
-        /* ---------- GROUP HEADER ---------- */
-        const header = createGroupHeader(group, 3, alt);
-        header.onclick = () => {
-            group.open = !group.open;
-            renderDuplicatePage();
-        };
-
-        tbody.appendChild(header);
-
-        /* ---------- CHILD ROWS ---------- */
-        if (group.open) {
-            group.rows.forEach(row => {
-                tbody.appendChild(createMovieReferenceRow(row));
-            });
-        }
-    });
-
-    const pages = Math.ceil(dupGroups.length / REC_PER_PAGE);
-    for (let i = 1; i <= pages; i++) {
-        const btn = document.createElement('button');
-        btn.textContent = i;
-        btn.className = i === dupPage ? 'active' : '';
-        btn.onclick = () => {
-            dupPage = i;
-            renderDuplicatePage();
-        };
-        pager.appendChild(btn);
-    }
 }
 
 /* =============================
    LIBRARY ISSUES
 ============================= */
 
-async function loadIssueRows(config) {
-    const request = statsDetailRequests.start();
-
-    try {
-        const rows = await config.fetchRows(request.signal);
-        if (!request.isCurrent()) return;
-
-        clearError(config.scope);
-
-        if (rows.length === 0) {
-            alert(config.emptyMessage);
-            return;
-        }
-
-        activeLibraryIssueConfig = config;
-        libraryIssueGroups = groupMovieRows(rows);
-        libraryIssuePage = 1;
-        showLibraryIssueModal();
-    } catch (error) {
-        if (!request.isCurrent() || isAbortError(error)) return;
-
-        console.error(`Failed to load ${config.title}`, error);
-        showError(
-            error.message ||
-                `Unable to load ${config.title.toLowerCase()}`,
-            {
-                scope: config.scope,
-                retry: config.retry
-            }
-        );
-    } finally {
-        request.finish();
-    }
-}
-
+/**
+ * Library Health card (Missing Files / Missing Posters / Incomplete
+ * Metadata): open the shared movie-list overlay with the movies behind the
+ * card's count.
+ * @param {string} issueType
+ */
 function loadLibraryIssues(issueType) {
     const config = LIBRARY_ISSUE_CONFIG[issueType];
     if (!config) return;
 
-    return loadIssueRows({
-        ...config,
-        scope: `library-issue-${issueType}`,
-        fetchRows: signal =>
-            fetchLibraryIssueRows(issueType, { signal }),
-        retry: () => loadLibraryIssues(issueType)
-    });
-}
-
-function closeLibraryIssueModal(restoreFocus = true) {
-    if (
-        !libraryIssueModal ||
-        libraryIssueModal.classList.contains('hidden')
-    ) {
-        return;
-    }
-
-    libraryIssueModal.classList.add('hidden');
-
-    const focusTarget = libraryIssueFocusReturn;
-    libraryIssueFocusReturn = null;
-
-    if (restoreFocus && focusTarget?.isConnected) {
-        requestAnimationFrame(() => focusTarget.focus());
-    }
-}
-
-function showLibraryIssueModal() {
-    const config = activeLibraryIssueConfig;
-    if (!config) return;
-
-    if (!libraryIssueModal) {
-        libraryIssueModal = document.createElement('div');
-        libraryIssueModal.className = 'stats-modal hidden';
-        libraryIssueModal.setAttribute('role', 'dialog');
-        libraryIssueModal.setAttribute('aria-modal', 'true');
-        libraryIssueModal.setAttribute(
-            'aria-labelledby',
-            'library-issue-title'
-        );
-
-        libraryIssueModal.innerHTML = `
-            <div class="stats-modal-content">
-                <div class="stats-modal-header">
-                    <h2 id="library-issue-title"></h2>
-                    <button type="button" class="stats-close" aria-label="Close library issue dialog">&times;</button>
-                </div>
-
-                <div class="stats-modal-body">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Details</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <div class="pagination" id="library-issue-pagination"></div>
-            </div>
-        `;
-
-        document.body.appendChild(libraryIssueModal);
-
-        libraryIssueModal.querySelector('.stats-close').onclick = () => {
-            closeLibraryIssueModal();
-        };
-
-        libraryIssueModal.onclick = event => {
-            if (event.target === libraryIssueModal) {
-                closeLibraryIssueModal();
-            }
-        };
-    }
-
-    libraryIssueModal.querySelector(
-        '#library-issue-title'
-    ).textContent = config.title;
-
-    libraryIssueModal.querySelector('.stats-close').setAttribute(
-        'aria-label',
-        `Close ${config.title.toLowerCase()} dialog`
-    );
-
-    renderLibraryIssuePage();
-
-    if (libraryIssueModal.classList.contains('hidden')) {
-        libraryIssueFocusReturn = document.activeElement;
-    }
-
-    libraryIssueModal.classList.remove('hidden');
-
-    requestAnimationFrame(() => {
-        libraryIssueModal.querySelector('.stats-close')?.focus();
-    });
-}
-
-function renderLibraryIssuePage() {
-    const config = activeLibraryIssueConfig;
-    if (!config || !libraryIssueModal) return;
-
-    const tbody = libraryIssueModal.querySelector('tbody');
-    const pager = libraryIssueModal.querySelector(
-        '#library-issue-pagination'
-    );
-
-    tbody.innerHTML = '';
-
-    const start = (libraryIssuePage - 1) * REC_PER_PAGE;
-    const pageGroups = libraryIssueGroups.slice(
-        start,
-        start + REC_PER_PAGE
-    );
-
-    let alternate = false;
-
-    pageGroups.forEach(group => {
-        alternate = !alternate;
-
-        const header = createGroupHeader(
-            group,
-            3,
-            alternate,
-            'movie'
-        );
-
-        header.onclick = () => {
-            group.open = !group.open;
-            renderLibraryIssuePage();
-        };
-
-        tbody.appendChild(header);
-
-        if (group.open) {
-            group.rows.forEach(row => {
-                tbody.appendChild(
-                    createMovieReferenceRow(row)
-                );
-            });
-        }
-    });
-
-    const totalPages = Math.max(
-        1,
-        Math.ceil(libraryIssueGroups.length / REC_PER_PAGE)
-    );
-
-    renderStatsPagination(pager, {
-        currentPage: libraryIssuePage,
-        totalPages,
-        totalItems: countGroupedRows(libraryIssueGroups),
-        itemLabel: 'movie',
-        ariaLabel: config.paginationLabel,
-        onPageChange: page => {
-            libraryIssuePage = page;
-            renderLibraryIssuePage();
-        }
+    openMovieListOverlay({
+        title: config.title,
+        emptyMessage: config.emptyMessage,
+        source: createListSource(
+            signal => fetchLibraryIssueRows(issueType, { signal })
+        )
     });
 }
 
@@ -1090,147 +687,12 @@ function renderLibraryIssuePage() {
    Better Copy
 ============================= */
 
-async function loadGetBetterCopy() {
-    const request = statsDetailRequests.start();
-
-    try {
-        const rows = await fetchBetterCopyRows({
-            signal: request.signal
-        });
-
-        if (!request.isCurrent()) return;
-
-        clearError('better-copy');
-
-        if (!Array.isArray(rows) || rows.length === 0) {
-            alert("No movies found with 'Get Better Copy'!");
-            return;
-        }
-
-        getBetterCopyGroups = groupMovieRows(rows);
-        getBetterCopyPage = 1;
-        showGetBetterCopyModal();
-    } catch (error) {
-        if (!request.isCurrent() || isAbortError(error)) return;
-
-        console.error('Get Better Copy load failed', error);
-
-        showError(
-            error.message ||
-                'Unable to load better-copy movies',
-            {
-                scope: 'better-copy',
-                retry: loadGetBetterCopy
-            }
-        );
-    } finally {
-        request.finish();
-    }
-}
-
-let getBetterCopyModal;
-
-function showGetBetterCopyModal() {
-    if (!getBetterCopyModal) {
-        getBetterCopyModal = document.createElement('div');
-        getBetterCopyModal.className = 'stats-modal hidden';
-        getBetterCopyModal.innerHTML = `
-            <div class="stats-modal-content">
-                <div class="stats-modal-header">
-                    <h2>Get Better Copy Movies</h2>
-                    <button type="button" class="stats-close" aria-label="Close better-copy movies dialog">&times;</button>
-                </div>
-
-                <div class="stats-modal-body">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Details</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <div class="pagination" id="better-copy-pagination"></div>
-            </div>
-        `;
-
-        document.body.appendChild(getBetterCopyModal);
-
-        getBetterCopyModal.querySelector('.stats-close').onclick =
-            () => getBetterCopyModal.classList.add('hidden');
-
-        getBetterCopyModal.onclick = event => {
-            if (event.target === getBetterCopyModal) {
-                getBetterCopyModal.classList.add('hidden');
-            }
-        };
-    }
-
-    renderGetBetterCopyPage();
-    getBetterCopyModal.classList.remove('hidden');
-}
-
-function renderGetBetterCopyPage() {
-    const tbody = getBetterCopyModal.querySelector('tbody');
-    const pager = getBetterCopyModal.querySelector(
-        '#better-copy-pagination'
-    );
-
-    tbody.innerHTML = '';
-    pager.innerHTML = '';
-
-    const start = (getBetterCopyPage - 1) * REC_PER_PAGE;
-    const pageGroups = getBetterCopyGroups.slice(
-        start,
-        start + REC_PER_PAGE
-    );
-
-    let alt = false;
-
-    pageGroups.forEach(group => {
-        alt = !alt;
-
-        const header = createGroupHeader(group, 3, alt);
-
-        header.onclick = () => {
-            group.open = !group.open;
-            renderGetBetterCopyPage();
-        };
-
-        tbody.appendChild(header);
-
-        if (group.open) {
-            group.rows.forEach(row => {
-                tbody.appendChild(
-                    createMovieReferenceRow(row)
-                );
-            });
-        }
-    });
-
-    const pages = Math.max(
-        1,
-        Math.ceil(
-            getBetterCopyGroups.length / REC_PER_PAGE
-        )
-    );
-
-    const totalMovies = countGroupedRows(
-        getBetterCopyGroups
-    );
-
-    renderStatsPagination(pager, {
-        currentPage: getBetterCopyPage,
-        totalPages: pages,
-        totalItems: totalMovies,
-        itemLabel: 'movie',
-        ariaLabel: 'Needs better copy pagination',
-        onPageChange: page => {
-            getBetterCopyPage = page;
-            renderGetBetterCopyPage();
-        }
+/** Get Better Copy card: open the shared movie-list overlay. */
+function loadGetBetterCopy() {
+    openMovieListOverlay({
+        title: 'Get Better Copy Movies',
+        emptyMessage: 'No movies found with Get Better Copy.',
+        source: createListSource(signal => fetchBetterCopyRows({ signal }))
     });
 }
 
@@ -1458,9 +920,6 @@ async function jumpToMovie(num) {
         }
 
         // Reveal the destination rather than leaving it behind a stats dialog.
-        duplicateModal?.classList.add('hidden');
-        getBetterCopyModal?.classList.add('hidden');
-        closeLibraryIssueModal(false);
         closeMovieListOverlay(false);
         closePanel();
         row.querySelector('.movie-title-link')?.focus({ preventScroll: true });

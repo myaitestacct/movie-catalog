@@ -142,9 +142,9 @@ Comprehensive collection analytics with **12 sections**:
 | Technical | Resolution and audio format analytics |
 | Storage | File size distribution and insights |
 | Metadata | Field-by-field completeness analysis |
-| Library Health | Health score, missing files/posters, duplicates |
+| Library Health | Health score, missing files/posters, duplicates, better copy — every card opens the shared movie list |
 
-**Interactive Feature**: Click any chart element to open an overlay listing the movies behind it (title, number, year, rating, stored size, external link); the overlay's "Filter the table" action applies the slice as a normal table filter.
+**Interactive Feature**: Click any analytics count to open the shared movie-list overlay with the movies behind it (title, number, year, rating, stored size, external link). Chart slices also offer "Filter the table" to apply the slice as a normal table filter; Library Health, Duplicates, and Get Better Copy lists are read-only.
 
 ### 4. Special Features
 - **Theme Toggle**: Light/Dark mode with localStorage persistence
@@ -599,7 +599,7 @@ All theming uses CSS variables:
 - ~105 KB total (unminified)
 
 ### Test Files
-- JavaScript tests: 27 files (148 tests)
+- JavaScript tests: 27 files (152 tests)
 - PHP tests: 1 runner
 - Browser tests: 3 spec files plus `tests/browser/support/mock-server.mjs`
 - **Total**: 31 test-related files, including the mock server
@@ -609,7 +609,7 @@ All theming uses CSS variables:
 ## Performance Characteristics
 
 ### Frontend
-- **Bundle size**: ~109 KB JS + ~72 KB CSS minified (~43 KB gzipped together)
+- **Bundle size**: ~102 KB JS + ~71 KB CSS minified (~41 KB gzipped together)
 - **Initial load**: Single HTTP request for bundled assets
 - **Lazy loading**: Analytics load after page render
 - **No framework overhead**: Vanilla JS keeps runtime minimal
@@ -665,7 +665,7 @@ All theming uses CSS variables:
    - Numeric columns support range grammar (`2000-2009`, `150+`, `<90`)
    - Zero values treated as "unknown" for RATING, LENGTH, FILESIZE
 
-3. **Analytics movie lists**: Click any chart element to open an overlay listing the movies behind it (title, number, year, rating, size, external link); the overlay's "Filter the table" action applies the slice to the main table
+3. **Movie lists**: Click any analytics count — a chart element, a Metadata Completeness row, a Library Health card, Duplicates, or Get Better Copy — to open the same overlay listing the movies behind it (title, number, year, rating, size, external link); chart slices also offer "Filter the table" to apply the slice to the main table
 
 ### UI Modernization (Implemented)
 1. **App identity**: Clapperboard brand mark, wordmark, tagline

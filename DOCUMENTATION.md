@@ -52,7 +52,7 @@ This repository includes **comprehensive documentation** to help you understand,
 │  ├── UI-ENHANCEMENTS.md    ← UI bug fixes and improvements                   │
 │  │   ├── Row highlighting fixes                                           │
 │  │   ├── Search behavior improvements                                     │
-│  │   ├── Analytics movie-list and drill-down features                     │
+│  │   ├── Shared movie-list overlay and drill-down features                │
 │  │   └── Implementation summary                                            │
 │  │                                                                         │
 │  └── UI-MODERNIZATION.md   ← UI redesign and modernization                    │

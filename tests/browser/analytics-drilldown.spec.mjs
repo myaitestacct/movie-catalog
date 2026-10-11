@@ -257,6 +257,75 @@ test.describe('analytics movie lists', () => {
     ).toHaveCount(4);
   });
 
+  test('library health cards open the same movie list', async ({ page }) => {
+    await openCatalog(page);
+    await openAnalytics(page);
+
+    await page.locator('#missing-files-card').click();
+
+    const modal = movieList(page);
+
+    await expect(modal.locator('#stats-movie-list-title')).toHaveText(
+      'Missing Files'
+    );
+    await expect(
+      modal.locator('.stats-movie-table tbody tr')
+    ).toHaveCount(1);
+
+    // Minimal details: title, number, year, rating, size, IMDb link.
+    const row = modal.locator('.stats-movie-table tbody tr').first();
+    await expect(row.locator('td:nth-child(1)')).not.toBeEmpty();
+    await expect(row.locator('td:nth-child(4) .rating-badge')).toBeVisible();
+    await expect(row.locator('td:nth-child(5)')).not.toBeEmpty();
+    await expect(row.locator('td:nth-child(6)')).toContainText('IMDB');
+
+    // A library issue has no table filter, so no footer action.
+    await expect(modal.locator('.stats-movie-list-filter')).toBeHidden();
+
+    // The table stays untouched behind the list.
+    await expect(
+      page.locator('#movies tbody tr[data-num]')
+    ).toHaveCount(50);
+  });
+
+  test('the duplicate card lists every duplicate movie', async ({ page }) => {
+    await openCatalog(page);
+    await openAnalytics(page);
+
+    await page.locator('#duplicate-card').click();
+
+    const modal = movieList(page);
+
+    await expect(modal.locator('#stats-movie-list-title')).toHaveText(
+      'Duplicate Movies'
+    );
+    await expect(
+      modal.locator('.stats-movie-table tbody tr')
+    ).toHaveCount(2);
+    await expect(
+      modal.locator('.stats-movie-table tbody tr[data-num="14"]')
+    ).toHaveCount(1);
+    await expect(
+      modal.locator('.stats-movie-table tbody tr[data-num="15"]')
+    ).toHaveCount(1);
+  });
+
+  test('the better-copy card lists the replacement movies', async ({ page }) => {
+    await openCatalog(page);
+    await openAnalytics(page);
+
+    await page.locator('#better-copy-card').click();
+
+    const modal = movieList(page);
+
+    await expect(modal.locator('#stats-movie-list-title')).toHaveText(
+      'Get Better Copy Movies'
+    );
+    await expect(
+      modal.locator('.stats-movie-table tbody tr[data-num="51"]')
+    ).toHaveCount(1);
+  });
+
   test('metadata completeness fields open the missing-movies list', async ({ page }) => {
     await openCatalog(page);
     await openAnalytics(page);

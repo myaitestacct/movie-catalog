@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
  * Unit tests for the analytics movie-list overlay: minimal movie rows
  * (title, number, year, rating, stored size, external link), paging,
  * empty/error states, the jump-to-movie link, the optional
- * "Filter the table" action, and the ways it closes.
+ * "Filter the table" action, the shared source for unpaginated list
+ * endpoints, and the ways it closes.
  */
 
 class FakeClassList {
@@ -210,6 +211,7 @@ globalThis.fetch = async () => {
 const {
     MOVIE_LIST_PAGE_SIZE,
     closeMovieListOverlay,
+    createListSource,
     openMovieListOverlay,
     setMovieJumper
 } = await import('../../public/assets/js/stats/stats-movie-list.js');
@@ -467,6 +469,50 @@ test('an empty result renders the empty status', async () => {
 
     assert.equal(status().textContent, 'No movies match this selection.');
     assert.equal(rows().length, 0);
+});
+
+test('a custom empty message replaces the default status', async () => {
+    const { source } = sourceFrom([{ rows: [], total: 0 }]);
+
+    openMovieListOverlay({
+        title: 'Missing Files',
+        emptyMessage: 'No movies with missing files were found.',
+        source
+    });
+    await flush();
+
+    assert.equal(
+        status().textContent,
+        'No movies with missing files were found.'
+    );
+});
+
+test('createListSource pages unpaginated rows client-side', async () => {
+    const all = Array.from(
+        { length: MOVIE_LIST_PAGE_SIZE + 5 },
+        (_, index) => makeRow({ NUM: String(index + 1) })
+    );
+    const requests = [];
+    const source = createListSource(async signal => {
+        requests.push(signal);
+        return all;
+    });
+
+    openMovieListOverlay({ title: 'Duplicate Movies', source });
+    await flush();
+
+    assert.equal(requests.length, 1);
+    assert.equal(rows().length, MOVIE_LIST_PAGE_SIZE);
+
+    const totalText = byClass('stats-pagination-info')[0].textContent;
+    assert.match(totalText, new RegExp(`Page 1 of 2 . ${all.length} movies`));
+
+    pagerButton('Next').click();
+    await flush();
+
+    assert.equal(requests.length, 2);
+    assert.equal(rows().length, 5);
+    assert.equal(rows()[0].children[1].textContent, String(MOVIE_LIST_PAGE_SIZE + 1));
 });
 
 test('a failed request offers a retry', async () => {

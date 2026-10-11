@@ -12,8 +12,8 @@
 | **Purpose** | Movie library browser and analytics dashboard |
 | **License** | No project LICENSE file in the repository; the bundled Font Awesome 6.5.0 is licensed separately (see its LICENSE.txt) |
 | **Maturity** | Working read-only application with JS, PHP, and browser test suites; needs external authentication before any non-private deployment |
-| **Lines of Code** | ~18,400 (JS 9,266; CSS 4,747; PHP 4,316; SQL 46), excluding tests, docs, and vendored fonts |
-| **Files** | 123 tracked files (including tests, docs, and vendored Font Awesome) |
+| **Lines of Code** | ~17,900 (JS 8,711; CSS 4,713; PHP 4,316; SQL 46), excluding tests, docs, and vendored fonts |
+| **Files** | 121 tracked files (including tests, docs, and vendored Font Awesome) |
 
 ## Why This Project Exists
 
@@ -38,10 +38,10 @@ This project solves the common problem of **managing and exploring large movie c
    - Deferred-join pagination for efficient database queries
    - Stats caching (300s TTL) to reduce database load
    - Lazy loading of analytics data
-   - Small bundles: ~109 KB minified JS (~30 KB gzipped) and ~72 KB CSS (~13 KB gzipped)
+   - Small bundles: ~102 KB minified JS (~29 KB gzipped) and ~71 KB CSS (~13 KB gzipped)
 
 3. **Well-Tested**
-   - JavaScript unit tests (27 files, 148 tests)
+   - JavaScript unit tests (27 files, 152 tests)
    - PHP unit tests
    - Playwright browser tests (E2E)
    - Mock server for UI development
@@ -88,7 +88,7 @@ This project solves the common problem of **managing and exploring large movie c
 | Theme Toggle | ✅ Yes (light/dark) |
 | Sidebar Customization | ✅ Yes (full/icons/hidden) |
 | Analytics Dashboard | ✅ Yes (12 sections) |
-| Analytics Movie Lists | ✅ Yes (click for an overlay list) |
+| Movie Lists | ✅ Yes (every analytics count opens the same overlay) |
 | Analytics Drill-Down | ✅ Yes (via the list's filter action) |
 | Health Monitoring | ✅ Yes (missing files, duplicates, etc.) |
 | Responsive Design | ✅ Yes |
@@ -200,7 +200,7 @@ npm run dev
 - **Source Maps**: Yes (for debugging)
 
 ### Testing
-- **JS Tests**: 27 files (148 tests), Node.js native test runner
+- **JS Tests**: 27 files (152 tests), Node.js native test runner
 - **PHP Tests**: Custom test runner
 - **Browser Tests**: Playwright with mock server
 - **JS suite time**: about 2 seconds; browser and PHP suite times were not measured
@@ -215,8 +215,8 @@ npm run dev
 
 | Metric | Value |
 |--------|-------|
-| Bundle Size (JS, minified) | 109.3 KB (29.7 KB gzipped) |
-| Bundle Size (CSS, minified) | 71.6 KB (12.9 KB gzipped) |
+| Bundle Size (JS, minified) | 101.6 KB (28.1 KB gzipped) |
+| Bundle Size (CSS, minified) | 71.2 KB (12.8 KB gzipped) |
 | Source Size (JS / CSS, unminified) | 246.5 KB / 104.9 KB |
 | Database Queries per Page | 2 (deferred join) |
 | Response times and scale | Not benchmarked (the test fixtures contain 55 movies) |
@@ -278,7 +278,7 @@ Based on [UI-ENHANCEMENTS.md](UI-ENHANCEMENTS.md) and [UI-MODERNIZATION.md](UI-M
 - ✅ Movie grid view
 - ✅ Flex app shell with modern viewport layout
 - ✅ Self-hosted Font Awesome (no third-party requests)
-- ✅ Analytics movie lists (click charts for an overlay of the movies; filter from the overlay)
+- ✅ Movie lists (click any analytics count — slices, field-coverage rows, Library Health, duplicates, better copy — for an overlay of the movies; filter from the overlay)
 
 ### Performance
 - ✅ All UI enhancements add zero runtime cost on common path

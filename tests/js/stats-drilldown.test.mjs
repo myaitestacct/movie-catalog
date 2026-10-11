@@ -130,7 +130,12 @@ class FakeElement {
     }
 
     click() {
-        this.dispatchEvent({ type: 'click', preventDefault() {} });
+        const event = { type: 'click', target: this, preventDefault() {} };
+
+        this.dispatchEvent(event);
+        // Browsers run the onclick property handler alongside listeners;
+        // the duplicate card is wired through `onclick`.
+        this.onclick?.(event);
     }
 
     focus() {
@@ -183,8 +188,14 @@ class FakeElement {
         return this.parent ?? null;
     }
 
-    querySelector() {
-        return null;
+    querySelector(selector) {
+        const idMatch = /^#([\w-]+)$/.exec(String(selector));
+
+        return idMatch ? (registry.get(idMatch[1]) ?? null) : null;
+    }
+
+    querySelectorAll() {
+        return [];
     }
 }
 
@@ -232,10 +243,14 @@ const { state } = await import(
     '../../public/assets/js/core/state.js'
 );
 const {
+    initStats,
     refreshStats,
     setMovieLoader
 } = await import(
     '../../public/assets/js/stats/stats.js'
+);
+const { MOVIE_LIST_PAGE_SIZE } = await import(
+    '../../public/assets/js/stats/stats-movie-list.js'
 );
 
 // Stats payload mirroring the mock server (complete per the API
@@ -442,6 +457,41 @@ const metadataRows = Array.from({ length: 30 }, (_, index) => ({
     URL: 'https://www.imdb.com/title/tt0100001/'
 }));
 
+// Fixture rows for the other movie-table entry points (duplicates /
+// better copy), which share the overlay through createListSource.
+const duplicateRows = [
+    {
+        NUM: '14',
+        FORMATTEDTITLE: 'Blade Runner 2049',
+        ORIGINALTITLE: 'Blade Runner 2049',
+        YEAR: '2017',
+        RATING: '8.0',
+        FILESIZE: '2100',
+        URL: 'https://www.imdb.com/title/tt1856101/'
+    },
+    {
+        NUM: '15',
+        FORMATTEDTITLE: 'Blade Runner 2049',
+        ORIGINALTITLE: 'Blade Runner 2049',
+        YEAR: '2017',
+        RATING: '8.0',
+        FILESIZE: '2600',
+        URL: 'https://www.imdb.com/title/tt1856101/'
+    }
+];
+
+const betterCopyRows = [
+    {
+        NUM: '51',
+        FORMATTEDTITLE: 'Movie 051',
+        ORIGINALTITLE: 'Movie 051',
+        YEAR: '2001',
+        RATING: '5.5',
+        FILESIZE: '700',
+        URL: 'https://www.imdb.com/title/tt0000051/'
+    }
+];
+
 const requestedUrls = [];
 
 globalThis.fetch = async url => {
@@ -455,6 +505,10 @@ globalThis.fetch = async url => {
         payload = statsPayload;
     } else if (text.includes('library-issues.php')) {
         payload = metadataRows;
+    } else if (text.includes('duplicates.php')) {
+        payload = duplicateRows;
+    } else if (text.includes('better-copy.php')) {
+        payload = betterCopyRows;
     } else if (text.includes('movies.php')) {
         const params = new URL(text, 'http://localhost').searchParams;
 
@@ -537,6 +591,9 @@ register('health-score-card');
 register('duplicate-card');
 register('better-copy-card');
 register('year-range');
+register('missing-files-card');
+register('missing-posters-card');
+register('incomplete-metadata-card');
 
 // Chart containers.
 const decadeContainer = register('decade-distribution');
@@ -596,6 +653,12 @@ test.before(async () => {
     state.search = {};
     state.page = 1;
     state.searchMode = 'AND';
+
+    // initStats() binds the panel's card entry points (library health,
+    // duplicates, better copy) to the shared overlay.
+    const statsPanel = register('stats-panel');
+    const ribbon = new FakeElement('button');
+    initStats(ribbon, statsPanel);
 
     const loaded = await refreshStats();
     assert.equal(loaded, true, 'refreshStats renders the payload');
@@ -828,4 +891,54 @@ test('Escape closes the overlay', async () => {
     document.dispatch('keydown', { key: 'Escape' });
 
     assert.equal(overlayIsOpen(), false);
+});
+
+test('library health cards open the shared movie-list overlay', async () => {
+    const card = registry.get('missing-files-card');
+
+    assert.ok(card, 'the card is part of the rendered view');
+
+    card.click();
+
+    assert.equal(overlayIsOpen(), true, 'the overlay opens');
+    assert.equal(overlayTitle(), 'Missing Files');
+
+    await flush();
+
+    const request = lastRequestMatching('library-issues.php');
+    assert.equal(request.searchParams.get('type'), 'missing-files');
+    assert.equal(
+        overlayRows().length,
+        Math.min(metadataRows.length, MOVIE_LIST_PAGE_SIZE)
+    );
+
+    // A library issue has no table filter, so no footer action.
+    assert.equal(overlayFilterButton().hidden, true);
+});
+
+test('the duplicate card opens the overlay with every duplicate row', async () => {
+    registry.get('duplicate-card').click();
+
+    assert.equal(overlayIsOpen(), true);
+    assert.equal(overlayTitle(), 'Duplicate Movies');
+
+    await flush();
+
+    assert.ok(lastRequestMatching('duplicates.php'));
+    assert.equal(overlayRows().length, duplicateRows.length);
+    assert.equal(overlayRows()[0].dataset.num, '14');
+    assert.equal(overlayRows()[1].dataset.num, '15');
+});
+
+test('the better-copy card opens the overlay with the replacement movies', async () => {
+    registry.get('better-copy-card').click();
+
+    assert.equal(overlayIsOpen(), true);
+    assert.equal(overlayTitle(), 'Get Better Copy Movies');
+
+    await flush();
+
+    assert.ok(lastRequestMatching('better-copy.php'));
+    assert.equal(overlayRows().length, betterCopyRows.length);
+    assert.equal(overlayRows()[0].dataset.num, '51');
 });
