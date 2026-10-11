@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   createStorageViewModel
-} from '../../movie-catalog/public/assets/js/stats/stats-storage.js';
+} from '../../public/assets/js/stats/stats-storage.js';
 
 test('storage model calculates coverage, formatted sizes, and band shares', () => {
   const model = createStorageViewModel({

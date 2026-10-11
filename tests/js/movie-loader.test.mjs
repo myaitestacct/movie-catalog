@@ -1,7 +1,7 @@
 import test, { beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { createMovieLoader } from '../../movie-catalog/public/assets/js/core/movie-loader.js';
-import { state, getMovieStateSignature } from '../../movie-catalog/public/assets/js/core/state.js';
+import { createMovieLoader } from '../../public/assets/js/core/movie-loader.js';
+import { state, getMovieStateSignature } from '../../public/assets/js/core/state.js';
 
 beforeEach(() => {
   Object.assign(state, {

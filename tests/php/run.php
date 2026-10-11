@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 $root = dirname(__DIR__, 2);
 
-require_once $root . '/movie-catalog/src/helpers/FileHelper.php';
-require_once $root . '/movie-catalog/src/helpers/Pagination.php';
-require_once $root . '/movie-catalog/src/repositories/MovieRepository.php';
-require_once $root . '/movie-catalog/src/controllers/StatsController.php';
+require_once $root . '/src/helpers/FileHelper.php';
+require_once $root . '/src/helpers/Pagination.php';
+require_once $root . '/src/repositories/MovieRepository.php';
+require_once $root . '/src/controllers/StatsController.php';
 
 $failures = 0;
 

@@ -13,7 +13,7 @@ const repositoryRoot =
 const scriptRoot =
   path.join(
     repositoryRoot,
-    'movie-catalog/public/assets/js'
+    'public/assets/js'
   );
 
 const entryPoint = path.join(scriptRoot, 'app.js');

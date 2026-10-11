@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   initSearch
-} from '../../movie-catalog/public/assets/js/table/search.js';
+} from '../../public/assets/js/table/search.js';
 import {
   state
-} from '../../movie-catalog/public/assets/js/core/state.js';
+} from '../../public/assets/js/core/state.js';
 
 class MockElement {
   constructor(tagName = 'div') {

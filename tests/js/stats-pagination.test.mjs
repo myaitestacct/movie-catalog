@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
   getStatsPageWindow,
   renderStatsPagination
-} from '../../movie-catalog/public/assets/js/stats/stats-pagination.js';
+} from '../../public/assets/js/stats/stats-pagination.js';
 
 class MockClassList {
   constructor() {

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { state, TITLE_SEARCH_MODES } from '../../movie-catalog/public/assets/js/core/state.js';
+import { state, TITLE_SEARCH_MODES } from '../../public/assets/js/core/state.js';
 
 test('search defaults to contains matching without the fuzzy flag', () => {
   assert.equal(state.titleSearchMode, 'CONTAINS');

@@ -178,15 +178,15 @@ globalThis.requestAnimationFrame = callback => {
 };
 
 const { createModalDOM } = await import(
-  '../../movie-catalog/public/assets/js/modal/modal.dom.js'
+  '../../public/assets/js/modal/modal.dom.js'
 );
 
 const { fillFields } = await import(
-  '../../movie-catalog/public/assets/js/modal/modal.utils.js'
+  '../../public/assets/js/modal/modal.utils.js'
 );
 
 const { Modal } = await import(
-  '../../movie-catalog/public/assets/js/modal/modal.js'
+  '../../public/assets/js/modal/modal.js'
 );
 
 test('movie-number field contains one persistent span and copy button', () => {

@@ -7,7 +7,7 @@ import {
   readStoredSidebarMode,
   writeStoredSidebarMode,
   initSidebar
-} from '../../movie-catalog/public/assets/js/table/sidebar.js';
+} from '../../public/assets/js/table/sidebar.js';
 
 class MockClassList {
   constructor() {

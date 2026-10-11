@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { setPoster } from '../../movie-catalog/public/assets/js/modal/modal.utils.js';
+import { setPoster } from '../../public/assets/js/modal/modal.utils.js';
 
 const BASE_PATH = '/movies/antexport';
 const FALLBACK = '/movies/antexport/movies_0000-coming_soon.jpg';

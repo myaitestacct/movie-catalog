@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   createDirectorViewModel
-} from '../../movie-catalog/public/assets/js/stats/stats-directors.js';
+} from '../../public/assets/js/stats/stats-directors.js';
 
 test('director model calculates coverage, credits, averages, and shares', () => {
   const model = createDirectorViewModel({

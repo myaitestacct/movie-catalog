@@ -6,7 +6,7 @@ import {
   loadStoredView,
   storeView,
   VIEWS
-} from '../../movie-catalog/public/assets/js/table/grid-view.js';
+} from '../../public/assets/js/table/grid-view.js';
 
 class MockGrid {
   constructor() {

@@ -5,7 +5,7 @@ import {
   countGroupedRows,
   groupMovieRows,
   LIBRARY_ISSUE_CONFIG
-} from '../../movie-catalog/public/assets/js/stats/stats-issues.js';
+} from '../../public/assets/js/stats/stats-issues.js';
 
 test('library issue configuration exposes all clickable health lists', () => {
   assert.deepEqual(

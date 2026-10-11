@@ -27,86 +27,85 @@ This is a **read-only PHP/MySQL movie-library browser** with a vanilla JavaScrip
 ### Project Structure
 
 ```
-movie-catalog/
-├── movie-catalog/                    # Main application directory
-│   ├── public/                       # Web document root
-│   │   ├── api/                      # PHP API endpoints
-│   │   │   ├── movies.php            # Movie listing with filtering/sorting
-│   │   │   ├── stats.php             # Collection statistics
-│   │   │   ├── duplicates.php        # Duplicate detection
-│   │   │   ├── better-copy.php       # Better copy detection
-│   │   │   ├── library-issues.php    # Library health issues
-│   │   │   └── movie-page.php        # Single movie details
-│   │   ├── assets/                   # Frontend assets
-│   │   │   ├── css/                  # Stylesheets (9 files)
-│   │   │   │   ├── variables.css      # Design tokens & theming
-│   │   │   │   ├── base.css          # Base styles & layout
-│   │   │   │   ├── table.css         # Table view styles
-│   │   │   │   ├── sidebar.css       # Sidebar controls
-│   │   │   │   ├── stats.css         # Analytics panel
-│   │   │   │   ├── modal.css         # Movie detail dialogs
-│   │   │   │   ├── pagination.css    # Pagination controls
-│   │   │   │   ├── responsive.css    # Responsive breakpoints
-│   │   │   │   └── bundle-entry.css  # Entry point for bundler
-│   │   │   ├── js/                   # JavaScript modules
-│   │   │   │   ├── app.js            # Main entry point
-│   │   │   │   ├── core/             # Core utilities
-│   │   │   │   │   ├── api.js         # API client
-│   │   │   │   │   ├── dom.js         # DOM utilities
-│   │   │   │   │   ├── movie-loader.js # Movie data loading
-│   │   │   │   │   ├── request.js     # HTTP requests
-│   │   │   │   │   └── state.js       # Application state
-│   │   │   │   ├── modal/            # Modal dialogs
-│   │   │   │   ├── stats/            # Analytics modules (15 files)
-│   │   │   │   ├── table/            # Table view modules
-│   │   │   │   └── utils/            # Utility functions
-│   │   │   └── vendor/              # Third-party libraries
-│   │   │       └── font-awesome/     # Font Awesome icons
-│   │   └── index.php                # Main entry point
-│   └── src/                         # PHP application code
-│       ├── config/                  # Configuration files
-│       │   ├── config.json          # App configuration (pagination, cache)
-│       │   ├── sql.json             # SQL query templates
-│       │   ├── database.example.json # Database config template
-│       │   └── README.md            # Config documentation
-│       ├── controllers/             # PHP controllers
-│       │   └── StatsController.php  # Statistics controller
-│       ├── db/                      # Database layer
-│       │   └── connection.php        # PDO connection factory
-│       ├── helpers/                 # Helper classes
-│       │   ├── ApiResponse.php      # API response utilities
-│       │   ├── FileHelper.php       # File path utilities
-│       │   ├── Pagination.php        # Pagination logic
-│       │   └── Request.php          # Request handling
-│       ├── repositories/            # Data access layer
-│       │   └── MovieRepository.php  # Movie data repository
-│       └── views/                   # PHP templates
-│           ├── layout/              # Layout templates
-│           │   ├── header.php        # HTML head
-│           │   └── footer.php        # HTML footer
-│           └── movie/                # Movie views
-│               ├── movie.php         # Main movie table view
-│               └── stats.php         # Analytics panel view
-├── dev/                            # Development files
-│   ├── schema.sql                  # Database schema (MySQL)
-│   └── seed.sql                    # Sample data
-├── tests/                          # Test suite
-│   ├── README.md                   # Test documentation
-│   ├── browser/                    # Playwright tests
-│   │   ├── *.spec.mjs              # Browser test suites
-│   │   └── support/                # Test support files
-│   │       └── mock-server.mjs     # Mock API server for UI demo
-│   ├── js/                         # Node.js unit tests
-│   │   └── *.test.mjs              # JS module tests (26 files)
-│   └── php/                        # PHP unit tests
-│       └── run.php                 # PHP test runner
-├── package.json                    # Node.js dependencies & scripts
-├── package-lock.json              # Lockfile
-├── build.mjs                      # Build script (esbuild)
-├── playwright.config.mjs          # Playwright configuration
-├── README.md                      # Main documentation
-├── UI-ENHANCEMENTS.md             # UI improvement documentation
-└── UI-MODERNIZATION.md            # UI modernization documentation
+movie-catalog/                    # Repository root
+├── public/                       # Web document root
+│   ├── api/                      # PHP API endpoints
+│   │   ├── movies.php            # Movie listing with filtering/sorting
+│   │   ├── stats.php             # Collection statistics
+│   │   ├── duplicates.php        # Duplicate detection
+│   │   ├── better-copy.php       # Better copy detection
+│   │   ├── library-issues.php    # Library health issues
+│   │   └── movie-page.php        # Single movie details
+│   ├── assets/                   # Frontend assets
+│   │   ├── css/                  # Stylesheets (9 files)
+│   │   │   ├── variables.css     # Design tokens & theming
+│   │   │   ├── base.css          # Base styles & layout
+│   │   │   ├── table.css         # Table view styles
+│   │   │   ├── sidebar.css       # Sidebar controls
+│   │   │   ├── stats.css         # Analytics panel
+│   │   │   ├── modal.css         # Movie detail dialogs
+│   │   │   ├── pagination.css    # Pagination controls
+│   │   │   ├── responsive.css    # Responsive breakpoints
+│   │   │   └── bundle-entry.css  # Entry point for bundler
+│   │   ├── js/                   # JavaScript modules
+│   │   │   ├── app.js            # Main entry point
+│   │   │   ├── core/             # Core utilities
+│   │   │   │   ├── api.js        # API client
+│   │   │   │   ├── dom.js        # DOM utilities
+│   │   │   │   ├── movie-loader.js # Movie data loading
+│   │   │   │   ├── request.js    # HTTP requests
+│   │   │   │   └── state.js      # Application state
+│   │   │   ├── modal/            # Modal dialogs
+│   │   │   ├── stats/            # Analytics modules (15 files)
+│   │   │   ├── table/            # Table view modules
+│   │   │   └── utils/            # Utility functions
+│   │   └── vendor/               # Third-party libraries
+│   │       └── font-awesome/     # Font Awesome icons
+│   └── index.php                 # Main entry point
+├── src/                          # PHP application code
+│   ├── config/                   # Configuration files
+│   │   ├── config.json           # App configuration (pagination, cache)
+│   │   ├── sql.json              # SQL query templates
+│   │   ├── database.example.json # Database config template
+│   │   └── README.md             # Config documentation
+│   ├── controllers/              # PHP controllers
+│   │   └── StatsController.php   # Statistics controller
+│   ├── db/                       # Database layer
+│   │   └── connection.php        # PDO connection factory
+│   ├── helpers/                  # Helper classes
+│   │   ├── ApiResponse.php       # API response utilities
+│   │   ├── FileHelper.php        # File path utilities
+│   │   ├── Pagination.php        # Pagination logic
+│   │   └── Request.php           # Request handling
+│   ├── repositories/             # Data access layer
+│   │   └── MovieRepository.php   # Movie data repository
+│   └── views/                    # PHP templates
+│       ├── layout/               # Layout templates
+│       │   ├── header.php        # HTML head
+│       │   └── footer.php        # HTML footer
+│       └── movie/                # Movie views
+│           ├── movie.php         # Main movie table view
+│           └── stats.php         # Analytics panel view
+├── dev/                          # Development files
+│   ├── schema.sql                # Database schema (MySQL)
+│   └── seed.sql                  # Sample data
+├── tests/                        # Test suite
+│   ├── README.md                 # Test documentation
+│   ├── browser/                  # Playwright tests
+│   │   ├── *.spec.mjs            # Browser test suites
+│   │   └── support/              # Test support files
+│   │       └── mock-server.mjs   # Mock API server for UI demo
+│   ├── js/                       # Node.js unit tests
+│   │   └── *.test.mjs            # JS module tests (26 files)
+│   └── php/                      # PHP unit tests
+│       └── run.php               # PHP test runner
+├── package.json                  # Node.js dependencies & scripts
+├── package-lock.json             # Lockfile
+├── build.mjs                     # Build script (esbuild)
+├── playwright.config.mjs         # Playwright configuration
+├── README.md                     # Main documentation
+├── UI-ENHANCEMENTS.md            # UI improvement documentation
+└── UI-MODERNIZATION.md           # UI modernization documentation
 ```
 
 ---
@@ -342,7 +341,7 @@ The PHP layouts automatically use bundled assets when available, falling back to
 
 ### Application Configuration
 
-**`movie-catalog/src/config/config.json`:**
+**`src/config/config.json`:**
 ```json
 {
   "pagination": {
@@ -454,13 +453,13 @@ npm run dev:demo
 
 3. **Configure database:**
    ```bash
-   cp movie-catalog/src/config/database.example.json movie-catalog/src/config/database.local.json
+   cp src/config/database.example.json src/config/database.local.json
    # Edit with your database credentials
    ```
 
 4. **Start development server:**
    ```bash
-   mkdir -p movie-catalog/var/cache
+   mkdir -p var/cache
    npm run dev
    # Open http://localhost:8080
    ```
@@ -504,18 +503,18 @@ npx playwright install --with-deps chromium
    npm run build
    ```
 
-2. **Set web document root to:** `movie-catalog/public/`
+2. **Set web document root to:** `public/`
 
 3. **Configure database** (via environment variables or local config file)
 
 4. **Set up cache directory:**
    ```bash
-   mkdir -p movie-catalog/var/cache
-   sudo chown www-data:www-data movie-catalog/var/cache   # only the web-server user may write here (replace www-data)
-   chmod 750 movie-catalog/var/cache
+   mkdir -p var/cache
+   sudo chown www-data:www-data var/cache   # only the web-server user may write here (replace www-data)
+   chmod 750 var/cache
    ```
 
-5. **Deploy poster images** to `movie-catalog/public/movies/antexport/`
+5. **Deploy poster images** to `public/movies/antexport/`
 
 ### Important Notes
 

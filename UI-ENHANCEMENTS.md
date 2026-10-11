@@ -17,7 +17,7 @@ dependency-free frontend:
 
 | Layer | Details |
 | --- | --- |
-| Backend | `movie-catalog/public/api/*.php` endpoints (`movies`, `stats`, `duplicates`, `better-copy`, `library-issues`, `movie-page`) → `src/` controllers, repositories, helpers. Read-only SQL against a pre-existing `movies` table. |
+| Backend | `public/api/*.php` endpoints (`movies`, `stats`, `duplicates`, `better-copy`, `library-issues`, `movie-page`) → `src/` controllers, repositories, helpers. Read-only SQL against a pre-existing `movies` table. |
 | Frontend | Vanilla ES modules (`public/assets/js/`) — table render/sort/search, column toggles, pagination, a movie-detail modal with ←/→ navigation, and a large Analytics panel (`stats/`). Bundled with esbuild (`build.mjs`). |
 | Theming | CSS custom properties in `variables.css`. Auto dark via `prefers-color-scheme`, manual override via `:root.theme-dark` / `.theme-light`, persisted in `localStorage`. `stats.css` redefines its **own** dark-token block. |
 | Tooling | `npm run dev:demo` — database-free demo (55 fixtures, mock APIs) on port 4173; Node unit tests, PHP tests, Playwright browser tests. |

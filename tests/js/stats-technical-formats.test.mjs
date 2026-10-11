@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   createTechnicalFormatViewModel
-} from '../../movie-catalog/public/assets/js/stats/stats-technical-formats.js';
+} from '../../public/assets/js/stats/stats-technical-formats.js';
 
 test('technical-format model calculates coverage and distribution shares', () => {
   const model = createTechnicalFormatViewModel({

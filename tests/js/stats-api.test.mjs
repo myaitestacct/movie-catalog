@@ -13,7 +13,7 @@ import {
   isCompleteStorageAnalytics,
   isCompleteTechnicalFormatAnalytics,
   parseJsonResponseBody
-} from '../../movie-catalog/public/assets/js/core/api.js';
+} from '../../public/assets/js/core/api.js';
 
 const completePayload = {
   total_movies: 250,

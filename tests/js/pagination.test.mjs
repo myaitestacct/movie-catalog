@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { state } from '../../movie-catalog/public/assets/js/core/state.js';
-import { renderPagination } from '../../movie-catalog/public/assets/js/table/pagination.js';
+import { state } from '../../public/assets/js/core/state.js';
+import { renderPagination } from '../../public/assets/js/table/pagination.js';
 
 class MockClassList {
   constructor() {

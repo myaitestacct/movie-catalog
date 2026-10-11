@@ -6,7 +6,7 @@ import {
   MINI_POSTER_BUTTON_SELECTOR,
   MINI_POSTER_STORAGE_KEY,
   HIDE_MINI_POSTERS_CLASS
-} from '../../movie-catalog/public/assets/js/table/poster-toggle.js';
+} from '../../public/assets/js/table/poster-toggle.js';
 
 class MockClassList {
   constructor() {
