@@ -272,7 +272,8 @@ All status colors pass WCAG AA against their own backgrounds; hover/active use
 > Updated: every analytics count — chart slices, insight cards, Metadata
 > Completeness rows, Library Health cards, Duplicates, and Get Better
 > Copy — now opens the shared movie-list overlay (`stats/stats-movie-list.js`)
-> with minimal movie rows (title, number, year, rating, size, external link).
+> with sortable minimal movie rows (title, number, year, rating as the IMDb
+> link, and size); the separate external-link column is gone.
 > The older grouped/expandable dialogs and their `.dup-group` / `.dup-child`
 > styles were removed.
 - `sorting.js`: sets `aria-sort` + title on the sorted column.

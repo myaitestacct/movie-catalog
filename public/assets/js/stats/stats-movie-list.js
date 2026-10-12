@@ -9,10 +9,12 @@ import { renderStatsPagination } from './stats-pagination.js';
  * row, or a Library Health / duplicate / better-copy card opens this dialog
  * with the movies behind that number/issue instead of filtering the main
  * table. The list stays deliberately minimal -- title, number, year, rating,
- * stored size, and the external link -- and is always ordered by No (`NUM`)
- * ascending, like the main table. For chart slices the slice itself remains
- * reachable through the footer's "Filter the table" button, which reuses the
- * normal table-filter code path.
+ * and stored size -- and every column header is clickable: the list sorts by
+ * No (`NUM`) ascending by default, like the main table. The rating badge is
+ * the external link to the movie's page, so there is no separate IMDb
+ * column. For chart slices the slice itself remains reachable through the
+ * footer's "Filter the table" button, which reuses the normal table-filter
+ * code path.
  *
  * The movie jumper (jumpToMovie, owned by stats.js) is injected through
  * setMovieJumper(); this module must never import the entry point (see the
@@ -43,22 +45,82 @@ export function compareByNum(left, right) {
     return String(left?.NUM ?? '').localeCompare(String(right?.NUM ?? ''));
 }
 
+/** Columns whose values compare numerically. */
+const NUMERIC_SORT_COLUMNS = Object.freeze([
+    'NUM',
+    'YEAR',
+    'RATING',
+    'FILESIZE'
+]);
+
+function sortableNumber(value) {
+    const text = String(value ?? '').trim();
+
+    if (text === '') return null;
+
+    const number = Number(text);
+
+    return Number.isFinite(number) ? number : null;
+}
+
+function compareValues(left, right, numeric) {
+    if (!numeric) {
+        return String(left ?? '')
+            .trim()
+            .localeCompare(String(right ?? '').trim(), 'en', {
+                sensitivity: 'base'
+            });
+    }
+
+    const leftNumber = sortableNumber(left);
+    const rightNumber = sortableNumber(right);
+
+    // Missing values first, like an SQL NULL in an ASC ordering.
+    if (leftNumber === null && rightNumber === null) return 0;
+    if (leftNumber === null) return -1;
+    if (rightNumber === null) return 1;
+    if (leftNumber === rightNumber) return 0;
+
+    return leftNumber < rightNumber ? -1 : 1;
+}
+
+/**
+ * Comparator for an overlay sort spec. The requested column decides the
+ * order, No (`NUM`) ascending breaks ties -- the same shape as the backend's
+ * `ORDER BY <column> <dir>, NUM ASC`.
+ * @param {{column: string, dir: string}} sort
+ */
+export function compareBySort(sort) {
+    const key = String(sort?.column ?? DEFAULT_SORT.column).toUpperCase();
+    const numeric = NUMERIC_SORT_COLUMNS.includes(key);
+    const factor =
+        String(sort?.dir ?? DEFAULT_SORT.dir).toUpperCase() === 'DESC'
+            ? -1
+            : 1;
+
+    return (left, right) => {
+        const primary = compareValues(left?.[key], right?.[key], numeric);
+
+        return primary !== 0 ? primary * factor : compareByNum(left, right);
+    };
+}
+
 /**
  * Build an overlay source from an unpaginated list request -- the library
  * issue, duplicate, and better-copy endpoints return every row at once.
- * Rows are sorted by No (`NUM`) ascending, then paged client-side with the
- * overlay's page size so every list behaves exactly like the slice lists
- * (where the API already sorts by NUM).
+ * Rows are sorted by the requested column (No ascending by default), then
+ * paged client-side with the overlay's page size so every list behaves
+ * exactly like the slice lists, where movies.php sorts server-side.
  *
  * @param {(signal: AbortSignal) => Promise<object[]>} fetchRows
  */
 export function createListSource(fetchRows) {
     return {
-        fetchPage: async (page, signal) => {
+        fetchPage: async (page, signal, sort = DEFAULT_SORT) => {
             const rows = await fetchRows(signal);
             const list = (Array.isArray(rows) ? rows : [])
                 .slice()
-                .sort(compareByNum);
+                .sort(compareBySort(sort));
             const start =
                 (Math.max(1, Number(page) || 1) - 1) * MOVIE_LIST_PAGE_SIZE;
 
@@ -70,14 +132,25 @@ export function createListSource(fetchRows) {
     };
 }
 
-const COLUMN_LABELS = Object.freeze([
-    'Title',
-    'No',
-    'Year',
-    'Rating',
-    'Size',
-    'IMDb'
+/*
+ * The visible columns and the API column each header sorts by. Rating
+ * doubles as the external link, so there is no IMDb column.
+ */
+const COLUMNS = Object.freeze([
+    Object.freeze({ label: 'Title', sort: 'FORMATTEDTITLE' }),
+    Object.freeze({ label: 'No', sort: 'NUM' }),
+    Object.freeze({ label: 'Year', sort: 'YEAR' }),
+    Object.freeze({ label: 'Rating', sort: 'RATING' }),
+    Object.freeze({ label: 'Size', sort: 'FILESIZE' })
 ]);
+
+const DEFAULT_SORT = Object.freeze({ column: 'NUM', dir: 'ASC' });
+
+const SORT_INDICATORS = Object.freeze({
+    ascending: '\u25b2',
+    descending: '\u25bc',
+    none: '\u21c5'
+});
 
 const TITLE_ID = 'stats-movie-list-title';
 
@@ -89,6 +162,7 @@ let activeSpec = null;
 let activeFilter = null;
 let activePage = 1;
 let activeEmptyMessage = 'No movies match this selection.';
+let activeSort = { ...DEFAULT_SORT };
 let inFlight = null;
 
 /**
@@ -135,8 +209,28 @@ function buildOverlay() {
 
     const table = createElement('table', 'table stats-movie-table');
     const headRow = createElement('tr');
-    COLUMN_LABELS.forEach(label => {
-        headRow.appendChild(createElement('th', '', label));
+    const headCells = COLUMNS.map(column => {
+        const th = createElement('th');
+        th.scope = 'col';
+
+        const button = createElement('button', 'stats-movie-sort');
+        button.type = 'button';
+        button.dataset.sort = column.sort;
+
+        const label = createElement(
+            'span',
+            'stats-movie-sort-label',
+            column.label
+        );
+        const indicator = createElement('span', 'stats-movie-sort-indicator');
+        indicator.setAttribute('aria-hidden', 'true');
+
+        button.append(label, indicator);
+        button.addEventListener('click', () => changeSort(column.sort));
+        th.appendChild(button);
+        headRow.appendChild(th);
+
+        return th;
     });
     const thead = createElement('thead');
     thead.appendChild(headRow);
@@ -189,6 +283,7 @@ function buildOverlay() {
         close,
         status,
         table,
+        headCells,
         tbody,
         pager,
         filterButton
@@ -199,6 +294,65 @@ function ensureOverlay() {
     if (!elements) elements = buildOverlay();
 
     return elements;
+}
+
+/**
+ * Clicking a header sorts by that column: the same column flips between
+ * ascending and descending, a new column starts ascending (mirrors the main
+ * table). The list restarts at page one, since the ordering changed.
+ * @param {string} column
+ */
+function changeSort(column) {
+    activeSort = {
+        column,
+        dir:
+            activeSort.column === column && activeSort.dir === 'ASC'
+                ? 'DESC'
+                : 'ASC'
+    };
+
+    syncSortIndicators();
+    loadPage(1);
+}
+
+/** Reflect the active sort in the headers' aria-sort and indicators. */
+function syncSortIndicators() {
+    const { headCells } = elements;
+
+    COLUMNS.forEach((column, index) => {
+        const th = headCells[index];
+        const button = th?.children[0];
+        const labelSpan = button?.children[0];
+        const indicator = button?.children[1];
+        const active = activeSort.column === column.sort;
+        const state = active
+            ? (activeSort.dir === 'ASC' ? 'ascending' : 'descending')
+            : 'none';
+
+        th.setAttribute('aria-sort', state);
+        if (indicator) indicator.textContent = SORT_INDICATORS[state];
+
+        if (!button) return;
+
+        button.title = active
+            ? `Sorted by ${column.label} ` +
+                `${activeSort.dir === 'ASC' ? 'ascending' : 'descending'}` +
+                ' \u2014 click to reverse'
+            : `Sort by ${column.label} ascending`;
+        button.setAttribute(
+            'aria-label',
+            active
+                ? `Sort by ${column.label}, currently ` +
+                    `${activeSort.dir === 'ASC' ? 'ascending' : 'descending'}`
+                : `Sort by ${column.label}`
+        );
+        button.setAttribute(
+            'aria-pressed',
+            String(active)
+        );
+
+        if (labelSpan) labelSpan.textContent = column.label;
+    });
 }
 
 function cancelInFlight() {
@@ -243,6 +397,12 @@ function movieTitle(row) {
     return formatted || original || `Movie #${String(row?.NUM ?? '')}`;
 }
 
+/*
+ * The rating badge is the row's external link: clicking it opens the
+ * movie's page (IMDb) in a new tab. With no safe URL the badge renders as
+ * an inert, aria-disabled anchor -- the same contract as the main table's
+ * rating column.
+ */
 function createRatingCell(row) {
     const cell = createElement('td', 'stats-movie-cell-rating');
     const rating = Number(row?.RATING);
@@ -252,11 +412,15 @@ function createRatingCell(row) {
         return cell;
     }
 
-    const badge = createElement(
-        'span',
-        `rating-badge ${ratingTier(rating)}`.trim(),
-        String(row.RATING)
-    );
+    const badge = document.createElement('a');
+    badge.className = `rating-badge ${ratingTier(rating)}`.trim();
+    badge.textContent = String(row.RATING);
+
+    if (configureExternalLink(badge, row?.URL)) {
+        badge.title = 'Open the movie page on IMDb';
+    } else {
+        badge.title = 'Movie page link unavailable';
+    }
 
     cell.appendChild(badge);
     return cell;
@@ -283,21 +447,6 @@ function createNumberCell(row) {
     return cell;
 }
 
-function createLinkCell(row) {
-    const cell = createElement('td', 'stats-movie-cell-imdb');
-    const link = createElement('a');
-
-    if (configureExternalLink(link, row?.URL)) {
-        link.textContent = 'IMDB';
-    } else {
-        link.textContent = 'IMDB';
-        link.setAttribute('aria-disabled', 'true');
-    }
-
-    cell.appendChild(link);
-    return cell;
-}
-
 function renderRow(row) {
     const tr = document.createElement('tr');
     tr.className = 'stats-movie-row';
@@ -314,7 +463,6 @@ function renderRow(row) {
     tr.appendChild(
         createElement('td', 'stats-movie-cell-size', valueOrDash(row?.FILESIZE))
     );
-    tr.appendChild(createLinkCell(row));
 
     return tr;
 }
@@ -373,7 +521,11 @@ function loadPage(page) {
     setStatus('Loading movies\u2026');
 
     Promise.resolve()
-        .then(() => activeSource.fetchPage(activePage, controller.signal))
+        .then(() => activeSource.fetchPage(
+            activePage,
+            controller.signal,
+            { ...activeSort }
+        ))
         .then(result => {
             if (inFlight !== controller) return;
 
@@ -423,6 +575,8 @@ export function openMovieListOverlay({
     activeSpec = spec;
     activeFilter = typeof onFilter === 'function' ? onFilter : null;
     activeEmptyMessage = String(emptyMessage || 'No movies match this selection.');
+    // Every list opens in the default order: No ascending.
+    activeSort = { ...DEFAULT_SORT };
 
     heading.textContent = String(title || 'Movies');
     filterButton.hidden = !(activeSpec && activeFilter);
@@ -432,6 +586,7 @@ export function openMovieListOverlay({
     }
 
     overlay.classList.remove('hidden');
+    syncSortIndicators();
     close.focus?.();
 
     loadPage(1);

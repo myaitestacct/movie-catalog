@@ -2,11 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 /*
- * Unit tests for the analytics movie-list overlay: minimal movie rows
- * (title, number, year, rating, stored size, external link), paging,
- * empty/error states, the jump-to-movie link, the optional
- * "Filter the table" action, the shared source for unpaginated list
- * endpoints (sorted by No), and the ways it closes.
+ * Unit tests for the movie-list overlay: minimal movie rows (title, number,
+ * year, rating, stored size) where the rating badge is the IMDb link,
+ * sortable headers, paging, empty/error states, the jump-to-movie link, the
+ * optional "Filter the table" action, the shared source for unpaginated
+ * list endpoints (sorted by No), and the ways it closes.
  */
 
 class FakeClassList {
@@ -212,6 +212,7 @@ const {
     MOVIE_LIST_PAGE_SIZE,
     closeMovieListOverlay,
     compareByNum,
+    compareBySort,
     createListSource,
     openMovieListOverlay,
     setMovieJumper
@@ -272,14 +273,30 @@ function pagerButton(label) {
     ) ?? null;
 }
 
+function headerButtons() {
+    return byClass('stats-movie-sort');
+}
+
+function headerButton(column) {
+    return headerButtons().find(
+        button => button.dataset.sort === column
+    ) ?? null;
+}
+
+function headerLabel(index) {
+    return headerButton(
+        ['FORMATTEDTITLE', 'NUM', 'YEAR', 'RATING', 'FILESIZE'][index]
+    ).children[0];
+}
+
 function sourceFrom(pages) {
     const calls = [];
 
     return {
         calls,
         source: {
-            fetchPage: async (page, signal) => {
-                calls.push({ page, signal });
+            fetchPage: async (page, signal, sort) => {
+                calls.push({ page, signal, sort });
 
                 const result = pages[page - 1];
                 if (result instanceof Error) throw result;
@@ -325,17 +342,21 @@ test('renders the minimal movie rows', async () => {
 
     const cells = rows()[0].children;
 
+    // Five columns: the IMDb column is gone, because the rating badge is
+    // the external link.
+    assert.equal(cells.length, 5);
     assert.equal(cells[0].textContent, 'Arrival');
     assert.equal(cells[1].textContent, '1');
     assert.equal(cells[2].textContent, '2016');
     assert.equal(cells[3].textContent, '7.9');
     assert.equal(cells[4].textContent, '1200');
 
-    const imdb = cells[5].children[0];
-    assert.equal(imdb.textContent, 'IMDB');
-    assert.equal(imdb.href, 'https://www.imdb.com/title/tt2543164/');
-    assert.equal(imdb.target, '_blank');
-    assert.equal(imdb.rel, 'noopener noreferrer');
+    const rating = cells[3].children[0];
+    assert.equal(rating.className, 'rating-badge rating-good');
+    assert.equal(rating.textContent, '7.9');
+    assert.equal(rating.href, 'https://www.imdb.com/title/tt2543164/');
+    assert.equal(rating.target, '_blank');
+    assert.equal(rating.rel, 'noopener noreferrer');
 
     // No slice spec, so the filter action stays hidden.
     assert.equal(filterButton().hidden, true);
@@ -413,10 +434,27 @@ test('unsafe external links are disabled', async () => {
     openMovieListOverlay({ title: 'Movies', source });
     await flush();
 
-    const imdb = rows()[0].children[5].children[0];
+    const rating = rows()[0].children[3].children[0];
 
-    assert.equal(imdb.hasAttribute('href'), false);
-    assert.equal(imdb.getAttribute('aria-disabled'), 'true');
+    assert.equal(rating.hasAttribute('href'), false);
+    assert.equal(rating.getAttribute('aria-disabled'), 'true');
+
+    // The badge still shows the rating, it just cannot be followed.
+    assert.equal(rating.textContent, '7.9');
+});
+
+test('an unknown rating renders as a dash, not a link', async () => {
+    const { source } = sourceFrom([
+        { rows: [makeRow({ RATING: '0' })], total: 1 }
+    ]);
+
+    openMovieListOverlay({ title: 'Movies', source });
+    await flush();
+
+    const ratingCell = rows()[0].children[3];
+
+    assert.equal(ratingCell.textContent, '\u2013');
+    assert.equal(ratingCell.children.length, 0);
 });
 
 test('the No link jumps to the movie through the injected handler', async () => {
@@ -576,6 +614,146 @@ test('compareByNum falls back to a string compare for odd values', () => {
         .map(row => String(row.NUM ?? ''));
 
     assert.deepEqual(mixed, ['', '12', 'alpha', 'beta']);
+});
+
+test('headers are sortable: No ascending by default, click toggles', async () => {
+    const calls = [];
+    const source = {
+        fetchPage: async (page, signal, sort) => {
+            calls.push({ page, sort });
+
+            return { rows: [makeRow()], total: 1 };
+        }
+    };
+
+    openMovieListOverlay({ title: 'Movies', source });
+    await flush();
+
+    // The overlay opens sorted by No ascending.
+    assert.deepEqual(calls[0].sort, { column: 'NUM', dir: 'ASC' });
+    assert.equal(headerLabel(0).textContent, 'Title');
+    assert.equal(headerLabel(4).textContent, 'Size');
+    assert.equal(rows()[0].children.length, 5, 'no IMDb column');
+
+    // Sorting by Title starts ascending, from page 1.
+    headerButton('FORMATTEDTITLE').click();
+    await flush();
+
+    assert.equal(calls.length, 2);
+    assert.deepEqual(calls[1].sort, { column: 'FORMATTEDTITLE', dir: 'ASC' });
+    assert.equal(calls[1].page, 1);
+
+    // The same header flips to descending.
+    headerButton('FORMATTEDTITLE').click();
+    await flush();
+
+    assert.deepEqual(calls[2].sort, { column: 'FORMATTEDTITLE', dir: 'DESC' });
+
+    // A different header starts ascending again.
+    headerButton('FILESIZE').click();
+    await flush();
+
+    assert.deepEqual(calls[3].sort, { column: 'FILESIZE', dir: 'ASC' });
+});
+
+test('the active header carries aria-sort and an indicator', async () => {
+    const { source } = sourceFrom([{ rows: [makeRow()], total: 1 }]);
+
+    openMovieListOverlay({ title: 'Movies', source });
+    await flush();
+
+    const headers = byClass('stats-movie-table')[0].children[0].children[0];
+    const [titleTh, numTh] = headers.children;
+
+    assert.equal(numTh.getAttribute('aria-sort'), 'ascending');
+    assert.equal(numTh.children[0].children[1].textContent, '\u25b2');
+    assert.equal(titleTh.getAttribute('aria-sort'), 'none');
+    assert.equal(titleTh.children[0].children[1].textContent, '\u21c5');
+
+    headerButton('FORMATTEDTITLE').click();
+    await flush();
+
+    assert.equal(titleTh.getAttribute('aria-sort'), 'ascending');
+    assert.equal(titleTh.children[0].children[1].textContent, '\u25b2');
+    assert.equal(numTh.getAttribute('aria-sort'), 'none');
+
+    headerButton('FORMATTEDTITLE').click();
+    await flush();
+
+    assert.equal(titleTh.getAttribute('aria-sort'), 'descending');
+    assert.equal(titleTh.children[0].children[1].textContent, '\u25bc');
+});
+
+test('a sortable header resets the list to page one', async () => {
+    const { source, calls } = sourceFrom([
+        { rows: [makeRow({ NUM: '1' })], total: 60 },
+        { rows: [makeRow({ NUM: '26' })], total: 60 },
+        { rows: [makeRow({ NUM: '1' })], total: 60 }
+    ]);
+
+    openMovieListOverlay({ title: 'Movies', source });
+    await flush();
+
+    pagerButton('Next').click();
+    await flush();
+
+    assert.equal(calls[calls.length - 1].page, 2);
+
+    headerButton('YEAR').click();
+    await flush();
+
+    assert.equal(calls[calls.length - 1].page, 1);
+});
+
+test('reopening the overlay returns to the default No ordering', async () => {
+    const { source, calls } = sourceFrom([
+        { rows: [makeRow()], total: 1 },
+        { rows: [makeRow()], total: 1 }
+    ]);
+
+    openMovieListOverlay({ title: 'Movies', source });
+    await flush();
+
+    headerButton('RATING').click();
+    await flush();
+
+    assert.deepEqual(calls[calls.length - 1].sort, { column: 'RATING', dir: 'ASC' });
+
+    closeMovieListOverlay(false);
+    openMovieListOverlay({ title: 'Other movies', source });
+    await flush();
+
+    assert.deepEqual(calls[calls.length - 1].sort, { column: 'NUM', dir: 'ASC' });
+});
+
+test('compareBySort mirrors ORDER BY column, then NUM', () => {
+    const rows = [
+        { NUM: '3', YEAR: '2017', RATING: '7.5', FORMATTEDTITLE: 'beta' },
+        { NUM: '1', YEAR: '2016', RATING: '8.4', FORMATTEDTITLE: 'Beta' },
+        { NUM: '2', YEAR: '2016', RATING: '6.1', FORMATTEDTITLE: 'alpha' }
+    ];
+
+    const byYear = rows.slice().sort(compareBySort({ column: 'YEAR', dir: 'ASC' }));
+    assert.deepEqual(byYear.map(row => row.NUM), ['1', '2', '3']);
+
+    const byYearDesc = rows.slice().sort(compareBySort({ column: 'YEAR', dir: 'DESC' }));
+    assert.deepEqual(byYearDesc.map(row => row.NUM), ['3', '1', '2']);
+
+    // Titles compare case-insensitively; NUM breaks the tie.
+    const byTitle = rows.slice().sort(
+        compareBySort({ column: 'FORMATTEDTITLE', dir: 'ASC' })
+    );
+    assert.deepEqual(byTitle.map(row => row.NUM), ['2', '1', '3']);
+
+    // Numeric, not lexicographic: 8.4 before 6.1 descending, 10 after 9.
+    const byRating = rows.slice().sort(
+        compareBySort({ column: 'RATING', dir: 'DESC' })
+    );
+    assert.deepEqual(byRating.map(row => row.RATING), ['8.4', '7.5', '6.1']);
+
+    const tens = [{ NUM: '10' }, { NUM: '9' }]
+        .sort(compareBySort({ column: 'NUM', dir: 'ASC' }));
+    assert.deepEqual(tens.map(row => row.NUM), ['9', '10']);
 });
 
 test('a failed request offers a retry', async () => {

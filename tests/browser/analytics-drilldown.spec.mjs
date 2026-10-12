@@ -46,14 +46,25 @@ test.describe('analytics movie lists', () => {
       modal.locator('.stats-movie-table tbody tr')
     ).toHaveCount(13);
 
-    // Every row carries the minimal details: title, number, year, IMDb link.
+    // Every row carries the minimal details: title, number, year, rating
+    // (the rating badge is the IMDb link), and size.
     const firstRow = modal.locator('.stats-movie-table tbody tr').first();
     await expect(firstRow.locator('td:nth-child(1)')).not.toBeEmpty();
     await expect(
       firstRow.locator('td:nth-child(2) a.jump-to-row')
     ).toBeVisible();
     await expect(firstRow.locator('td:nth-child(3)')).not.toBeEmpty();
-    await expect(firstRow.locator('td:nth-child(6)')).toContainText('IMDB');
+    await expect(
+      firstRow.locator('td:nth-child(4) a.rating-badge')
+    ).toHaveAttribute('target', '_blank');
+    await expect(firstRow.locator('td:nth-child(4) a.rating-badge')).toHaveAttribute(
+      'href',
+      /https:\/\/www\.imdb\.com\//
+    );
+    await expect(firstRow.locator('td:nth-child(5)')).not.toBeEmpty();
+    await expect(
+      modal.locator('.stats-movie-table tbody tr td:nth-child(6)')
+    ).toHaveCount(0);
 
     // The list is read-only: the drawer stays open, nothing is filtered.
     await expect(page.locator('#stats-panel')).toHaveClass(/show/);
@@ -272,12 +283,11 @@ test.describe('analytics movie lists', () => {
       modal.locator('.stats-movie-table tbody tr')
     ).toHaveCount(1);
 
-    // Minimal details: title, number, year, rating, size, IMDb link.
+    // Minimal details: title, number, year, rating (the IMDb link), size.
     const row = modal.locator('.stats-movie-table tbody tr').first();
     await expect(row.locator('td:nth-child(1)')).not.toBeEmpty();
-    await expect(row.locator('td:nth-child(4) .rating-badge')).toBeVisible();
+    await expect(row.locator('td:nth-child(4) a.rating-badge')).toBeVisible();
     await expect(row.locator('td:nth-child(5)')).not.toBeEmpty();
-    await expect(row.locator('td:nth-child(6)')).toContainText('IMDB');
 
     // A library issue has no table filter, so no footer action.
     await expect(modal.locator('.stats-movie-list-filter')).toBeHidden();
@@ -329,6 +339,62 @@ test.describe('analytics movie lists', () => {
     await expect(
       modal.locator('.stats-movie-table tbody tr[data-num="51"]')
     ).toHaveCount(1);
+  });
+
+  test('list headers sort the movies', async ({ page }) => {
+    await openCatalog(page);
+    await openAnalytics(page);
+
+    await page
+      .locator('#decade-distribution .stats-decade-row', {
+        hasText: '2010s'
+      })
+      .click();
+
+    const modal = movieList(page);
+
+    await expect(
+      modal.locator('.stats-movie-table tbody tr')
+    ).toHaveCount(13);
+
+    // Opens sorted by No ascending.
+    await expect(
+      modal.locator('.stats-movie-sort[data-sort="NUM"]')
+    ).toHaveAttribute('aria-pressed', 'true');
+
+    const titleHeader = modal.locator(
+      '.stats-movie-sort[data-sort="FORMATTEDTITLE"]'
+    );
+
+    await titleHeader.click();
+
+    await expect(
+      modal.locator('th[aria-sort="ascending"] .stats-movie-sort')
+    ).toHaveCount(1);
+
+    const titles = await modal
+      .locator('.stats-movie-table tbody tr .stats-movie-cell-title')
+      .allTextContents();
+
+    expect(titles).toEqual([...titles].sort((a, b) => a.localeCompare(b)));
+
+    // Same header again reverses the order.
+    await titleHeader.click();
+
+    await expect(
+      modal.locator('th[aria-sort="descending"] .stats-movie-sort')
+    ).toHaveCount(1);
+
+    const descending = await modal
+      .locator('.stats-movie-table tbody tr .stats-movie-cell-title')
+      .allTextContents();
+
+    expect(descending).toEqual([...titles].reverse());
+
+    // Sorting never touches the main table.
+    await expect(
+      page.locator('#movies tbody tr[data-num]')
+    ).toHaveCount(50);
   });
 
   test('metadata completeness fields open the missing-movies list', async ({ page }) => {

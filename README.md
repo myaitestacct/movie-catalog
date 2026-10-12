@@ -262,15 +262,26 @@ Duplicates, and Get Better Copy:
 | Largest Movie card | jumps to that row in the table | — |
 
 The overlay lists each movie with minimal details: title, number (`NUM`),
-year, rating, stored file size, and the external IMDb link, 25 rows per
-page, always ordered by **No ascending** — the same order as the main
-table. Slice lists ask the API for `sort=NUM&dir=ASC`; the library-issue,
-duplicate, and better-copy endpoints return the whole list at once, and the
-overlay sorts it by `NUM` and pages it the same way. The number jumps to
-that movie's row in the main table; the previous grouped, expandable
-dialogs are gone. The list is read-only: the table and the
-active filters stay untouched, and the drawer stays open behind the
+year, rating, and stored file size, 25 rows per page, always opening in
+**No ascending** order — the same order as the main table. There is no
+separate IMDb column: the **rating badge is the link** to the movie's IMDb
+page (it opens in a new tab, and renders inert when the record has no safe
+URL). The number jumps to that movie's row in the main table; the previous
+grouped, expandable dialogs are gone. The list is read-only: the table and
+the active filters stay untouched, and the drawer stays open behind the
 overlay.
+
+Every column header is clickable, exactly like the main table: clicking
+sorts by that column (the same header again reverses the order, a new
+header starts ascending), the active header carries `aria-sort` plus a
+▲/▼ indicator, and the list restarts at page one. Slice lists pass the
+column straight to the API (`sort=FORMATTEDTITLE&dir=ASC`, validated
+against the same sortable-column whitelist the main table uses); the
+library-issue, duplicate, and better-copy endpoints return the whole list
+at once, so the overlay sorts those client-side — numerically for No,
+year, rating, and size, case-insensitively for titles — with `NUM`
+ascending as the tie-breaker, mirroring `ORDER BY <column> <dir>, NUM
+ASC`.
 
 The **Filter the table** button in the overlay footer applies the slice as a
 normal toolbar filter instead (the older drill-down): the overlay and drawer

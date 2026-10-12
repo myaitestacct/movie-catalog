@@ -278,7 +278,7 @@ Based on [UI-ENHANCEMENTS.md](UI-ENHANCEMENTS.md) and [UI-MODERNIZATION.md](UI-M
 - ✅ Movie grid view
 - ✅ Flex app shell with modern viewport layout
 - ✅ Self-hosted Font Awesome (no third-party requests)
-- ✅ Movie lists (click any analytics count — slices, field-coverage rows, Library Health, duplicates, better copy — for an overlay of the movies; filter from the overlay)
+- ✅ Movie lists (click any analytics count — slices, field-coverage rows, Library Health, duplicates, better copy — for a sortable overlay of the movies; filter from the overlay)
 
 ### Performance
 - ✅ All UI enhancements add zero runtime cost on common path

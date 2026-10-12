@@ -237,50 +237,54 @@ User Action: Open analytics panel
 User Action: Click genre bar in analytics
        │
        ▼
-┌──────────────────────────┐
+┌───────────────────────────┐
 │  stats/stats-genres.js    │
 │  - Handle click           │
 │  - Extract filter spec    │
 │  - onSelect(spec, title)  │
-└────────┬─────────────────┘
+└────────┬──────────────────┘
          │
          ▼
-┌──────────────────────────┐
+┌───────────────────────────┐
 │  stats/stats.js           │
 │  - handleSliceSelect()    │
 │  - Open the overlay       │
-└────────┬─────────────────┘
+└────────┬──────────────────┘
          │
          ▼
-┌──────────────────────────┐
+┌───────────────────────────┐
 │  stats/stats-movie-list.js│
 │  - Show dialog + title    │
 │  - Fetch page via         │
 │    /api/movies.php with   │
 │    the slice as a column  │
-│    filter, sort=NUM ASC   │
-│    (25 per page)          │
-│  - Render minimal rows    │
+│    filter and the clicked │
+│    sort (default NUM ASC, │
+│    25 per page)           │
+│  - Render minimal rows,   │
+│    rating badge links to  │
+│    the movie's IMDb page  │
 │  - Paginate               │
-└────────┬─────────────────┘
+└────────┬──────────────────┘
          │
          │  Optional: "Filter the table" footer action
          ▼
-┌──────────────────────────┐
+┌───────────────────────────┐
 │  stats-table-filters.js   │
 │  - applyTableFilter(spec) │
 │  - Write state.search     │
 │  - Force AND mode         │
 │  - Reload page 1          │
-└──────────────────────────┘
+└───────────────────────────┘
+```
 
 Metadata Completeness field rows, the Library Health cards, and the
 Duplicates / Get Better Copy cards open the same overlay through
 createListSource(), fed by the unpaginated list endpoints
-(/api/library-issues.php, /api/duplicates.php, /api/better-copy.php),
-which are sorted by NUM before paging; they have no table filter, so no
-filter action.
-```
+(/api/library-issues.php, /api/duplicates.php, /api/better-copy.php).
+Those rows are sorted client-side by the clicked column (NUM ascending by
+default, NUM as tie-breaker) before paging, using the same comparator
+shape as the backend; they have no table filter, so no filter action.
 
 ---
 

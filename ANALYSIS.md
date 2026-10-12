@@ -144,7 +144,7 @@ Comprehensive collection analytics with **12 sections**:
 | Metadata | Field-by-field completeness analysis |
 | Library Health | Health score, missing files/posters, duplicates, better copy — every card opens the shared movie list |
 
-**Interactive Feature**: Click any analytics count to open the shared movie-list overlay with the movies behind it (title, number, year, rating, stored size, external link). Chart slices also offer "Filter the table" to apply the slice as a normal table filter; Library Health, Duplicates, and Get Better Copy lists are read-only.
+**Interactive Feature**: Click any analytics count to open the shared movie-list overlay with the movies behind it (title, number, year, rating, stored size), sorted by any column through the clickable headers with the rating badge as the IMDb link. Chart slices also offer "Filter the table" to apply the slice as a normal table filter; Library Health, Duplicates, and Get Better Copy lists are read-only.
 
 ### 4. Special Features
 - **Theme Toggle**: Light/Dark mode with localStorage persistence
@@ -665,7 +665,7 @@ All theming uses CSS variables:
    - Numeric columns support range grammar (`2000-2009`, `150+`, `<90`)
    - Zero values treated as "unknown" for RATING, LENGTH, FILESIZE
 
-3. **Movie lists** (ordered by No ascending): Click any analytics count — a chart element, a Metadata Completeness row, a Library Health card, Duplicates, or Get Better Copy — to open the same overlay listing the movies behind it (title, number, year, rating, size, external link); chart slices also offer "Filter the table" to apply the slice to the main table
+3. **Movie lists** (sortable headers, No ascending by default): Click any analytics count — a chart element, a Metadata Completeness row, a Library Health card, Duplicates, or Get Better Copy — to open the same overlay listing the movies behind it (title, number, year, rating as the IMDb link, and size); chart slices also offer "Filter the table" to apply the slice to the main table
 
 ### UI Modernization (Implemented)
 1. **App identity**: Clapperboard brand mark, wordmark, tagline

@@ -1340,8 +1340,8 @@
 }
 
 /* ==========================
-   Analytics movie-list overlay
-   (slices, insight cards, and Metadata Completeness fields)
+   Movie-list overlay
+   (every analytics count: slices, insight cards, field rows, health cards)
 ========================== */
 
 .stats-modal-content.stats-movie-list {
@@ -1367,6 +1367,51 @@
 .stats-movie-table .rating-badge {
     padding: 2px 9px;
     font-size: 0.72rem;
+}
+
+/* Sortable headers: one button per column, indicator on the active one. */
+.stats-movie-table th {
+    padding: 0;
+}
+
+.stats-movie-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.stats-movie-sort:hover {
+    color: var(--primary);
+}
+
+.stats-movie-sort:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+}
+
+.stats-movie-sort-indicator {
+    font-size: 10px;
+    opacity: 0.65;
+}
+
+.stats-movie-table th[aria-sort="ascending"] .stats-movie-sort,
+.stats-movie-table th[aria-sort="descending"] .stats-movie-sort {
+    color: var(--primary);
+}
+
+.stats-movie-table th[aria-sort="ascending"] .stats-movie-sort-indicator,
+.stats-movie-table th[aria-sort="descending"] .stats-movie-sort-indicator {
+    opacity: 1;
 }
 
 .stats-movie-list-status {

@@ -592,10 +592,14 @@ test.describe('movie catalog', () => {
 
       await expect(issueRow).toHaveCount(1);
 
-      // Minimal details: title, number, year, rating, size, IMDb link.
+      // Minimal details: title, number, year, rating, size -- the rating
+      // badge links to the movie's IMDb page.
       await expect(
-        issueRow.locator('.stats-movie-cell-imdb a')
-      ).toHaveText('IMDB');
+        issueRow.locator('td')
+      ).toHaveCount(5);
+      await expect(
+        issueRow.locator('.stats-movie-cell-rating a.rating-badge')
+      ).toHaveAttribute('target', '_blank');
 
       await page.locator(
         '.stats-modal:not(.hidden) .stats-close'

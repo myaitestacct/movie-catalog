@@ -392,9 +392,11 @@ function closePanel(restoreFocus = false) {
 
 /**
  * Analytics slice click: open the movie-list overlay with the movies
- * behind the clicked slice, ordered by No (`NUM`) ascending like every
- * other list. The overlay keeps the main table untouched and offers the
- * older drill-down as a secondary "Filter the table" action.
+ * behind the clicked slice, ordered by No (`NUM`) ascending by default;
+ * the overlay's sortable headers pass their column through to movies.php,
+ * which validates it against its sortable-column whitelist. The overlay
+ * keeps the main table untouched and offers the older drill-down as a
+ * secondary "Filter the table" action.
  * @param {{column: string, value: string}} spec
  * @param {string} [title] e.g. "Movies certified PG-13"
  */
@@ -407,13 +409,13 @@ function handleSliceSelect(spec, title) {
     openMovieListOverlay({
         title: title || `${value} movies`,
         source: {
-            fetchPage: (page, signal) =>
+            fetchPage: (page, signal, sort) =>
                 fetchMovies(
                     new URLSearchParams({
                         [column]: value,
                         // Same order as the main table: No ascending.
-                        sort: 'NUM',
-                        dir: 'ASC',
+                        sort: String(sort?.column ?? 'NUM'),
+                        dir: String(sort?.dir ?? 'ASC'),
                         page: String(page),
                         limit: String(MOVIE_LIST_PAGE_SIZE)
                     }),

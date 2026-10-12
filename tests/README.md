@@ -65,11 +65,13 @@ On constrained machines use `npm run test:browser -- --workers=2`.
   exactly one, and `app.js` must swap only the icon so the markup label
   survives a re-render.
 - Dashboard animations, issue grouping, and selected analytics view models.
-- The analytics movie-list overlay: minimal rows (title fallback, rating
-  tiers, dashes for unknown values, safe external links), paging through the
-  source (with its NUM ordering, including across pages), empty and
-  failed-request states, the jump-to-movie link, the optional "Filter the
-  table" action, and closing via button/backdrop/Escape.
+- The movie-list overlay: minimal rows (title fallback, rating tiers where
+  the badge is the external link, dashes for unknown values, unsafe links
+  disabled), sortable headers (default No ascending, toggle direction, page
+  reset, client-side sorting of unpaginated lists including across pages),
+  paging through the source, empty and failed-request states, the
+  jump-to-movie link, the optional "Filter the table" action, and closing
+  via button/backdrop/Escape.
 - Slice wiring: chart slices and insight cards open that overlay with the
   right filter spec without touching the table state, and Metadata
   Completeness field rows open it with the missing-movies rows.

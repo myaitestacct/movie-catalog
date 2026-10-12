@@ -578,6 +578,14 @@ function overlayRows() {
     return tbody ? tbody.children : [];
 }
 
+function overlaySortButton(column) {
+    return findAll(
+        document.body,
+        element => element.classList.contains('stats-movie-sort') &&
+            element.dataset.sort === column
+    )[0] ?? null;
+}
+
 function overlayFilterButton() {
     return findAll(
         document.body,
@@ -693,12 +701,18 @@ test('decade rows open the movie-list overlay with the slice movies', async () =
 
     const rows = overlayRows();
     assert.equal(rows.length, sliceRows.length);
+    assert.equal(rows[0].children.length, 5, 'no IMDb column');
     assert.equal(rows[0].children[0].textContent, 'Arrival');
     assert.equal(rows[0].children[1].textContent, '1');
     assert.equal(rows[0].children[2].textContent, '2016');
     assert.equal(rows[0].children[3].textContent, '7.9');
     assert.equal(rows[0].children[4].textContent, '1200');
-    assert.equal(rows[0].children[5].textContent, 'IMDB');
+
+    // The rating badge is the external link.
+    const badge = rows[0].children[3].children[0];
+    assert.equal(badge.className, 'rating-badge rating-good');
+    assert.equal(badge.href, 'https://www.imdb.com/title/tt2543164/');
+    assert.equal(badge.target, '_blank');
 });
 
 test('genre rows request the CATEGORY column', async () => {
@@ -894,6 +908,39 @@ test('Escape closes the overlay', async () => {
     document.dispatch('keydown', { key: 'Escape' });
 
     assert.equal(overlayIsOpen(), false);
+});
+
+test('slice lists sort through the API when a header is clicked', async () => {
+    const row = findSlice(decadeContainer, '2010s');
+    row.click();
+    await flush();
+
+    // The list opens sorted by No.
+    let request = lastRequestMatching('movies.php');
+    assert.equal(request.searchParams.get('sort'), 'NUM');
+    assert.equal(request.searchParams.get('dir'), 'ASC');
+
+    // Clicking Title asks movies.php for a title ordering, from page 1.
+    const titleHeader = overlaySortButton('FORMATTEDTITLE');
+    assert.ok(titleHeader, 'renders the sortable Title header');
+    titleHeader.click();
+    await flush();
+
+    request = lastRequestMatching('movies.php');
+    assert.equal(request.searchParams.get('sort'), 'FORMATTEDTITLE');
+    assert.equal(request.searchParams.get('dir'), 'ASC');
+    assert.equal(request.searchParams.get('page'), '1');
+
+    // The same header flips to descending.
+    titleHeader.click();
+    await flush();
+
+    request = lastRequestMatching('movies.php');
+    assert.equal(request.searchParams.get('sort'), 'FORMATTEDTITLE');
+    assert.equal(request.searchParams.get('dir'), 'DESC');
+
+    // The table state is still untouched.
+    assert.deepEqual(state.search, {});
 });
 
 test('library health cards open the shared movie-list overlay', async () => {
