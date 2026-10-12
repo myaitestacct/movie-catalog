@@ -308,6 +308,11 @@ test.describe('analytics movie lists', () => {
     await expect(
       modal.locator('.stats-movie-table tbody tr[data-num="15"]')
     ).toHaveCount(1);
+
+    // Lists are ordered by No ascending, whatever the API returned.
+    await expect(
+      modal.locator('.stats-movie-table tbody tr .stats-movie-cell-num')
+    ).toHaveText(['14', '15']);
   });
 
   test('the better-copy card lists the replacement movies', async ({ page }) => {

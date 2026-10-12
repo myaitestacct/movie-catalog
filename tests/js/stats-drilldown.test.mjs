@@ -681,6 +681,9 @@ test('decade rows open the movie-list overlay with the slice movies', async () =
 
     const request = lastRequestMatching('movies.php');
     assert.equal(request.searchParams.get('YEAR'), '2010-2019');
+    // Every list is ordered by No, like the main table.
+    assert.equal(request.searchParams.get('sort'), 'NUM');
+    assert.equal(request.searchParams.get('dir'), 'ASC');
     assert.equal(request.searchParams.get('page'), '1');
     assert.equal(request.searchParams.get('limit'), '25');
 

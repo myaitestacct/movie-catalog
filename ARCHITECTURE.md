@@ -258,7 +258,8 @@ User Action: Click genre bar in analytics
 │  - Fetch page via         │
 │    /api/movies.php with   │
 │    the slice as a column  │
-│    filter (25 per page)   │
+│    filter, sort=NUM ASC   │
+│    (25 per page)          │
 │  - Render minimal rows    │
 │  - Paginate               │
 └────────┬─────────────────┘
@@ -276,8 +277,9 @@ User Action: Click genre bar in analytics
 Metadata Completeness field rows, the Library Health cards, and the
 Duplicates / Get Better Copy cards open the same overlay through
 createListSource(), fed by the unpaginated list endpoints
-(/api/library-issues.php, /api/duplicates.php, /api/better-copy.php);
-they have no table filter, so no filter action.
+(/api/library-issues.php, /api/duplicates.php, /api/better-copy.php),
+which are sorted by NUM before paging; they have no table filter, so no
+filter action.
 ```
 
 ---

@@ -263,10 +263,12 @@ Duplicates, and Get Better Copy:
 
 The overlay lists each movie with minimal details: title, number (`NUM`),
 year, rating, stored file size, and the external IMDb link, 25 rows per
-page (the library-issue, duplicate, and better-copy endpoints return the
-whole list at once, and the overlay pages it the same way). The number
-jumps to that movie's row in the main table; the previous grouped,
-expandable dialogs are gone. The list is read-only: the table and the
+page, always ordered by **No ascending** — the same order as the main
+table. Slice lists ask the API for `sort=NUM&dir=ASC`; the library-issue,
+duplicate, and better-copy endpoints return the whole list at once, and the
+overlay sorts it by `NUM` and pages it the same way. The number jumps to
+that movie's row in the main table; the previous grouped, expandable
+dialogs are gone. The list is read-only: the table and the
 active filters stay untouched, and the drawer stays open behind the
 overlay.
 

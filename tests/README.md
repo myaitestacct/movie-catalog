@@ -67,8 +67,9 @@ On constrained machines use `npm run test:browser -- --workers=2`.
 - Dashboard animations, issue grouping, and selected analytics view models.
 - The analytics movie-list overlay: minimal rows (title fallback, rating
   tiers, dashes for unknown values, safe external links), paging through the
-  source, empty and failed-request states, the jump-to-movie link, the
-  optional "Filter the table" action, and closing via button/backdrop/Escape.
+  source (with its NUM ordering, including across pages), empty and
+  failed-request states, the jump-to-movie link, the optional "Filter the
+  table" action, and closing via button/backdrop/Escape.
 - Slice wiring: chart slices and insight cards open that overlay with the
   right filter spec without touching the table state, and Metadata
   Completeness field rows open it with the missing-movies rows.

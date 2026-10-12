@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
  * (title, number, year, rating, stored size, external link), paging,
  * empty/error states, the jump-to-movie link, the optional
  * "Filter the table" action, the shared source for unpaginated list
- * endpoints, and the ways it closes.
+ * endpoints (sorted by No), and the ways it closes.
  */
 
 class FakeClassList {
@@ -211,6 +211,7 @@ globalThis.fetch = async () => {
 const {
     MOVIE_LIST_PAGE_SIZE,
     closeMovieListOverlay,
+    compareByNum,
     createListSource,
     openMovieListOverlay,
     setMovieJumper
@@ -513,6 +514,68 @@ test('createListSource pages unpaginated rows client-side', async () => {
     assert.equal(requests.length, 2);
     assert.equal(rows().length, 5);
     assert.equal(rows()[0].children[1].textContent, String(MOVIE_LIST_PAGE_SIZE + 1));
+});
+
+test('createListSource sorts the list by No, numerically', async () => {
+    const shuffled = [
+        makeRow({ NUM: '10' }),
+        makeRow({ NUM: '2' }),
+        makeRow({ NUM: '30' }),
+        makeRow({ NUM: '9' }),
+        makeRow({ NUM: '101' })
+    ];
+    const source = createListSource(async () => shuffled);
+
+    openMovieListOverlay({ title: 'Duplicate Movies', source });
+    await flush();
+
+    assert.deepEqual(
+        rows().map(row => row.dataset.num),
+        ['2', '9', '10', '30', '101']
+    );
+    // The caller's array is left untouched.
+    assert.equal(shuffled[0].NUM, '10');
+});
+
+test('sorting applies before paging, so pages stay ordered', async () => {
+    const all = Array.from(
+        { length: MOVIE_LIST_PAGE_SIZE + 3 },
+        (_, index) => makeRow({
+            NUM: String((MOVIE_LIST_PAGE_SIZE + 3) - index)
+        })
+    );
+    const source = createListSource(async () => all);
+
+    openMovieListOverlay({ title: 'Missing Files', source });
+    await flush();
+
+    const firstPage = rows().map(row => Number(row.dataset.num));
+    assert.deepEqual(
+        firstPage,
+        Array.from({ length: MOVIE_LIST_PAGE_SIZE }, (_, index) => index + 1)
+    );
+
+    pagerButton('Next').click();
+    await flush();
+
+    assert.deepEqual(
+        rows().map(row => Number(row.dataset.num)),
+        [MOVIE_LIST_PAGE_SIZE + 1, MOVIE_LIST_PAGE_SIZE + 2, MOVIE_LIST_PAGE_SIZE + 3]
+    );
+});
+
+test('compareByNum falls back to a string compare for odd values', () => {
+    assert.equal(compareByNum({ NUM: '9' }, { NUM: '10' }) < 0, true);
+    assert.equal(compareByNum({ NUM: '10' }, { NUM: '9' }) > 0, true);
+    assert.equal(compareByNum({ NUM: '7' }, { NUM: '7' }), 0);
+    assert.equal(compareByNum({}, {}) <= 0, true);
+
+    // A missing NUM sorts first (empty string), then digits, then words.
+    const mixed = [{ NUM: 'beta' }, { NUM: '12' }, { NUM: 'alpha' }, {}]
+        .sort(compareByNum)
+        .map(row => String(row.NUM ?? ''));
+
+    assert.deepEqual(mixed, ['', '12', 'alpha', 'beta']);
 });
 
 test('a failed request offers a retry', async () => {

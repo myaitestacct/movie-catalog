@@ -665,7 +665,7 @@ All theming uses CSS variables:
    - Numeric columns support range grammar (`2000-2009`, `150+`, `<90`)
    - Zero values treated as "unknown" for RATING, LENGTH, FILESIZE
 
-3. **Movie lists**: Click any analytics count — a chart element, a Metadata Completeness row, a Library Health card, Duplicates, or Get Better Copy — to open the same overlay listing the movies behind it (title, number, year, rating, size, external link); chart slices also offer "Filter the table" to apply the slice to the main table
+3. **Movie lists** (ordered by No ascending): Click any analytics count — a chart element, a Metadata Completeness row, a Library Health card, Duplicates, or Get Better Copy — to open the same overlay listing the movies behind it (title, number, year, rating, size, external link); chart slices also offer "Filter the table" to apply the slice to the main table
 
 ### UI Modernization (Implemented)
 1. **App identity**: Clapperboard brand mark, wordmark, tagline

@@ -9,9 +9,10 @@ import { renderStatsPagination } from './stats-pagination.js';
  * row, or a Library Health / duplicate / better-copy card opens this dialog
  * with the movies behind that number/issue instead of filtering the main
  * table. The list stays deliberately minimal -- title, number, year, rating,
- * stored size, and the external link. For chart slices the slice itself
- * remains reachable through the footer's "Filter the table" button, which
- * reuses the normal table-filter code path.
+ * stored size, and the external link -- and is always ordered by No (`NUM`)
+ * ascending, like the main table. For chart slices the slice itself remains
+ * reachable through the footer's "Filter the table" button, which reuses the
+ * normal table-filter code path.
  *
  * The movie jumper (jumpToMovie, owned by stats.js) is injected through
  * setMovieJumper(); this module must never import the entry point (see the
@@ -21,10 +22,33 @@ import { renderStatsPagination } from './stats-pagination.js';
 export const MOVIE_LIST_PAGE_SIZE = 25;
 
 /**
+ * Order two movie rows by No (`NUM`), numerically so "9" sorts before "10".
+ * Rows without a numeric NUM fall back to a string compare, which keeps the
+ * ordering deterministic.
+ * @param {object} left
+ * @param {object} right
+ */
+export function compareByNum(left, right) {
+    const leftNum = Number(left?.NUM);
+    const rightNum = Number(right?.NUM);
+
+    if (
+        Number.isFinite(leftNum) &&
+        Number.isFinite(rightNum) &&
+        leftNum !== rightNum
+    ) {
+        return leftNum - rightNum;
+    }
+
+    return String(left?.NUM ?? '').localeCompare(String(right?.NUM ?? ''));
+}
+
+/**
  * Build an overlay source from an unpaginated list request -- the library
  * issue, duplicate, and better-copy endpoints return every row at once.
- * Pages are sliced client-side with the overlay's page size so every list
- * behaves like the slice lists.
+ * Rows are sorted by No (`NUM`) ascending, then paged client-side with the
+ * overlay's page size so every list behaves exactly like the slice lists
+ * (where the API already sorts by NUM).
  *
  * @param {(signal: AbortSignal) => Promise<object[]>} fetchRows
  */
@@ -32,7 +56,9 @@ export function createListSource(fetchRows) {
     return {
         fetchPage: async (page, signal) => {
             const rows = await fetchRows(signal);
-            const list = Array.isArray(rows) ? rows : [];
+            const list = (Array.isArray(rows) ? rows : [])
+                .slice()
+                .sort(compareByNum);
             const start =
                 (Math.max(1, Number(page) || 1) - 1) * MOVIE_LIST_PAGE_SIZE;
 
