@@ -115,6 +115,56 @@ test('grid view renders one card per movie with escaped content', () => {
   assert.ok(!card51.includes('rating-badge'));
 });
 
+test('the rating badge is the movie page link and keeps its own click', () => {
+  const grid = new MockGrid();
+
+  renderGridView(grid, [
+    {
+      NUM: '1',
+      FORMATTEDTITLE: 'Arrival',
+      RATING: '7.9',
+      URL: 'https://www.imdb.com/title/tt2543164/'
+    },
+    {
+      NUM: '2',
+      FORMATTEDTITLE: 'Unsafe',
+      RATING: '6.0',
+      URL: 'javascript:alert(1)'
+    }
+  ]);
+
+  const html = grid.innerHTML;
+
+  // Safe URL → a real link in a new tab
+  assert.ok(html.includes('class="rating-badge rating-good"'));
+  assert.ok(html.includes('href="https://www.imdb.com/title/tt2543164/"'));
+  assert.ok(html.includes('target="_blank"'));
+  assert.ok(html.includes('rel="noopener noreferrer"'));
+  assert.ok(html.includes('title="Open the movie page on IMDb"'));
+
+  // Unsafe URL → inert badge, no javascript: URL anywhere
+  assert.ok(!html.includes('javascript:'));
+  assert.ok(html.includes('title="Movie page link unavailable"'));
+
+  // Clicking/keying the badge is the link's business, not the card's
+  const badge = {
+    closest: selector => (selector === 'a.rating-badge' ? {} : null)
+  };
+  assert.doesNotThrow(() => grid.onclick({ target: badge }));
+
+  const keyEvent = {
+    key: 'Enter',
+    prevented: false,
+    preventDefault() {
+      this.prevented = true;
+    },
+    target: badge
+  };
+
+  grid.onkeydown(keyEvent);
+  assert.equal(keyEvent.prevented, false);
+});
+
 test('grid view renders an empty state with a clear-filters action', () => {
   const grid = new MockGrid();
 

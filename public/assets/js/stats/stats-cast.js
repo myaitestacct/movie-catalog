@@ -257,7 +257,7 @@ function renderActorList(
         makeSliceInteractive(
             row,
             getFacetTableFilter('ACTORS', actor.label),
-            `Filter the table to movies with ${actor.label}`,
+            `Movies with ${actor.label}`,
             onSliceSelect
         );
 

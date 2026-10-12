@@ -210,7 +210,8 @@ npm run build
 | **View Toggle** | Click Table/Grid buttons in sidebar |
 | **Theme Toggle** | Click theme button in sidebar header |
 | **Analytics** | Click "Analytics" ribbon (top right) |
-| **Drill-Down** | Click any chart element to filter table |
+| **Movie Lists** | Click any analytics count for a list of its movies (overlay) |
+| **Filter From Analytics** | Click "Filter the table" in the movie list |
 | **Movie Details** | Click any movie row |
 | **Copy Details** | Click copy button in modal |
 | **Sidebar Modes** | Click mode buttons in sidebar header |

@@ -9,8 +9,6 @@
     /* Aliases onto the shared design tokens */
     --bg-panel: var(--table-bg);
     --bg-card: var(--surface-2);
-    --bg-group-a: color-mix(in srgb, var(--primary) 7%, var(--table-bg));
-    --bg-group-b: color-mix(in srgb, var(--primary) 3%, var(--table-bg));
     --bg-hover: color-mix(in srgb, var(--primary) 9%, var(--table-bg));
 
     --text-main: var(--text-color);
@@ -1211,38 +1209,6 @@
     top: 0;
 }
 
-.dup-group {
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.dup-group-a {
-    background: var(--bg-group-a);
-}
-
-.dup-group-b {
-    background: var(--bg-group-b);
-}
-
-.dup-group:hover {
-    background: var(--bg-hover);
-}
-
-.dup-toggle {
-    display: inline-block;
-    width: 14px;
-    margin-right: 6px;
-    font-size: 12px;
-}
-
-.dup-child {
-    background: var(--bg-card);
-}
-
-.dup-child td {
-    padding-left: 36px;
-}
-
 .stats-modal tbody tr:hover {
     background: var(--bg-hover);
 }
@@ -1370,5 +1336,148 @@
     .stats-pagination-jump {
         flex-basis: 100%;
         justify-content: center;
+    }
+}
+
+/* ==========================
+   Movie-list overlay
+   (every analytics count: slices, insight cards, field rows, health cards)
+========================== */
+
+.stats-modal-content.stats-movie-list {
+    width: min(720px, 92vw);
+    min-width: min(520px, 92vw);
+}
+
+.stats-movie-list .stats-modal-body {
+    min-height: 140px;
+}
+
+.stats-movie-table td.stats-movie-cell-title {
+    white-space: normal;
+    min-width: 180px;
+}
+
+.stats-movie-table td.stats-movie-cell-num,
+.stats-movie-table td.stats-movie-cell-year,
+.stats-movie-table td.stats-movie-cell-size {
+    font-variant-numeric: tabular-nums;
+}
+
+.stats-movie-table .rating-badge {
+    padding: 2px 9px;
+    font-size: 0.72rem;
+}
+
+/* Sortable headers: one button per column, indicator on the active one. */
+.stats-movie-table th {
+    padding: 0;
+}
+
+.stats-movie-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.stats-movie-sort:hover {
+    color: var(--primary);
+}
+
+.stats-movie-sort:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+}
+
+.stats-movie-sort-indicator {
+    font-size: 10px;
+    opacity: 0.65;
+}
+
+.stats-movie-table th[aria-sort="ascending"] .stats-movie-sort,
+.stats-movie-table th[aria-sort="descending"] .stats-movie-sort {
+    color: var(--primary);
+}
+
+.stats-movie-table th[aria-sort="ascending"] .stats-movie-sort-indicator,
+.stats-movie-table th[aria-sort="descending"] .stats-movie-sort-indicator {
+    opacity: 1;
+}
+
+.stats-movie-list-status {
+    margin: 0 0 10px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.stats-movie-list-status[hidden] {
+    display: none;
+}
+
+.stats-movie-list-retry {
+    margin-left: 10px;
+    padding: 5px 12px;
+    border: 1px solid var(--border-panel);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    color: var(--text-main);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.stats-movie-list-retry:hover,
+.stats-movie-list-filter:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.stats-movie-list-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.stats-movie-list-footer .pagination {
+    flex: 1 1 320px;
+}
+
+.stats-movie-list-filter {
+    padding: 7px 14px;
+    border: 1px solid var(--border-panel);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.stats-movie-list-filter[hidden] {
+    display: none;
+}
+
+@media (max-width: 520px) {
+    .stats-movie-list-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .stats-movie-list-filter {
+        width: 100%;
     }
 }

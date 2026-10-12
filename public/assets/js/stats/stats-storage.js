@@ -136,7 +136,7 @@ function renderBands(container, model, onSliceSelect) {
         makeSliceInteractive(
             row,
             getBandTableFilter('fileSize', band.key),
-            `Filter the table to movies sized ${band.label}`,
+            `Movies sized ${band.label}`,
             onSliceSelect
         );
 

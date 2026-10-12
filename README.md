@@ -231,38 +231,74 @@ numeric columns), bringing rating filtering in line with `YEAR`;
 non-numeric `RATING` input keeps the legacy contains-matching.
 
 `DIRECTOR`, `ACTORS`, and `COUNTRY` are **filter-only** API columns: they
-can filter results (used by the analytics drill-down) but have no table
-header, so they are not sortable and appear only as removable filter pills.
+can filter results (used by the analytics movie lists and their filter
+action) but have no table header, so they are not sortable and appear only
+as removable filter pills.
 
-## Analytics drill-down: click a chart to filter the table
+## Movie lists: click any count to see its movies
 
-Every analytics chart slice in the Analytics panel is clickable and applies
-the matching filter to the main movie table — the same idea as the Metadata
-Completeness rows, but targeting the table instead of a dialog:
+Every analytics count is clickable and opens the shared movie-list overlay
+with the movies behind that number. The same overlay covers the whole
+dashboard — chart slices, insight cards, Metadata Completeness rows, and the
+Library Health cards (Missing Files, Missing Posters, Incomplete Metadata),
+Duplicates, and Get Better Copy:
 
-| Analytics slice | Applied filter |
-| --- | --- |
-| Decade Distribution row | `YEAR` decade range, e.g. `2000-2009` |
-| Collection Timeline year | exact `YEAR` |
-| Genre bar / donut legend item | `CATEGORY` contains the genre |
-| Rating / Runtime / File-Size band | `RATING`, `LENGTH`, or `FILESIZE` range |
-| Certification row | `CERTIFICATION` |
-| Director / Actor row | `DIRECTOR` / `ACTORS` (filter-only columns) |
-| Language / Country row | `LANGUAGES` / `COUNTRY` |
-| Resolution / Audio row | `RESOLUTION` / `AUDIOFORMAT` |
-| Top-item insight cards (Top Director, Peak Year, ...) | same mapping as their chart |
-| Largest Movie card | jumps to that row in the table |
+| Clicked item | Movies listed | Filter action |
+| --- | --- | --- |
+| Decade Distribution row | `YEAR` decade range, e.g. `2000-2009` | same |
+| Collection Timeline year | exact `YEAR` | same |
+| Genre bar / donut legend item | `CATEGORY` contains the genre | same |
+| Rating / Runtime / File-Size band | `RATING`, `LENGTH`, or `FILESIZE` range | same |
+| Certification row | `CERTIFICATION` | same |
+| Director / Actor row | `DIRECTOR` / `ACTORS` (filter-only columns) | same |
+| Language / Country row | `LANGUAGES` / `COUNTRY` | same |
+| Resolution / Audio row | `RESOLUTION` / `AUDIOFORMAT` | same |
+| Top-item insight cards (Top Director, Peak Year, ...) | same as their chart | same |
+| Metadata Completeness field row | movies missing that field | — (no table filter) |
+| Missing Files / Missing Posters cards | `FILEPATH = 'MISSING'` / no poster | — |
+| Incomplete Metadata card | rows missing a required field | — |
+| Duplicates card | every row sharing a duplicate IMDb URL | — |
+| Get Better Copy card | rows marked `-Get.Better.Copy` | — |
+| Largest Movie card | jumps to that row in the table | — |
 
-Clicking a slice closes the drawer, resets to page one, and reloads the
-table with the filter applied. The result behaves exactly like a typed
-toolbar filter: the column input (when the column has one) shows the value,
-a removable pill appears for filter-only columns such as Director, and the
-Clear Filters chip clears it. Drill-downs switch the filter mode to **AND**
-so the clicked slice is always satisfied alongside any other active
-filters; reopen Analytics to stack more slices. Metadata Completeness and
-Library Health keep their existing "open the list of movies" dialogs.
+The overlay lists each movie with minimal details: title, number (`NUM`),
+year, rating, and stored file size, 25 rows per page, always opening in
+**No ascending** order — the same order as the main table. There is no
+separate IMDb column: the **rating badge is the link** to the movie's IMDb
+page (it opens in a new tab, and renders inert when the record has no safe
+URL). The number jumps to that movie's row in the main table; the previous
+grouped, expandable dialogs are gone. The list is read-only: the table and
+the active filters stay untouched, and the drawer stays open behind the
+overlay.
 
-Band boundaries in the table filter match the analytics banding exactly
+Every column header is clickable, exactly like the main table: clicking
+sorts by that column (the same header again reverses the order, a new
+header starts ascending), the active header carries `aria-sort` plus a
+▲/▼ indicator, and the list restarts at page one. Slice lists pass the
+column straight to the API (`sort=FORMATTEDTITLE&dir=ASC`, validated
+against the same sortable-column whitelist the main table uses); the
+library-issue, duplicate, and better-copy endpoints return the whole list
+at once, so the overlay sorts those client-side — numerically for No,
+year, rating, and size, case-insensitively for titles — with `NUM`
+ascending as the tie-breaker, mirroring `ORDER BY <column> <dir>, NUM
+ASC`.
+
+The **Filter the table** button in the overlay footer applies the slice as a
+normal toolbar filter instead (the older drill-down): the overlay and drawer
+close, the table resets to page one with the filter applied, the column
+input (when the column has one) shows the value, a removable pill appears
+for filter-only columns such as Director, and the Clear Filters chip clears
+it. The filter mode switches to **AND** so the clicked slice is always
+satisfied alongside any other active filters. The Library Health,
+Duplicates, and Get Better Copy lists have no table filter, so they show no
+footer action.
+
+When a list is empty the overlay reports it in place — a Library Health card
+whose count is 0 opens an empty list rather than firing an alert — and a
+failed request shows a Retry button. Metadata Completeness rows whose
+`missing_count` is 0 stay non-interactive.
+
+Band boundaries in the filter action match the analytics banding exactly
 (ratings are one decimal, runtimes whole minutes, file sizes the stored MiB
 value), so the filtered row count equals the bar's count.
 

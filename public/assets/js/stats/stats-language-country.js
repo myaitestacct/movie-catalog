@@ -120,9 +120,9 @@ function renderFacetList(
         makeSliceInteractive(
             row,
             getFacetTableFilter(column, item.label),
-            `Filter the table to ${singularLabel === 'language'
+            `${singularLabel === 'language'
                 ? `${item.label} movies`
-                : `movies from ${item.label}`}`,
+                : `Movies from ${item.label}`}`,
             onSliceSelect
         );
 

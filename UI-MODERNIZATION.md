@@ -49,7 +49,8 @@ the left sidebar), and search `Arrival` for the exact/fuzzy grouping.
 
 ### Movie grid view (new)
 - `table/grid-view.js` + `#grid-view` pane: poster cards (3:4, lazy-loaded,
-  sized) with title, year, tiered rating badge, and missing-file /
+  sized) with title, year, a tiered rating badge that is the movie's IMDb
+  link (new tab; a plain badge without a safe URL), and missing-file /
   better-copy status ribbons. Keyboard accessible (Tab + Enter), click opens
   the same detail modal.
 - View preference persists in `localStorage`; the grid reuses its rendered

@@ -564,6 +564,8 @@ function issueRow(movie) {
     ORIGINALTITLE:
       movie.ORIGINALTITLE,
     YEAR: movie.YEAR,
+    RATING: movie.RATING,
+    FILESIZE: movie.FILESIZE,
     URL: movie.URL
   };
 }
