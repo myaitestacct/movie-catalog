@@ -5,6 +5,7 @@
 //  - posters use loading="lazy" + decoding="async"
 //  - no re-render unless the movie array reference changed
 import { Modal } from '../modal/modal.js';
+import { safeExternalUrl } from '../utils/url.js';
 
 const POSTER_BASE_PATH = '/movies/antexport';
 const POSTER_FALLBACK = '/movies/antexport/movies_0000-coming_soon.jpg';
@@ -57,6 +58,26 @@ function posterSrc(pictureName) {
     : POSTER_FALLBACK;
 }
 
+// The rating badge doubles as the movie's IMDb link, like the table view's
+// rating cell and the movie-list overlay. Without a safe URL it stays a
+// plain, non-interactive badge.
+function ratingHtml(movie) {
+  if (!movie.RATING) return '';
+
+  const classes = `rating-badge ${ratingTier(movie.RATING)}`.trim();
+  const label = escapeHtml(movie.RATING);
+  const url = safeExternalUrl(movie.URL);
+
+  if (!url) {
+    return `<span class="${classes}" title="Movie page link unavailable">`
+      + `${label}</span>`;
+  }
+
+  return `<a class="${classes}" href="${escapeHtml(url)}" target="_blank"`
+    + ` rel="noopener noreferrer" title="Open the movie page on IMDb">`
+    + `${label}</a>`;
+}
+
 function cardHtml(movie, index) {
   const title = (
     movie.FORMATTEDTITLE ||
@@ -72,9 +93,7 @@ function cardHtml(movie, index) {
       ? '<span class="movie-card-status better">Better copy</span>'
       : '';
 
-  const rating = movie.RATING
-    ? `<a class="rating-badge ${ratingTier(movie.RATING)}" href="#" tabindex="-1" aria-hidden="true">${escapeHtml(movie.RATING)}</a>`
-    : '';
+  const rating = ratingHtml(movie);
 
   const year = movie.YEAR ? `<span>${escapeHtml(movie.YEAR)}</span>` : '';
 
@@ -145,6 +164,9 @@ export function renderGridView(container, movies) {
   // Wire up one delegated click handler (survives re-renders is not
   // guaranteed, so re-attach on each render — one node listener).
   container.onclick = event => {
+    // The rating badge is its own link and must not also open the modal.
+    if (event.target.closest('a.rating-badge')) return;
+
     const card = event.target.closest('.movie-card');
     if (!card || !container.contains(card)) return;
 
@@ -153,6 +175,7 @@ export function renderGridView(container, movies) {
 
   container.onkeydown = event => {
     if (event.key !== 'Enter' && event.key !== ' ') return;
+    if (event.target.closest('a.rating-badge')) return;
 
     const card = event.target.closest('.movie-card');
     if (!card || !container.contains(card)) return;

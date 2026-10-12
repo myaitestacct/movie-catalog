@@ -908,6 +908,34 @@ test.describe('movie catalog', () => {
   );
 });
 
+test('the grid card rating badge links to the movie page', async ({ page }) => {
+  await openCatalog(page);
+  await page.locator('#view-grid').click();
+  await expect(page.locator('#grid-wrapper')).toBeVisible();
+
+  const badges = page.locator(
+    '#grid-view a.rating-badge'
+  );
+  await expect(badges.first()).toBeVisible();
+  await expect(badges.first()).toHaveAttribute('target', '_blank');
+  await expect(badges.first()).toHaveAttribute(
+    'rel',
+    'noopener noreferrer'
+  );
+  expect(
+    await badges.first().getAttribute('href')
+  ).toMatch(/^https?:\/\//);
+
+  // Clicking the badge follows the link instead of opening the modal
+  // (the popup is closed again right away).
+  page.on('popup', popup => popup.close());
+  await badges.first().click();
+  await expect(page.locator('#movieModal')).toHaveAttribute(
+    'aria-hidden',
+    'true'
+  );
+});
+
 test('slash focuses and selects the title filter without intercepting typing', async ({ page }) => {
   await openCatalog(page);
   const title = page.locator('#search-row input[data-col="FORMATTEDTITLE"]');
