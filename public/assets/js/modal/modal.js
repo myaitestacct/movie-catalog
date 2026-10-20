@@ -38,6 +38,8 @@ export const Modal = (() => {
     let zoomCloseBtn;
     let activeRow = null;
     let lastFocusedElement = null;
+    let zoomReturnFocus = null;
+    let zoomIsStandalone = false;
     let backgroundState = [];
 
     // Pan / zoom state for the full-size viewer
@@ -101,12 +103,12 @@ export const Modal = (() => {
 
         document.addEventListener('keydown', handleKeydown);
 
-        poster.onclick = openPosterZoom;
-        poster.onkeydown = event => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                openPosterZoom();
-            }
+        poster.onclick = () => {
+            openPosterZoom(
+                poster.currentSrc || poster.src,
+                poster.alt,
+                poster
+            );
         };
 
         // Wheel zoom centered on the cursor
@@ -413,12 +415,18 @@ export const Modal = (() => {
         });
     }
 
-    function openPosterZoom() {
-        if (!poster?.src) return;
+    function openPosterZoom(
+        imageSrc = poster?.currentSrc || poster?.src,
+        imageAlt = poster?.alt,
+        returnFocus = poster
+    ) {
+        if (!imageSrc) return;
 
-        posterZoomImg.src = poster.src;
-        posterZoomImg.alt =
-            poster.alt || 'Enlarged movie poster';
+        zoomReturnFocus = returnFocus;
+        zoomIsStandalone = !modal.classList.contains('open');
+
+        posterZoomImg.src = imageSrc;
+        posterZoomImg.alt = imageAlt || 'Enlarged movie poster';
 
         zoom.scale = 1;
         zoom.tx = 0;
@@ -435,8 +443,13 @@ export const Modal = (() => {
             whenReady();
         }
 
-        modal.inert = true;
-        modal.setAttribute('aria-hidden', 'true');
+        if (zoomIsStandalone) {
+            setBackgroundInert(true);
+        } else {
+            modal.inert = true;
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
         posterZoom.setAttribute('aria-hidden', 'false');
         posterZoom.classList.add('open');
         posterZoom.focus();
@@ -454,15 +467,23 @@ export const Modal = (() => {
 
         posterZoom.classList.remove('open');
         posterZoom.setAttribute('aria-hidden', 'true');
-        modal.inert = false;
 
-        if (modal.classList.contains('open')) {
-            modal.setAttribute('aria-hidden', 'false');
+        if (zoomIsStandalone) {
+            setBackgroundInert(false);
+        } else {
+            modal.inert = false;
+
+            if (modal.classList.contains('open')) {
+                modal.setAttribute('aria-hidden', 'false');
+            }
         }
 
         if (restorePosterFocus) {
-            poster.focus();
+            zoomReturnFocus?.focus?.();
         }
+
+        zoomReturnFocus = null;
+        zoomIsStandalone = false;
     }
 
     function clearActiveRow() {
@@ -612,6 +633,20 @@ export const Modal = (() => {
             if (movie) {
                 renderMovie(movie);
             }
+        },
+
+        showPoster(image, title = '', trigger = image) {
+            if (!image?.src) return;
+
+            if (!modal) {
+                initDOM();
+            }
+
+            openPosterZoom(
+                image.currentSrc || image.src,
+                title ? `${title} poster` : 'Enlarged movie poster',
+                trigger
+            );
         },
 
         close: closeModal,

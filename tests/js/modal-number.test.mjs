@@ -441,3 +441,35 @@ test('confirmation is required before previous and next navigation wraps', () =>
     Modal.close();
   }
 });
+
+test('standalone poster zoom opens from a thumbnail and restores focus', () => {
+  const app = new MockElement('main');
+  const trigger = new MockElement('button');
+  const image = new MockElement('img');
+  image.src = '/movies/antexport/sing.jpg';
+  trigger.appendChild(image);
+  document.body.append(app, trigger);
+
+  Modal.showPoster(image, 'Sing', trigger);
+
+  const viewer = document.body.querySelector('#posterZoom');
+  const zoomImage = findElements(
+    viewer,
+    element => element.tagName === 'IMG'
+  )[0];
+
+  assert.equal(viewer.classList.contains('open'), true);
+  assert.equal(viewer.getAttribute('aria-hidden'), 'false');
+  assert.equal(zoomImage.src, image.src);
+  assert.equal(zoomImage.alt, 'Sing poster');
+  assert.equal(app.inert, true);
+  assert.equal(trigger.inert, true);
+  assert.equal(document.activeElement, viewer);
+
+  viewer.querySelector('.zoom-close').onclick();
+
+  assert.equal(viewer.classList.contains('open'), false);
+  assert.equal(app.inert, false);
+  assert.equal(trigger.inert, false);
+  assert.equal(document.activeElement, trigger);
+});

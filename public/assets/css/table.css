@@ -699,10 +699,27 @@ tr.empty-state td {
 /* ==========================
    Poster thumbnails (title cell)
 ========================== */
+.row-poster-trigger {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0 1px 0 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    cursor: zoom-in;
+}
+
+.row-poster-trigger:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+}
+
 .row-poster {
     width: 36px;
     height: 54px;
-    margin-right: 9px;
     vertical-align: middle;
     object-fit: cover;
     border-radius: 6px;
@@ -717,7 +734,8 @@ tr.empty-state td {
     opacity: 1;
 }
 
-/* Hide mini posters when the user disables them via the toolbar toggle */
+/* Hide the thumbnail and its interactive wrapper when posters are disabled. */
+.hide-mini-posters .row-poster-trigger,
 .hide-mini-posters .row-poster {
     display: none !important;
 }

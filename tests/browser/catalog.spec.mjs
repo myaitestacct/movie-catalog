@@ -746,6 +746,38 @@ test.describe('movie catalog', () => {
   );
 
   test(
+    'opens the full-size poster viewer from a visible table thumbnail',
+    async ({ page }) => {
+      await openCatalog(page);
+
+      const trigger = page.locator(
+        '#movies tbody .row-poster-trigger'
+      ).first();
+      const thumbnail = trigger.locator('.row-poster');
+
+      await expect(trigger).toBeVisible();
+      await trigger.click();
+
+      const viewer = page.locator('#posterZoom');
+      await expect(viewer).toHaveClass(/open/);
+      await expect(viewer).toHaveAttribute('aria-hidden', 'false');
+      await expect(page.locator('#movieModal')).toHaveAttribute(
+        'aria-hidden',
+        'true'
+      );
+
+      const thumbnailSrc = await thumbnail.evaluate(
+        image => image.currentSrc || image.src
+      );
+      await expect(viewer.locator('img')).toHaveAttribute('src', thumbnailSrc);
+
+      await page.keyboard.press('Escape');
+      await expect(viewer).not.toHaveClass(/open/);
+      await expect(trigger).toBeFocused();
+    }
+  );
+
+  test(
     'Hide All / Show All covers the mini posters too',
     async ({ page }) => {
       await openCatalog(page);

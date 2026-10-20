@@ -31,7 +31,16 @@ function ratingTier(value) {
 }
 
 function createRowPoster(movie) {
+  const title = (
+    movie.FORMATTEDTITLE || movie.ORIGINALTITLE || 'Movie'
+  ).trim();
+  const trigger = document.createElement('button');
   const poster = document.createElement('img');
+
+  trigger.type = 'button';
+  trigger.className = 'row-poster-trigger';
+  trigger.setAttribute('aria-label', `Enlarge ${title} poster`);
+  trigger.title = `Enlarge ${title} poster`;
 
   poster.className = 'row-poster';
   poster.alt = '';
@@ -44,9 +53,15 @@ function createRowPoster(movie) {
     poster.classList.add('loaded');
   });
 
-  setPoster(poster, movie.PICTURENAME, POSTER_BASE_PATH, POSTER_FALLBACK);
+  trigger.onclick = event => {
+    event.stopPropagation();
+    Modal.showPoster(poster, title, trigger);
+  };
 
-  return poster;
+  setPoster(poster, movie.PICTURENAME, POSTER_BASE_PATH, POSTER_FALLBACK);
+  trigger.appendChild(poster);
+
+  return trigger;
 }
 
 function createEmptyStateRow(columns) {
