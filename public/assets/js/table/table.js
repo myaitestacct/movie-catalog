@@ -18,6 +18,62 @@ import { setPoster } from '../modal/modal.utils.js';
 const POSTER_BASE_PATH = '/movies/antexport';
 const POSTER_FALLBACK = '/movies/antexport/movies_0000-coming_soon.jpg';
 
+let posterHoverPreview = null;
+let posterHoverImage = null;
+
+function ensurePosterHoverPreview() {
+  if (posterHoverPreview) return posterHoverPreview;
+
+  posterHoverPreview = document.createElement('div');
+  posterHoverPreview.className = 'poster-hover-preview';
+  posterHoverPreview.setAttribute('aria-hidden', 'true');
+
+  posterHoverImage = document.createElement('img');
+  posterHoverImage.alt = '';
+  posterHoverPreview.appendChild(posterHoverImage);
+  document.body.appendChild(posterHoverPreview);
+
+  return posterHoverPreview;
+}
+
+function showPosterHoverPreview(poster, trigger) {
+  const preview = ensurePosterHoverPreview();
+  const source = poster.currentSrc || poster.src;
+  if (!source) return;
+
+  posterHoverImage.src = source;
+
+  const rect = trigger.getBoundingClientRect();
+  const previewWidth = 260;
+  const previewHeight = 380;
+  const gap = 12;
+  const edge = 12;
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  let left = rect.right + gap;
+  if (left + previewWidth > viewportWidth - edge) {
+    left = rect.left - gap - previewWidth;
+  }
+  left = Math.max(edge, Math.min(left, viewportWidth - previewWidth - edge));
+
+  const top = Math.max(
+    edge,
+    Math.min(
+      rect.top + rect.height / 2 - previewHeight / 2,
+      viewportHeight - previewHeight - edge
+    )
+  );
+
+  preview.style.left = `${left}px`;
+  preview.style.top = `${top}px`;
+  preview.classList.add('is-visible');
+}
+
+function hidePosterHoverPreview() {
+  posterHoverPreview?.classList.remove('is-visible');
+}
+
 function ratingTier(value) {
   const rating = parseFloat(value);
 
@@ -31,7 +87,16 @@ function ratingTier(value) {
 }
 
 function createRowPoster(movie) {
+  const title = (
+    movie.FORMATTEDTITLE || movie.ORIGINALTITLE || 'Movie'
+  ).trim();
+  const trigger = document.createElement('button');
   const poster = document.createElement('img');
+
+  trigger.type = 'button';
+  trigger.className = 'row-poster-trigger';
+  trigger.setAttribute('aria-label', `Enlarge ${title} poster`);
+  trigger.title = `Enlarge ${title} poster`;
 
   poster.className = 'row-poster';
   poster.alt = '';
@@ -44,9 +109,24 @@ function createRowPoster(movie) {
     poster.classList.add('loaded');
   });
 
-  setPoster(poster, movie.PICTURENAME, POSTER_BASE_PATH, POSTER_FALLBACK);
+  trigger.addEventListener('mouseenter', () => {
+    showPosterHoverPreview(poster, trigger);
+  });
+  trigger.addEventListener('mouseleave', hidePosterHoverPreview);
+  trigger.addEventListener('focus', () => {
+    showPosterHoverPreview(poster, trigger);
+  });
+  trigger.addEventListener('blur', hidePosterHoverPreview);
 
-  return poster;
+  trigger.onclick = event => {
+    event.stopPropagation();
+    Modal.showPoster(poster, title, trigger);
+  };
+
+  setPoster(poster, movie.PICTURENAME, POSTER_BASE_PATH, POSTER_FALLBACK);
+  trigger.appendChild(poster);
+
+  return trigger;
 }
 
 function createEmptyStateRow(columns) {
