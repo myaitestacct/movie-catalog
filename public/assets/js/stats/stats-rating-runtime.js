@@ -213,7 +213,7 @@ export function renderRatingRuntimeAnalytics(
         model.ratedMovies,
         'No rating data available.',
         'rating',
-        label => `Filter the table to movies rated ${label}`,
+        label => `Movies rated ${label}`,
         onSliceSelect
     );
     renderBandList(
@@ -222,7 +222,7 @@ export function renderRatingRuntimeAnalytics(
         model.runtimeKnownMovies,
         'No runtime data available.',
         'runtime',
-        label => `Filter the table to movies running ${label}`,
+        label => `Movies running ${label}`,
         onSliceSelect
     );
 

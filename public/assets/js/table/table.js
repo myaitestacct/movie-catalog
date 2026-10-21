@@ -409,8 +409,8 @@ function renderMovieRow(
 
         link.className = `rating-badge ${ratingTier(value)}`.trim();
         link.title = hasExternalRating
-          ? 'Open external rating'
-          : 'External rating link unavailable';
+          ? 'Open the movie page on IMDb'
+          : 'Movie page link unavailable';
 
         if (shouldHighlight(
           textValue,

@@ -1316,9 +1316,12 @@ throw new InvalidArgumentException(
 $condition =
     $this->metadataMissingSql($field);
 
+// RATING and FILESIZE feed the movie-list overlay's detail columns; the
+// missing-movie rows themselves are unchanged.
 $query =
     'SELECT `NUM`, `ORIGINALTITLE`, ' .
-    '`FORMATTEDTITLE`, `YEAR`, `URL` ' .
+    '`FORMATTEDTITLE`, `YEAR`, `RATING`, ' .
+    '`FILESIZE`, `URL` ' .
     'FROM movies WHERE ' .
     $condition .
     ' ORDER BY ' .

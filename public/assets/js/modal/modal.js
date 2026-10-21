@@ -537,8 +537,8 @@ export const Modal = (() => {
         ratingEl.setAttribute(
             'aria-label',
             hasRatingLink && displayTitle
-                ? `Open external rating for ${displayTitle}`
-                : 'External rating link unavailable'
+                ? `Open the IMDb page for ${displayTitle}`
+                : 'Movie page link unavailable'
         );
 
         setMultilineText(

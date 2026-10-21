@@ -178,7 +178,7 @@ export function renderReleaseYearAnalytics(
             makeSliceInteractive(
                 row,
                 getDecadeTableFilter(decade.startYear),
-                `Filter the table to movies from the ${decade.label}`,
+                `Movies from the ${decade.label}`,
                 onSliceSelect
             );
 
@@ -230,7 +230,7 @@ export function renderReleaseYearAnalytics(
             makeSliceInteractive(
                 item,
                 getYearTableFilter(entry.year),
-                `Filter the table to movies from ${entry.year}`,
+                `Movies from ${entry.year}`,
                 onSliceSelect,
                 { keepRole: true }
             );

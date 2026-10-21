@@ -174,7 +174,7 @@ function renderGenreDonut(model, onSliceSelect) {
             segment.label === 'Other'
                 ? null
                 : getFacetTableFilter('CATEGORY', segment.label),
-            `Filter the table to ${segment.label} movies`,
+            `${segment.label} movies`,
             onSliceSelect,
             { keepRole: true }
         );
@@ -251,7 +251,7 @@ export function renderGenreAnalytics(
         makeSliceInteractive(
             row,
             getFacetTableFilter('CATEGORY', genre.label),
-            `Filter the table to ${genre.label} movies`,
+            `${genre.label} movies`,
             onSliceSelect
         );
 

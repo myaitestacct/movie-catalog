@@ -566,9 +566,10 @@ test.describe('movie catalog', () => {
         '#missing-files-card'
       ).click();
 
+      // The card opens the shared movie-list overlay.
       const issueModal =
         page.locator(
-          '#library-issue-title'
+          '#stats-movie-list-title'
         );
 
       await expect(
@@ -579,19 +580,34 @@ test.describe('movie catalog', () => {
 
       await expect(
         page.locator(
-          '#library-issue-pagination'
+          '.stats-modal:not(.hidden) .stats-pagination-info'
         )
       ).toContainText(
         'Page 1 of 1 • 1 movie'
       );
+
+      const issueRow = page.locator(
+        '.stats-modal:not(.hidden) .stats-movie-table tbody tr'
+      );
+
+      await expect(issueRow).toHaveCount(1);
+
+      // Minimal details: title, number, year, rating, size -- the rating
+      // badge links to the movie's IMDb page.
+      await expect(
+        issueRow.locator('td')
+      ).toHaveCount(5);
+      await expect(
+        issueRow.locator('.stats-movie-cell-rating a.rating-badge')
+      ).toHaveAttribute('target', '_blank');
 
       await page.locator(
         '.stats-modal:not(.hidden) .stats-close'
       ).click();
 
       await expect(
-        issueModal
-      ).toBeHidden();
+        page.locator('.stats-modal:not(.hidden)')
+      ).toHaveCount(0);
     }
   );
 
@@ -954,6 +970,34 @@ test.describe('movie catalog', () => {
         movieRequestCount
       ).toBe(2);
     }
+  );
+});
+
+test('the grid card rating badge links to the movie page', async ({ page }) => {
+  await openCatalog(page);
+  await page.locator('#view-grid').click();
+  await expect(page.locator('#grid-wrapper')).toBeVisible();
+
+  const badges = page.locator(
+    '#grid-view a.rating-badge'
+  );
+  await expect(badges.first()).toBeVisible();
+  await expect(badges.first()).toHaveAttribute('target', '_blank');
+  await expect(badges.first()).toHaveAttribute(
+    'rel',
+    'noopener noreferrer'
+  );
+  expect(
+    await badges.first().getAttribute('href')
+  ).toMatch(/^https?:\/\//);
+
+  // Clicking the badge follows the link instead of opening the modal
+  // (the popup is closed again right away).
+  page.on('popup', popup => popup.close());
+  await badges.first().click();
+  await expect(page.locator('#movieModal')).toHaveAttribute(
+    'aria-hidden',
+    'true'
   );
 });
 

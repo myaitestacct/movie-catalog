@@ -84,7 +84,7 @@ function renderDirectorList(container, model, onSliceSelect) {
         makeSliceInteractive(
             row,
             getFacetTableFilter('DIRECTOR', item.label),
-            `Filter the table to movies directed by ${item.label}`,
+            `Movies directed by ${item.label}`,
             onSliceSelect
         );
 
