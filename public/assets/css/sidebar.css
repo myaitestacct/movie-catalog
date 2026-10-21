@@ -127,8 +127,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    /* Row 1: title + display-mode switcher. Row 2: the theme toggle, which
-       spans the full width so it keeps its text label (see below). */
+    /* Keep the title and mode switcher on row 1; the full-width theme button
+       wraps to row 2 instead of being squeezed out of view. */
+    flex-wrap: wrap;
     padding: 12px 14px;
     border-bottom: 1px solid var(--border-light);
     background: var(--surface-2);
@@ -396,19 +397,19 @@
 
 /* ------------------------------------------------------------
    Theme (light/dark) toggle
-   Lives in the sidebar header, i.e. at the very top of the left
-   panel, next to the sidebar display-mode switcher.
+   Lives on its own full-width row in the sidebar header, below the
+   title and display-mode switcher.
    ------------------------------------------------------------ */
 .app-sidebar .sidebar-header #theme-toggle {
-    /* `flex-basis: 100%` always pushes the toggle onto its own header row:
-       the first row (title + switcher) is already ~171px of the 202px
-       available, so a third control there would clip the "Controls" title. */
+    /* With header wrapping enabled, a 100% basis gives the toggle its own row
+       instead of squeezing it beside the title and mode switcher. */
     flex: 1 1 100%;
     width: 100%;
     height: 30px;
     padding: 0 8px;
     border-radius: 6px;
     border: 1px solid transparent;
+    box-sizing: border-box;
     display: inline-flex;
     align-items: center;
     justify-content: flex-start;

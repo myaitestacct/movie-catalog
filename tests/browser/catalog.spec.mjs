@@ -66,6 +66,49 @@ test.describe('movie catalog', () => {
   );
 
   test(
+    'keeps the theme switcher fully visible in the expanded sidebar',
+    async ({ page }) => {
+      await page.setViewportSize({ width: 600, height: 600 });
+      await openCatalog(page);
+      await page.locator('[data-sidebar-mode="full"]').click();
+
+      const layout = await page.locator('#theme-toggle').evaluate(toggle => {
+        const toggleBounds = toggle.getBoundingClientRect();
+        const sidebarBounds = toggle
+          .closest('.sidebar-inner')
+          .getBoundingClientRect();
+        const modeSwitcherBounds = toggle
+          .closest('.sidebar-header')
+          .querySelector('.sidebar-mode-selector')
+          .getBoundingClientRect();
+        const labelBounds = toggle
+          .querySelector('.sidebar-label')
+          .getBoundingClientRect();
+
+        return {
+          toggleLeft: toggleBounds.left,
+          toggleRight: toggleBounds.right,
+          toggleTop: toggleBounds.top,
+          toggleWidth: toggleBounds.width,
+          sidebarLeft: sidebarBounds.left,
+          sidebarRight: sidebarBounds.right,
+          modeSwitcherBottom: modeSwitcherBounds.bottom,
+          labelRight: labelBounds.right,
+          toggleClientWidth: toggle.clientWidth,
+          toggleScrollWidth: toggle.scrollWidth
+        };
+      });
+
+      expect(layout.toggleWidth).toBeGreaterThan(120);
+      expect(layout.toggleLeft).toBeGreaterThanOrEqual(layout.sidebarLeft);
+      expect(layout.toggleRight).toBeLessThanOrEqual(layout.sidebarRight);
+      expect(layout.toggleTop).toBeGreaterThan(layout.modeSwitcherBottom);
+      expect(layout.labelRight).toBeLessThanOrEqual(layout.toggleRight);
+      expect(layout.toggleScrollWidth).toBeLessThanOrEqual(layout.toggleClientWidth);
+    }
+  );
+
+  test(
     'shows the title-mode control appropriate to each sidebar mode',
     async ({ page }) => {
       await page.setViewportSize({ width: 600, height: 600 });
