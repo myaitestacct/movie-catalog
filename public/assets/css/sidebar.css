@@ -127,8 +127,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    /* Keep the title and mode switcher on row 1; the full-width theme button
-       wraps to row 2 instead of being squeezed out of view. */
+    /* Keep the title on row 1; the full-width theme button wraps to row 2. */
     flex-wrap: wrap;
     padding: 12px 14px;
     border-bottom: 1px solid var(--border-light);
@@ -226,6 +225,24 @@
     background: var(--primary-soft);
     color: var(--primary);
     line-height: 1;
+}
+
+/* Sidebar mode control sits in the fixed top status row, outside the
+   independently scrollable sidebar body, so all three modes stay reachable. */
+.sidebar-display-control {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 6px;
+}
+
+.sidebar-display-label {
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
 }
 
 /* Mode Switcher Buttons (Full, Partial, Hidden) */
@@ -477,9 +494,7 @@
 .app-sidebar.sidebar-partial .sidebar-label,
 .app-sidebar.sidebar-mode-partial .sidebar-label,
 .app-sidebar.sidebar-partial .sidebar-header-title,
-.app-sidebar.sidebar-mode-partial .sidebar-header-title,
-.app-sidebar.sidebar-partial .sidebar-mode-selector,
-.app-sidebar.sidebar-mode-partial .sidebar-mode-selector {
+.app-sidebar.sidebar-mode-partial .sidebar-header-title {
     display: none !important;
 }
 
@@ -701,8 +716,7 @@
         --sidebar-width-full: 200px;
     }
 
-    /* Keep the Controls label from being squeezed between the title icon and
-       the mode switcher at the narrower full-sidebar width. */
+    /* Keep the Controls title comfortable in the narrower full-sidebar width. */
     .sidebar-header {
         padding-right: 10px;
         padding-left: 10px;
@@ -711,5 +725,11 @@
 
     .table-legend-bar {
         padding: 8px 12px 0;
+    }
+}
+
+@media (max-width: 420px) {
+    .sidebar-display-label {
+        display: none;
     }
 }

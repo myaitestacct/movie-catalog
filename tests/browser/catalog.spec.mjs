@@ -77,9 +77,9 @@ test.describe('movie catalog', () => {
         const sidebarBounds = toggle
           .closest('.sidebar-inner')
           .getBoundingClientRect();
-        const modeSwitcherBounds = toggle
+        const headerTitleBounds = toggle
           .closest('.sidebar-header')
-          .querySelector('.sidebar-mode-selector')
+          .querySelector('.sidebar-header-title')
           .getBoundingClientRect();
         const labelBounds = toggle
           .querySelector('.sidebar-label')
@@ -92,7 +92,7 @@ test.describe('movie catalog', () => {
           toggleWidth: toggleBounds.width,
           sidebarLeft: sidebarBounds.left,
           sidebarRight: sidebarBounds.right,
-          modeSwitcherBottom: modeSwitcherBounds.bottom,
+          headerTitleBottom: headerTitleBounds.bottom,
           labelRight: labelBounds.right,
           toggleClientWidth: toggle.clientWidth,
           toggleScrollWidth: toggle.scrollWidth
@@ -102,9 +102,46 @@ test.describe('movie catalog', () => {
       expect(layout.toggleWidth).toBeGreaterThan(120);
       expect(layout.toggleLeft).toBeGreaterThanOrEqual(layout.sidebarLeft);
       expect(layout.toggleRight).toBeLessThanOrEqual(layout.sidebarRight);
-      expect(layout.toggleTop).toBeGreaterThan(layout.modeSwitcherBottom);
+      expect(layout.toggleTop).toBeGreaterThan(layout.headerTitleBottom);
       expect(layout.labelRight).toBeLessThanOrEqual(layout.toggleRight);
       expect(layout.toggleScrollWidth).toBeLessThanOrEqual(layout.toggleClientWidth);
+    }
+  );
+
+  test(
+    'keeps sidebar mode controls available outside the scrolling panel',
+    async ({ page }) => {
+      await page.setViewportSize({ width: 600, height: 420 });
+      await openCatalog(page);
+
+      const modeControl = page.locator('.sidebar-display-control');
+      const sidebarContent = page.locator('.sidebar-content');
+      await expect(modeControl).toBeVisible();
+
+      const positionBeforeScroll = await modeControl.evaluate(control => ({
+        insideSidebarScroller: Boolean(control.closest('.sidebar-content')),
+        top: control.getBoundingClientRect().top
+      }));
+      expect(positionBeforeScroll.insideSidebarScroller).toBe(false);
+
+      await sidebarContent.evaluate(content => {
+        content.scrollTop = content.scrollHeight;
+      });
+
+      const positionAfterScroll = await modeControl.evaluate(control =>
+        control.getBoundingClientRect().top
+      );
+      expect(positionAfterScroll).toBe(positionBeforeScroll.top);
+
+      for (const mode of ['partial', 'hidden', 'full']) {
+        const modeButton = page.locator(`[data-sidebar-mode="${mode}"]`);
+        await modeButton.click();
+        await expect(modeControl).toBeVisible();
+        await expect(modeButton).toHaveAttribute('aria-pressed', 'true');
+        await expect(page.locator('#app-sidebar')).toHaveClass(
+          new RegExp(`sidebar-${mode}`)
+        );
+      }
     }
   );
 
@@ -136,7 +173,6 @@ test.describe('movie catalog', () => {
         const title = header.querySelector('.sidebar-header-title');
         const icon = title.querySelector('i');
         const label = title.querySelector('.sidebar-label');
-        const modeSelector = header.querySelector('.sidebar-mode-selector');
         const range = document.createRange();
         range.selectNodeContents(label);
 
@@ -145,13 +181,13 @@ test.describe('movie catalog', () => {
           iconRight: icon.getBoundingClientRect().right,
           labelLeft: range.getBoundingClientRect().left,
           labelRight: range.getBoundingClientRect().right,
-          modesLeft: modeSelector.getBoundingClientRect().left
+          headerRight: header.getBoundingClientRect().right
         };
       });
 
       expect(headerLayout.label).toBe('Controls');
       expect(headerLayout.labelLeft).toBeGreaterThanOrEqual(headerLayout.iconRight);
-      expect(headerLayout.labelRight).toBeLessThanOrEqual(headerLayout.modesLeft);
+      expect(headerLayout.labelRight).toBeLessThanOrEqual(headerLayout.headerRight);
 
       await page.locator('[data-sidebar-mode="partial"]').click();
       await expect(dropdown).toBeHidden();

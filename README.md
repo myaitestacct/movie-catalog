@@ -183,13 +183,13 @@ can load without them, but posters will be missing until you supply the files.
 
 ## Where the controls live
 
-The left panel (`#app-sidebar`) is where filtering and display controls live.
-Its fixed header holds the display-mode switcher (full / icons-only / hidden)
-and, directly under it, the **theme (light/dark) toggle**; the scrollable body
-below holds Search Logic, optional columns, and the Poster chip. In
-icons-only mode the header stacks: expand button first, then the theme toggle
-as an icon. The theme choice is persisted in `localStorage` under `theme` and
-restored on the next load.
+The left panel (`#app-sidebar`) holds filtering and display controls. Its
+scrollable body contains Search Logic, optional columns, and the Poster chip;
+the pinned header holds the **theme (light/dark) toggle**. Sidebar display modes
+(full / icons-only / hidden) are controlled from the pinned status row above the
+movie table, outside the scrollable panel, so the mode controls remain available
+even when the sidebar is scrolled or hidden. The theme and sidebar choices are
+persisted in `localStorage` and restored on the next load.
 
 ## Search behavior: why did `missing` match unexpected files?
 

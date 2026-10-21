@@ -30,9 +30,10 @@ the left sidebar), and search `Arrival` for the exact/fuzzy grouping.
   optional-column chips are now visual groups (`tool-group`) instead of one
   flat row of equal-weight buttons. The **theme toggle sits in the sidebar
   header** — the top of the left panel, on its own full-width row under the
-  "Controls" title — rather than at the bottom of the column list, so the
-  display-mode switcher and the light/dark switch are visible together at
-  every sidebar width.
+  "Controls" title — rather than at the bottom of the column list. The
+  full / icons-only / hidden mode selector lives in the pinned status row above
+  the movie table so it remains reachable when the sidebar content is scrolled
+  or the sidebar itself is hidden.
 
 ### Design tokens (single source of truth)
 - `variables.css` rewritten: brand **indigo primary + amber "marquee" accent**,

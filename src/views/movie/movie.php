@@ -19,7 +19,7 @@
         </button>
 
         <div class="sidebar-inner">
-            <!-- Sidebar Header with Mode Switcher (Full, Partial/Icons, Hide) -->
+            <!-- Fixed header keeps the theme toggle outside the scrolling controls. -->
             <div class="sidebar-header">
                 <button
                     type="button"
@@ -34,40 +34,6 @@
                     <i class="fa-solid fa-sliders" aria-hidden="true"></i>
                     <span class="sidebar-label">Controls</span>
                 </span>
-
-                <div
-                    class="sidebar-mode-selector"
-                    role="group"
-                    aria-label="Sidebar display mode"
-                >
-                    <button
-                        type="button"
-                        class="mode-btn"
-                        data-sidebar-mode="full"
-                        title="Full sidebar (icons and text)"
-                        aria-label="Full sidebar"
-                    >
-                        <i class="fa-solid fa-bars" aria-hidden="true"></i>
-                    </button>
-                    <button
-                        type="button"
-                        class="mode-btn"
-                        data-sidebar-mode="partial"
-                        title="Partial sidebar (icons only)"
-                        aria-label="Partial sidebar"
-                    >
-                        <i class="fa-solid fa-grip-vertical" aria-hidden="true"></i>
-                    </button>
-                    <button
-                        type="button"
-                        class="mode-btn"
-                        data-sidebar-mode="hidden"
-                        title="Hide sidebar"
-                        aria-label="Hide sidebar"
-                    >
-                        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-                    </button>
-                </div>
 
                 <button
                     type="button"
@@ -282,9 +248,46 @@
     <!-- Main Content Area -->
     <main class="main-viewport">
         <!-- Top legend & Analytics bar (retained at the top with reclaimed height) -->
-        <header class="table-legend-bar" aria-label="Library Status and Analytics">
-            <!-- First row: Status legend chips, keyboard shortcuts, library summary, and Analytics toggle -->
+        <header class="table-legend-bar" aria-label="Library status, sidebar display, and analytics">
+            <!-- Pinned status row: sidebar modes, legend, shortcuts, summary, and Analytics. -->
             <div class="table-legend">
+                <div class="sidebar-display-control">
+                    <span class="sidebar-display-label">Sidebar</span>
+                    <div
+                        class="sidebar-mode-selector"
+                        role="group"
+                        aria-label="Sidebar display mode"
+                    >
+                        <button
+                            type="button"
+                            class="mode-btn"
+                            data-sidebar-mode="full"
+                            title="Full sidebar (icons and text)"
+                            aria-label="Full sidebar"
+                        >
+                            <i class="fa-solid fa-bars" aria-hidden="true"></i>
+                        </button>
+                        <button
+                            type="button"
+                            class="mode-btn"
+                            data-sidebar-mode="partial"
+                            title="Partial sidebar (icons only)"
+                            aria-label="Partial sidebar"
+                        >
+                            <i class="fa-solid fa-grip-vertical" aria-hidden="true"></i>
+                        </button>
+                        <button
+                            type="button"
+                            class="mode-btn"
+                            data-sidebar-mode="hidden"
+                            title="Hide sidebar"
+                            aria-label="Hide sidebar"
+                        >
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+
                 <span class="legend-chip">
                     <span
                         class="legend-swatch missing"
