@@ -746,6 +746,39 @@ test.describe('movie catalog', () => {
   );
 
   test(
+    'shows a larger poster preview while hovering an enabled thumbnail',
+    async ({ page }) => {
+      await openCatalog(page);
+
+      const trigger = page.locator(
+        '#movies tbody .row-poster-trigger'
+      ).first();
+      const thumbnail = trigger.locator('.row-poster');
+      const preview = page.locator('.poster-hover-preview');
+
+      await trigger.hover();
+
+      await expect(preview).toBeVisible();
+      await expect(preview.locator('img')).toBeVisible();
+
+      const thumbnailSrc = await thumbnail.evaluate(
+        image => image.currentSrc || image.src
+      );
+      await expect(preview.locator('img')).toHaveAttribute('src', thumbnailSrc);
+
+      const dimensions = await Promise.all([
+        thumbnail.boundingBox(),
+        preview.locator('img').boundingBox()
+      ]);
+      expect(dimensions[1].width).toBeGreaterThan(dimensions[0].width);
+      expect(dimensions[1].height).toBeGreaterThan(dimensions[0].height);
+
+      await page.mouse.move(0, 0);
+      await expect(preview).toBeHidden();
+    }
+  );
+
+  test(
     'opens the full-size poster viewer from a visible table thumbnail',
     async ({ page }) => {
       await openCatalog(page);

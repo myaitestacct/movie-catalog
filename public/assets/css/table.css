@@ -757,6 +757,35 @@ tr.empty-state td {
     white-space: nowrap;
 }
 
+/* Larger poster preview shown while a table thumbnail is hovered/focused. */
+.poster-hover-preview {
+    position: fixed;
+    z-index: 9998;
+    display: none;
+    width: 260px;
+    height: 380px;
+    box-sizing: border-box;
+    padding: 6px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.28);
+    border-radius: 9px;
+    background: rgba(8, 10, 14, 0.94);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.5);
+    pointer-events: none;
+}
+
+.poster-hover-preview.is-visible {
+    display: block;
+}
+
+.poster-hover-preview img {
+    display: block;
+    width: 248px;
+    height: 368px;
+    border-radius: 4px;
+    object-fit: contain;
+}
+
 /* ==========================
    Numeric alignment & tabular figures
 ========================== */
