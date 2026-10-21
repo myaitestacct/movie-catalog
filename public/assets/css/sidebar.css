@@ -227,60 +227,135 @@
     line-height: 1;
 }
 
-/* Sidebar mode control sits in the fixed top status row, outside the
-   independently scrollable sidebar body, so all three modes stay reachable. */
-.sidebar-display-control {
-    display: inline-flex;
-    flex: 0 0 auto;
-    align-items: center;
-    gap: 6px;
+/* Fixed edge dock keeps sidebar controls outside the scrolling panel. */
+.sidebar-mode-dock {
+    position: absolute;
+    z-index: 40;
+    top: 92px;
+    left: calc(var(--sidebar-width-full) - 16px);
+    display: flex;
+    align-items: flex-start;
+    pointer-events: none;
+    transition: left var(--sidebar-transition-duration) var(--sidebar-transition-easing);
 }
 
-.sidebar-display-label {
-    color: var(--text-muted);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    white-space: nowrap;
+html.sidebar-mode-partial .sidebar-mode-dock {
+    left: calc(var(--sidebar-width-partial) - 16px);
 }
 
-/* Mode Switcher Buttons (Full, Partial, Hidden) */
-.sidebar-mode-selector {
-    display: inline-flex;
-    flex: 0 0 auto;
-    align-items: center;
-    gap: 2px;
-    background: var(--table-bg);
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
-    padding: 2px;
+html.sidebar-mode-hidden .sidebar-mode-dock {
+    left: 0;
 }
 
-.sidebar-mode-selector .mode-btn {
-    width: 24px;
-    height: 24px;
-    display: grid;
-    place-items: center;
+.sidebar-mode-dock > * {
+    pointer-events: auto;
+}
+
+.sidebar-edge-toggle {
+    position: relative;
+    width: 32px;
+    height: 42px;
     padding: 0;
-    border: none;
-    border-radius: 5px;
-    background: transparent;
+    border: 1px solid var(--border-light);
+    border-left: 0;
+    border-radius: 0 9px 9px 0;
+    background: var(--table-bg);
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--text-muted);
-    font-size: 11px;
     cursor: pointer;
     transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.sidebar-mode-selector .mode-btn:hover {
+.sidebar-edge-toggle:hover {
+    background: var(--surface-3);
+    color: var(--primary);
+}
+
+.sidebar-edge-toggle:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.sidebar-edge-toggle i {
+    font-size: 13px;
+}
+
+html.sidebar-mode-hidden .sidebar-edge-toggle {
+    border-left: 1px solid var(--border-light);
+    border-radius: 0 9px 9px 0;
+}
+
+.sidebar-mode-menu {
+    position: absolute;
+    top: 0;
+    left: calc(100% + 8px);
+    z-index: 41;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 184px;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    padding: 7px;
+    box-sizing: border-box;
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    background: var(--surface-2);
+    box-shadow: var(--shadow-md);
+}
+
+.sidebar-mode-menu[hidden] {
+    display: none !important;
+}
+
+.sidebar-mode-menu-title {
+    padding: 4px 8px 6px;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.sidebar-mode-option {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 9px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
     color: var(--text-color);
+    font: inherit;
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-mode-option i {
+    width: 16px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.sidebar-mode-option:hover {
     background: var(--button-hover);
 }
 
-.sidebar-mode-selector .mode-btn.active {
+.sidebar-mode-option.active {
     background: var(--primary-soft);
+    border-color: color-mix(in srgb, var(--primary) 35%, transparent);
     color: var(--primary);
-    font-weight: 700;
+    font-weight: 600;
+}
+
+.sidebar-mode-option.active i {
+    color: var(--primary);
 }
 
 /* Sidebar controls body. Keep scrolling as a fallback for short viewports or
@@ -652,62 +727,28 @@
     text-align: center;
 }
 
-/* ============================================================
-   Floating Edge Toggle Button
-   Anchored right at the boundary of the sidebar and main viewport.
-   When hidden, it rests cleanly at the left edge of the screen.
-   ============================================================ */
-.sidebar-edge-toggle {
-    position: absolute;
-    top: 50%;
-    right: -14px;
-    transform: translateY(-50%);
-    width: 24px;
-    height: 48px;
-    border-radius: 0 8px 8px 0;
-    background: var(--table-bg);
-    border: 1px solid var(--border-light);
-    border-left: none;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-    cursor: pointer;
-    z-index: 30;
-    pointer-events: auto !important;
-    transition:
-        background-color 0.15s ease,
-        color 0.15s ease,
-        right var(--sidebar-transition-duration) var(--sidebar-transition-easing),
-        transform 0.15s ease;
-}
+/* Keep the popover inside the viewport on narrow screens. */
+@media (max-width: 480px) {
+    .sidebar-mode-menu {
+        width: min(176px, calc(100vw - 16px));
+    }
 
-.sidebar-edge-toggle:hover {
-    background: var(--surface-3);
-    color: var(--primary);
-}
+    html.sidebar-mode-full .sidebar-mode-menu {
+        left: auto;
+        right: calc(100% + 8px);
+    }
 
-.sidebar-edge-toggle:focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
-}
+    html.sidebar-mode-partial .sidebar-mode-menu {
+        left: calc(100% + 8px);
+        right: auto;
+        width: min(176px, calc(100vw - var(--sidebar-width-partial) - 32px));
+    }
 
-.sidebar-edge-toggle i {
-    font-size: 11px;
-    transition: transform 0.2s ease;
-}
-
-/* Edge toggle icon flips when hidden */
-.app-sidebar.sidebar-hidden .sidebar-edge-toggle,
-.app-sidebar.sidebar-mode-hidden .sidebar-edge-toggle {
-    right: -24px;
-    border-left: 1px solid var(--border-light);
-}
-
-.app-sidebar.sidebar-hidden .sidebar-edge-toggle i,
-.app-sidebar.sidebar-mode-hidden .sidebar-edge-toggle i {
-    transform: rotate(180deg);
+    html.sidebar-mode-hidden .sidebar-mode-menu {
+        left: calc(100% + 8px);
+        right: auto;
+        width: min(176px, calc(100vw - 48px));
+    }
 }
 
 /* Responsive considerations */
@@ -725,11 +766,5 @@
 
     .table-legend-bar {
         padding: 8px 12px 0;
-    }
-}
-
-@media (max-width: 420px) {
-    .sidebar-display-label {
-        display: none;
     }
 }

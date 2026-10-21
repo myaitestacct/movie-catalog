@@ -240,3 +240,45 @@ test('sidebar-header-expand-btn expands sidebar to full mode', () => {
   assert.equal(storage.getItem(SIDEBAR_STORAGE_KEY), 'full');
   assert.equal(root.documentElement.classList.contains('sidebar-mode-full'), true);
 });
+
+test('edge dock opens a menu for direct sidebar mode selection', () => {
+  const menuButtons = ['full', 'partial', 'hidden'].map(mode => {
+    const button = new MockElement('button');
+    button.dataset.sidebarMode = mode;
+    return button;
+  });
+  const modeMenu = new MockElement('div');
+  modeMenu.hidden = true;
+
+  const root = {
+    documentElement: new MockElement('html'),
+    getElementById(id) {
+      if (id === 'app-sidebar') return sidebarEl;
+      if (id === 'sidebar-edge-toggle') return toggleEl;
+      if (id === 'sidebar-mode-menu') return modeMenu;
+      return null;
+    },
+    querySelectorAll() {
+      return menuButtons;
+    }
+  };
+  const sidebarEl = new MockElement('aside');
+  const toggleEl = new MockElement('button');
+  const storage = new MockStorage();
+  const handle = initSidebar(root, storage);
+
+  assert.equal(handle.getMode(), SIDEBAR_MODES.FULL);
+  assert.equal(modeMenu.hidden, true);
+  assert.equal(toggleEl.getAttribute('aria-expanded'), 'false');
+
+  toggleEl.click();
+  assert.equal(modeMenu.hidden, false);
+  assert.equal(toggleEl.getAttribute('aria-expanded'), 'true');
+
+  menuButtons[1].click();
+  assert.equal(handle.getMode(), SIDEBAR_MODES.PARTIAL);
+  assert.equal(storage.getItem(SIDEBAR_STORAGE_KEY), 'partial');
+  assert.equal(modeMenu.hidden, true);
+  assert.equal(toggleEl.getAttribute('aria-expanded'), 'false');
+  assert.equal(menuButtons[1].getAttribute('aria-pressed'), 'true');
+});

@@ -185,11 +185,11 @@ can load without them, but posters will be missing until you supply the files.
 
 The left panel (`#app-sidebar`) holds filtering and display controls. Its
 scrollable body contains Search Logic, optional columns, and the Poster chip;
-the pinned header holds the **theme (light/dark) toggle**. Sidebar display modes
-(full / icons-only / hidden) are controlled from the pinned status row above the
-movie table, outside the scrollable panel, so the mode controls remain available
-even when the sidebar is scrolled or hidden. The theme and sidebar choices are
-persisted in `localStorage` and restored on the next load.
+the pinned header holds the **theme (light/dark) toggle**. A fixed handle just
+below the panel header opens the sidebar mode menu (full / icons-only / hidden).
+It sits outside the scrollable panel and remains available when the sidebar is
+scrolled or hidden. The theme and sidebar choices are persisted in
+`localStorage` and restored on the next load.
 
 ## Search behavior: why did `missing` match unexpected files?
 

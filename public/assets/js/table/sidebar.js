@@ -43,7 +43,7 @@ export function writeStoredSidebarMode(storage = globalThis.localStorage, mode) 
 }
 
 /**
- * Initialize the left sidebar controls and floating edge toggle.
+ * Initialize the sidebar controls and fixed edge mode menu.
  *
  * @param {Document|Element} root
  * @param {Storage} storage
@@ -57,6 +57,7 @@ export function initSidebar(
 ) {
   const sidebar = root?.getElementById?.('app-sidebar');
   const edgeToggle = root?.getElementById?.('sidebar-edge-toggle');
+  const modeMenu = root?.getElementById?.('sidebar-mode-menu');
   const headerExpandBtn = root?.getElementById?.('sidebar-header-expand-btn');
   const modeButtons = root?.querySelectorAll?.('[data-sidebar-mode]') || [];
   const html = root?.documentElement ?? null;
@@ -65,8 +66,16 @@ export function initSidebar(
 
   let currentMode = readStoredSidebarMode(storage);
 
+  function setModeMenuOpen(open) {
+    if (!modeMenu) return;
+    const isOpen = Boolean(open);
+    modeMenu.hidden = !isOpen;
+    edgeToggle?.setAttribute('aria-expanded', String(isOpen));
+  }
+
   function applyMode(mode, notify = true) {
     if (!Object.values(SIDEBAR_MODES).includes(mode)) return;
+    setModeMenuOpen(false);
     currentMode = mode;
 
     if (html) {
@@ -94,27 +103,32 @@ export function initSidebar(
 
     if (edgeToggle) {
       edgeToggle.setAttribute('data-mode', mode);
-      edgeToggle.setAttribute('aria-expanded', String(mode !== SIDEBAR_MODES.HIDDEN));
 
-      let nextModeLabel = '';
-      let edgeIconClass = '';
-      if (mode === SIDEBAR_MODES.FULL) {
-        nextModeLabel = 'Collapse sidebar to icons';
-        edgeIconClass = 'fa-solid fa-chevron-left';
-      } else if (mode === SIDEBAR_MODES.PARTIAL) {
-        nextModeLabel = 'Hide sidebar';
-        edgeIconClass = 'fa-solid fa-angles-left';
-      } else {
-        nextModeLabel = 'Expand sidebar';
-        edgeIconClass = 'fa-solid fa-chevron-right';
-      }
+      // Older markup uses the edge control as a cycle button. In the current
+      // view it opens a persistent menu, so its expanded state tracks the menu.
+      if (!modeMenu) {
+        edgeToggle.setAttribute('aria-expanded', String(mode !== SIDEBAR_MODES.HIDDEN));
 
-      edgeToggle.title = nextModeLabel;
-      edgeToggle.setAttribute('aria-label', nextModeLabel);
+        let nextModeLabel = '';
+        let edgeIconClass = '';
+        if (mode === SIDEBAR_MODES.FULL) {
+          nextModeLabel = 'Collapse sidebar to icons';
+          edgeIconClass = 'fa-solid fa-chevron-left';
+        } else if (mode === SIDEBAR_MODES.PARTIAL) {
+          nextModeLabel = 'Hide sidebar';
+          edgeIconClass = 'fa-solid fa-angles-left';
+        } else {
+          nextModeLabel = 'Expand sidebar';
+          edgeIconClass = 'fa-solid fa-chevron-right';
+        }
 
-      const icon = edgeToggle.querySelector('i');
-      if (icon) {
-        icon.className = edgeIconClass;
+        edgeToggle.title = nextModeLabel;
+        edgeToggle.setAttribute('aria-label', nextModeLabel);
+
+        const icon = edgeToggle.querySelector('i');
+        if (icon) {
+          icon.className = edgeIconClass;
+        }
       }
     }
 
@@ -140,7 +154,26 @@ export function initSidebar(
   if (edgeToggle) {
     edgeToggle.addEventListener('click', (e) => {
       e.preventDefault();
-      cycleNextMode();
+      if (modeMenu) {
+        setModeMenuOpen(modeMenu.hidden);
+      } else {
+        cycleNextMode();
+      }
+    });
+  }
+
+  if (modeMenu && edgeToggle) {
+    root?.addEventListener?.('pointerdown', event => {
+      if (!modeMenu.contains(event.target) && !edgeToggle.contains(event.target)) {
+        setModeMenuOpen(false);
+      }
+    });
+
+    root?.addEventListener?.('keydown', event => {
+      if (event.key === 'Escape' && !modeMenu.hidden) {
+        setModeMenuOpen(false);
+        edgeToggle.focus?.();
+      }
     });
   }
 
@@ -155,7 +188,10 @@ export function initSidebar(
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       const targetMode = btn.dataset.sidebarMode;
-      if (targetMode) applyMode(targetMode);
+      if (targetMode) {
+        applyMode(targetMode);
+        if (modeMenu) edgeToggle?.focus?.();
+      }
     });
   });
 

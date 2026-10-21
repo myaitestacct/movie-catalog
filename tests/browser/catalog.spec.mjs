@@ -70,6 +70,7 @@ test.describe('movie catalog', () => {
     async ({ page }) => {
       await page.setViewportSize({ width: 600, height: 600 });
       await openCatalog(page);
+      await page.locator('#sidebar-edge-toggle').click();
       await page.locator('[data-sidebar-mode="full"]').click();
 
       const layout = await page.locator('#theme-toggle').evaluate(toggle => {
@@ -109,34 +110,48 @@ test.describe('movie catalog', () => {
   );
 
   test(
-    'keeps sidebar mode controls available outside the scrolling panel',
+    'keeps the edge mode menu available while the sidebar content scrolls',
     async ({ page }) => {
       await page.setViewportSize({ width: 600, height: 420 });
       await openCatalog(page);
 
-      const modeControl = page.locator('.sidebar-display-control');
+      const edgeToggle = page.locator('#sidebar-edge-toggle');
+      const modeMenu = page.locator('#sidebar-mode-menu');
       const sidebarContent = page.locator('.sidebar-content');
-      await expect(modeControl).toBeVisible();
+      await expect(edgeToggle).toBeVisible();
 
-      const positionBeforeScroll = await modeControl.evaluate(control => ({
-        insideSidebarScroller: Boolean(control.closest('.sidebar-content')),
-        top: control.getBoundingClientRect().top
+      const positionBeforeScroll = await edgeToggle.evaluate(toggle => ({
+        insideSidebarScroller: Boolean(toggle.closest('.sidebar-content')),
+        top: toggle.getBoundingClientRect().top,
+        headerBottom: document
+          .querySelector('#app-sidebar .sidebar-header')
+          .getBoundingClientRect()
+          .bottom
       }));
       expect(positionBeforeScroll.insideSidebarScroller).toBe(false);
+      expect(positionBeforeScroll.top).toBeGreaterThanOrEqual(
+        positionBeforeScroll.headerBottom
+      );
 
       await sidebarContent.evaluate(content => {
         content.scrollTop = content.scrollHeight;
       });
 
-      const positionAfterScroll = await modeControl.evaluate(control =>
-        control.getBoundingClientRect().top
+      const positionAfterScroll = await edgeToggle.evaluate(toggle =>
+        toggle.getBoundingClientRect().top
       );
       expect(positionAfterScroll).toBe(positionBeforeScroll.top);
 
       for (const mode of ['partial', 'hidden', 'full']) {
+        await edgeToggle.click();
+        await expect(modeMenu).toBeVisible();
+        await expect(edgeToggle).toHaveAttribute('aria-expanded', 'true');
+
         const modeButton = page.locator(`[data-sidebar-mode="${mode}"]`);
         await modeButton.click();
-        await expect(modeControl).toBeVisible();
+        await expect(modeMenu).toBeHidden();
+        await expect(edgeToggle).toBeVisible();
+        await expect(edgeToggle).toHaveAttribute('aria-expanded', 'false');
         await expect(modeButton).toHaveAttribute('aria-pressed', 'true');
         await expect(page.locator('#app-sidebar')).toHaveClass(
           new RegExp(`sidebar-${mode}`)
@@ -189,6 +204,7 @@ test.describe('movie catalog', () => {
       expect(headerLayout.labelLeft).toBeGreaterThanOrEqual(headerLayout.iconRight);
       expect(headerLayout.labelRight).toBeLessThanOrEqual(headerLayout.headerRight);
 
+      await page.locator('#sidebar-edge-toggle').click();
       await page.locator('[data-sidebar-mode="partial"]').click();
       await expect(dropdown).toBeHidden();
       await expect(badgeButton).toBeVisible();

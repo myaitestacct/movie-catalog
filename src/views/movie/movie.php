@@ -1,22 +1,67 @@
 <div class="app-layout">
+    <!-- Fixed edge control: available even when the sidebar is scrolled or hidden. -->
+    <div class="sidebar-mode-dock">
+        <button
+            type="button"
+            id="sidebar-edge-toggle"
+            class="sidebar-edge-toggle"
+            aria-label="Sidebar display options"
+            title="Sidebar display options"
+            aria-controls="sidebar-mode-menu"
+            aria-expanded="false"
+        >
+            <i class="fa-solid fa-bars" aria-hidden="true"></i>
+        </button>
+        <div
+            id="sidebar-mode-menu"
+            class="sidebar-mode-menu"
+            role="group"
+            aria-label="Sidebar display mode"
+            hidden
+        >
+            <span class="sidebar-mode-menu-title">Sidebar display</span>
+            <button
+                type="button"
+                class="sidebar-mode-option"
+                data-sidebar-mode="full"
+                aria-pressed="false"
+                aria-controls="app-sidebar"
+                title="Show the full sidebar"
+            >
+                <i class="fa-solid fa-bars" aria-hidden="true"></i>
+                <span>Expanded</span>
+            </button>
+            <button
+                type="button"
+                class="sidebar-mode-option"
+                data-sidebar-mode="partial"
+                aria-pressed="false"
+                aria-controls="app-sidebar"
+                title="Show sidebar icons only"
+            >
+                <i class="fa-solid fa-grip-vertical" aria-hidden="true"></i>
+                <span>Icons only</span>
+            </button>
+            <button
+                type="button"
+                class="sidebar-mode-option"
+                data-sidebar-mode="hidden"
+                aria-pressed="false"
+                aria-controls="app-sidebar"
+                title="Hide the sidebar"
+            >
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                <span>Hidden</span>
+            </button>
+        </div>
+    </div>
+
     <!-- Left adaptable sidebar holding toolbar controls -->
     <aside
         id="app-sidebar"
         class="app-sidebar"
         aria-label="Filter and display controls"
     >
-        <!-- Floating edge toggle button situated on the sidebar right border -->
-        <button
-            type="button"
-            id="sidebar-edge-toggle"
-            class="sidebar-edge-toggle"
-            aria-label="Toggle sidebar"
-            title="Toggle sidebar mode"
-            aria-controls="app-sidebar"
-            aria-expanded="true"
-        >
-            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
-        </button>
 
         <div class="sidebar-inner">
             <!-- Fixed header keeps the theme toggle outside the scrolling controls. -->
@@ -248,46 +293,9 @@
     <!-- Main Content Area -->
     <main class="main-viewport">
         <!-- Top legend & Analytics bar (retained at the top with reclaimed height) -->
-        <header class="table-legend-bar" aria-label="Library status, sidebar display, and analytics">
-            <!-- Pinned status row: sidebar modes, legend, shortcuts, summary, and Analytics. -->
+        <header class="table-legend-bar" aria-label="Library status and analytics">
+            <!-- Pinned status row: legend, shortcuts, library summary, and Analytics. -->
             <div class="table-legend">
-                <div class="sidebar-display-control">
-                    <span class="sidebar-display-label">Sidebar</span>
-                    <div
-                        class="sidebar-mode-selector"
-                        role="group"
-                        aria-label="Sidebar display mode"
-                    >
-                        <button
-                            type="button"
-                            class="mode-btn"
-                            data-sidebar-mode="full"
-                            title="Full sidebar (icons and text)"
-                            aria-label="Full sidebar"
-                        >
-                            <i class="fa-solid fa-bars" aria-hidden="true"></i>
-                        </button>
-                        <button
-                            type="button"
-                            class="mode-btn"
-                            data-sidebar-mode="partial"
-                            title="Partial sidebar (icons only)"
-                            aria-label="Partial sidebar"
-                        >
-                            <i class="fa-solid fa-grip-vertical" aria-hidden="true"></i>
-                        </button>
-                        <button
-                            type="button"
-                            class="mode-btn"
-                            data-sidebar-mode="hidden"
-                            title="Hide sidebar"
-                            aria-label="Hide sidebar"
-                        >
-                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                </div>
-
                 <span class="legend-chip">
                     <span
                         class="legend-swatch missing"

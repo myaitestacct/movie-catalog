@@ -109,6 +109,8 @@ setup and File-filter examples. Browser mock tests are not a substitute for this
   cross-page jumps reveal and highlight the movie.
 - File filter examples: the `MISSING` marker, real substring matches, fuzzy-only
   filenames, hidden folder matches, wildcard characters, and OR semantics.
+- Sidebar mode menu stays outside the scrolling panel, remains available when
+  the sidebar is hidden, and selects full / icons-only / hidden modes directly.
 - Theme/column preferences — including that the theme toggle is still inside
   `.sidebar-header` and keeps its `Theme` label — the `Poster` chip across a
   re-render and a reload, the clear-filters chip appearing only while a filter
