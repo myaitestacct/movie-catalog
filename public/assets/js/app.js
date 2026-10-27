@@ -26,6 +26,12 @@ import {
 } from './stats/stats.js';
 import { initSidebar } from './table/sidebar.js';
 import {
+  isArchiveShortcut,
+  toggleArchiveView,
+  syncArchiveIndicator,
+  announceArchiveChange
+} from './table/archive-toggle.js';
+import {
   FILTER_COLUMN_LABELS
 } from './stats/stats-table-filters.js';
 import {
@@ -312,6 +318,26 @@ function setupKeyboardShortcuts() {
   document.onkeydown = event => {
     // Row navigation must not fight with the open detail modal.
     if (document.querySelector('.movie-modal.open')) return;
+
+    // Ctrl+Shift+K: switch the whole catalog between the default `movies`
+    // table and the hidden `paripakva` archive. Handled before the typing
+    // guard so the chord also works while a filter input is focused.
+    if (isArchiveShortcut(event)) {
+      event.preventDefault();
+
+      const archiveActive = toggleArchiveView();
+      syncArchiveIndicator();
+      announceArchiveChange(archiveActive);
+      loadMovies();
+
+      // Follow the new source immediately when the analytics panel is
+      // already in use; an idle preload otherwise picks it up later.
+      if (isStatsLoaded()) {
+        refreshStats();
+      }
+
+      return;
+    }
 
     if (event.key === '/' && !isTypingTarget(event.target)) {
       const titleInput = searchRow.querySelector('input[data-col="FORMATTEDTITLE"]');
@@ -763,6 +789,9 @@ function scheduleIdleStatsPreload() {
      Keyboard shortcuts
   ============================== */
 
+  // Defaults to the main library view; syncs the (hidden) archive
+  // indicator and body class in case state was flipped before boot.
+  syncArchiveIndicator();
   setupKeyboardShortcuts();
 
   // 3️⃣ Sorting

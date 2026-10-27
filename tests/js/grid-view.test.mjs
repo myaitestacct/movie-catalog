@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
@@ -7,6 +7,11 @@ import {
   storeView,
   VIEWS
 } from '../../public/assets/js/table/grid-view.js';
+import { state } from '../../public/assets/js/core/state.js';
+
+beforeEach(() => {
+  state.archive = false;
+});
 
 class MockGrid {
   constructor() {
@@ -204,4 +209,46 @@ test('view preference storage round-trips and falls back to table', () => {
 
   store.set('movieCatalogView', 'bogus');
   assert.equal(loadStoredView(), 'table');
+});
+
+test('archive cards use the paripakva poster tree and source badges', () => {
+  state.archive = true;
+  const grid = new MockGrid();
+
+  renderGridView(grid, [
+    {
+      NUM: '5001',
+      FORMATTEDTITLE: 'Paripakva Title 1',
+      YEAR: '2019',
+      RATING: '7.1',
+      PICTURENAME: 'archive-one.jpg'
+    },
+    {
+      NUM: '5002',
+      FORMATTEDTITLE: 'No Poster',
+      PICTURENAME: null
+    }
+  ]);
+
+  const html = grid.innerHTML;
+
+  assert.ok(
+    html.includes('src="/movies_template/paripakva/archive-one.jpg"')
+  );
+  assert.ok(
+    html.includes(
+      'src="/movies_template/paripakva/movies_0000-coming_soon.jpg"'
+    )
+  );
+  assert.ok(html.includes('class="source-badge"'));
+
+  // Restoring the default collection brings the antexport tree back.
+  state.archive = false;
+  const defaultGrid = new MockGrid();
+  renderGridView(defaultGrid, [
+    { NUM: '1', FORMATTEDTITLE: 'Arrival', PICTURENAME: 'arrival.jpg' }
+  ]);
+  assert.ok(
+    defaultGrid.innerHTML.includes('src="/movies/antexport/arrival.jpg"')
+  );
 });

@@ -6,11 +6,17 @@ require_once $root . '/src/helpers/ApiResponse.php';
 ApiResponse::configure();
 
 try {
-    require_once $root . '/src/db/connection.php';
+    require_once $root . '/src/db/ConnectionFactory.php';
+    $pdo = ConnectionFactory::fromRequest($_GET);
     require_once $root . '/src/helpers/Pagination.php';
+    require_once $root . '/src/helpers/MovieTable.php';
     require_once $root . '/src/repositories/MovieRepository.php';
 
-    $repo = new MovieRepository($pdo);
+    // Keep the jump-to-row lookup on the same source table as the table
+    // the user is currently viewing (`archive=1` for the hidden archive).
+    $table = MovieTable::fromRequest($_GET);
+
+    $repo = new MovieRepository($pdo, $table);
 
     $config = json_decode(
         file_get_contents(__DIR__ . '/../../src/config/config.json'),
@@ -61,7 +67,8 @@ try {
 
     echo json_encode([
         'found' => $page !== null,
-        'page' => $page
+        'page' => $page,
+        'source' => $repo->getSourceName()
     ]);
 } catch (Throwable $e) {
     ApiResponse::serverError(

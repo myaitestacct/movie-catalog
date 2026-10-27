@@ -174,12 +174,19 @@ and 8**, not the fuzzy-only `Mission.Spring.mkv` or the hidden `/missing/` folde
 
 ### Poster files
 
-The current poster URL convention is `/movies/antexport/<PICTURENAME>` with
-fallback `/movies/antexport/movies_0000-coming_soon.jpg`. Put your exported images,
+The main library's poster URL convention is
+`/movies/antexport/<PICTURENAME>` with fallback
+`/movies/antexport/movies_0000-coming_soon.jpg`. Put your exported images,
 including that fallback, under `public/movies/antexport/`, or map
 that URL to an existing poster directory in your web server. This directory is
 ignored by Git. Images are not included in the SQL fixtures; the real catalog
 can load without them, but posters will be missing until you supply the files.
+
+The hidden `paripakva` archive uses its own poster tree:
+`/movies_template/paripakva/<PICTURENAME>` with the same
+`movies_0000-coming_soon.jpg` fallback filename, served from
+`public/movies_template/paripakva/` (or a web-server alias). The active path is
+resolved centrally in `public/assets/js/core/poster-sources.js`.
 
 ## Where the controls live
 
@@ -190,6 +197,83 @@ below holds Search Logic, optional columns, and the Poster chip. In
 icons-only mode the header stacks: expand button first, then the theme toggle
 as an icon. The theme choice is persisted in `localStorage` under `theme` and
 restored on the next load.
+
+## Hidden archive table (`paripakva`)
+
+The catalog can serve a second collection, `paripakva`, as a hidden view. The
+main `movies` table is always the default view: the archive is never visible
+until the **Ctrl+Shift+K** keyboard shortcut is pressed, and the choice is
+intentionally not persisted — a fresh page load always returns to `movies`.
+
+While the archive view is active:
+
+- the movie table, grid, and every filter/sort/pagination action read from
+  the `paripakva` source instead of `movies`;
+- posters load from `/movies_template/paripakva/` rather than
+  `/movies/antexport/`;
+- a **Paripakva archive** chip appears in the top legend bar, each row/card
+  carries a `Paripakva` source badge, and a toast confirms the switch;
+- the Analytics panel and its drill-down movie lists follow the same source;
+- pressing Ctrl+Shift+K again restores the main library.
+
+The shortcut works even while a filter input is focused and is ignored while
+the movie detail modal is open.
+
+### Archive database configuration
+
+The archive can live in its own database. Add an `archive_database` block
+alongside `database` in the Git-ignored `src/config/database.local.json`:
+
+```json
+{
+  "database": {
+    "host": "localhost",
+    "dbname": "movies",
+    "user": "root",
+    "password": "",
+    "charset": "utf8mb4"
+  },
+  "archive_database": {
+    "host": "localhost",
+    "dbname": "paripakva",
+    "user": "root",
+    "password": "",
+    "charset": "utf8mb4"
+  }
+}
+```
+
+`src/db/ConnectionFactory.php` picks the connection from the `archive=1`
+request flag: `database` for the main library, `archive_database` for the
+archive. Environment overrides mirror the main connection with the
+`MOVIE_ARCHIVE_DB_*` prefix (`MOVIE_ARCHIVE_DB_HOST`, `MOVIE_ARCHIVE_DB_NAME`,
+`MOVIE_ARCHIVE_DB_USER`, `MOVIE_ARCHIVE_DB_PASSWORD`, …). When no archive
+block is configured, archive requests reuse the main connection, so a
+single-database deployment with a `paripakva` table next to `movies` keeps
+working.
+
+### API contract
+
+Every API endpoint accepts an `archive` boolean flag:
+
+| Request | Connection | Source table |
+| --- | --- | --- |
+| `api/movies.php`, `api/stats.php`, … (no flag or `archive=0`) | `database` | `movies` |
+| same endpoints with `archive=1` | `archive_database` (or main when unset) | `paripakva` |
+
+The frontend injects `archive=1` centrally (see `core/api.js`) for every
+request while the archive view is active. The table name is never taken
+literally from request input: `src/helpers/MovieTable.php` whitelists the two
+allowed names (`movies`, `paripakva`) and backtick-quotes the resolved
+identifier before it reaches SQL. The movies response echoes the active
+source as `"source": "movies" | "paripakva"`. Stats keep a separate cache
+file per source (`var/cache/stats.movies.json`,
+`var/cache/stats.paripakva.json`) so the two collections can never exchange
+cached analytics.
+
+The `paripakva` table must expose the same columns as `movies` (the reference
+shape is documented in [`dev/schema.sql`](dev/schema.sql)); no migration or
+data copy is performed by the application.
 
 ## Search behavior: why did `missing` match unexpected files?
 
@@ -354,6 +438,13 @@ by injection instead (`setMovieLoader()` in `stats/stats.js`), and
 - A database-configuration error usually means the ignored JSON file is absent,
   an environment variable overrides it, or the configured account cannot connect.
   Check PHP/server logs; detailed database errors are not returned to the browser.
+  For a definitive diagnosis run the command-line check
+  `php dev/db-check.php`: it prints the config path in use, whether that file
+  exists, the masked values for both connection blocks, and the exact PDO
+  SQLSTATE with a remediation hint (server unreachable, access denied, unknown
+  database, missing `pdo_mysql` driver, …). The API's 500 response stays generic
+  on purpose; the matching detail line is written to the PHP error log with the
+  target host/port/database (never the password).
 - `could not find driver` means `pdo_mysql` is missing from the PHP runtime used
   by the server. CLI and Apache/FPM can use different PHP installations.
 - Statistics are collection-wide, not filtered-table statistics. Their disk cache

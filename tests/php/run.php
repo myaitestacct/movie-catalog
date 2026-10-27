@@ -6,6 +6,8 @@ $root = dirname(__DIR__, 2);
 
 require_once $root . '/src/helpers/FileHelper.php';
 require_once $root . '/src/helpers/Pagination.php';
+require_once $root . '/src/helpers/MovieTable.php';
+require_once $root . '/src/db/ConnectionFactory.php';
 require_once $root . '/src/repositories/MovieRepository.php';
 require_once $root . '/src/controllers/StatsController.php';
 
@@ -24,6 +26,30 @@ function assertSameValue(mixed $expected, mixed $actual, string $label): void
     echo "FAIL: {$label}\n";
     echo '  Expected: ' . var_export($expected, true) . "\n";
     echo '  Actual:   ' . var_export($actual, true) . "\n";
+}
+
+function assertThrows(string $expectedClass, callable $callback, string $label): void
+{
+    global $failures;
+
+    try {
+        $callback();
+    } catch (Throwable $error) {
+        if ($error instanceof $expectedClass) {
+            echo "PASS: {$label}\n";
+            return;
+        }
+
+        $failures++;
+        echo "FAIL: {$label}\n";
+        echo '  Expected exception: ' . $expectedClass . "\n";
+        echo '  Actual exception:   ' . get_class($error) . "\n";
+        return;
+    }
+
+    $failures++;
+    echo "FAIL: {$label}\n";
+    echo "  Expected exception {$expectedClass}, but nothing was thrown\n";
 }
 
 assertSameValue(
@@ -631,6 +657,199 @@ assertSameValue(
     $directorOrder,
     'Filter-only columns are not sortable and fall back to NUM order'
 );
+
+// ===== MovieTable: hidden archive (paripakva) source resolution =====
+assertSameValue(
+    MovieTable::DEFAULT_TABLE,
+    MovieTable::fromRequest([]),
+    'Requests without the archive flag resolve to the movies table'
+);
+assertSameValue(
+    MovieTable::DEFAULT_TABLE,
+    MovieTable::fromRequest(['archive' => '0']),
+    'archive=0 keeps the default movies table'
+);
+assertSameValue(
+    MovieTable::ARCHIVE_TABLE,
+    MovieTable::fromRequest(['archive' => '1']),
+    'archive=1 resolves to the hidden paripakva table'
+);
+assertSameValue(
+    MovieTable::ARCHIVE_TABLE,
+    MovieTable::fromRequest(['archive' => 'true']),
+    'Boolean-style archive flags are accepted by the resolver'
+);
+assertSameValue(
+    ['movies', 'paripakva'],
+    MovieTable::allowed(),
+    'Exactly the two whitelisted tables are selectable'
+);
+assertSameValue('`movies`', MovieTable::quote('movies'), 'Default table is backtick quoted');
+assertSameValue('`paripakva`', MovieTable::quote('paripakva'), 'Archive table is backtick quoted');
+assertSameValue(false, MovieTable::isArchive('movies'), 'movies is not the archive source');
+assertSameValue(true, MovieTable::isArchive('paripakva'), 'paripakva is the archive source');
+assertSameValue('paripakva', MovieTable::sourceName('paripakva'), 'Source name echoes the archive table');
+
+assertThrows(
+    InvalidArgumentException::class,
+    fn() => MovieTable::validate('information_schema.tables'),
+    'Table names outside the whitelist are rejected'
+);
+assertThrows(
+    InvalidArgumentException::class,
+    fn() => MovieTable::quote('movies; DROP TABLE movies'),
+    'Malicious table names cannot be quoted into SQL'
+);
+
+assertSameValue(
+    'SELECT * FROM `paripakva` WHERE 1',
+    MovieTable::rewriteSql('SELECT * FROM movies WHERE 1', 'paripakva'),
+    'Static SQL is retargeted at the archive table'
+);
+assertSameValue(
+    'SELECT COUNT(*) AS movie_count FROM `movies`',
+    MovieTable::rewriteSql('SELECT COUNT(*) AS movie_count FROM movies', 'movies'),
+    'SQL rewriting replaces the table identifier but not aliases containing the word movie'
+);
+assertSameValue(
+    'FROM `paripakva` m JOIN (SELECT URL FROM `paripakva`) dup',
+    MovieTable::rewriteSql('FROM movies m JOIN (SELECT URL FROM movies) dup', 'paripakva'),
+    'Every occurrence of the table name in one statement is rewritten'
+);
+
+// ===== ConnectionFactory: per-database connection configuration =====
+assertSameValue(
+    [
+        'host' => 'localhost',
+        'port' => 3306,
+        'dbname' => 'paripakva',
+        'user' => 'root',
+        'password' => '',
+        'charset' => 'utf8mb4'
+    ],
+    ConnectionFactory::normalizeBlock([
+        'host' => 'localhost',
+        'dbname' => 'paripakva',
+        'user' => 'root',
+        'password' => '',
+        'charset' => 'utf8mb4'
+    ]),
+    'A complete archive block normalizes, including an empty local password'
+);
+
+assertSameValue(
+    [
+        'host' => 'localhost',
+        'port' => 3306,
+        'dbname' => 'movies',
+        'user' => 'movie_catalog',
+        'password' => 'secret',
+        'charset' => 'utf8mb4'
+    ],
+    ConnectionFactory::normalizeBlock([
+        'dbname' => 'movies',
+        'user' => 'movie_catalog',
+        'password' => 'secret'
+    ]),
+    'Omitted host, port, and charset fall back to the documented defaults'
+);
+
+assertSameValue(
+    6033,
+    ConnectionFactory::normalizeBlock([
+        'host' => 'db.internal',
+        'port' => '6033',
+        'dbname' => 'movies',
+        'user' => 'app',
+        'password' => 'pw',
+        'charset' => 'utf8mb4'
+    ])['port'],
+    'A numeric string port is normalized to an integer'
+);
+
+assertThrows(
+    InvalidArgumentException::class,
+    fn() => ConnectionFactory::normalizeBlock([
+        'host' => 'localhost',
+        'dbname' => '',
+        'user' => 'root',
+        'password' => ''
+    ]),
+    'A blank database name is rejected'
+);
+
+assertThrows(
+    InvalidArgumentException::class,
+    fn() => ConnectionFactory::normalizeBlock([
+        'host' => 'localhost',
+        'dbname' => 'movies',
+        'user' => '',
+        'password' => ''
+    ]),
+    'A blank user is rejected'
+);
+
+assertThrows(
+    InvalidArgumentException::class,
+    fn() => ConnectionFactory::normalizeBlock([
+        'host' => 'localhost',
+        'dbname' => 'movies',
+        'user' => 'root'
+    ]),
+    'A missing password key is rejected (empty string is still allowed)'
+);
+
+assertThrows(
+    InvalidArgumentException::class,
+    fn() => ConnectionFactory::normalizeBlock([
+        'dbname' => 'movies',
+        'user' => 'root',
+        'password' => '',
+        'port' => 70000
+    ]),
+    'Ports outside the 1-65535 range are rejected'
+);
+
+assertThrows(
+    InvalidArgumentException::class,
+    fn() => ConnectionFactory::normalizeBlock([
+        'dbname' => 'movies',
+        'user' => 'root',
+        'password' => '',
+        'port' => 'not-a-port'
+    ]),
+    'Non-numeric ports are rejected'
+);
+
+assertThrows(
+    InvalidArgumentException::class,
+    fn() => ConnectionFactory::normalizeBlock([
+        'dbname' => 'movies',
+        'user' => 'root',
+        'password' => '',
+        'charset' => 'utf8; DROP DATABASE movies'
+    ]),
+    'Charsets outside the safe identifier pattern are rejected'
+);
+
+// The diagnostic path honors MOVIE_DB_CONFIG and otherwise points at the
+// ignored local JSON file next to the example.
+$previousConfigPath = getenv('MOVIE_DB_CONFIG');
+putenv('MOVIE_DB_CONFIG=/tmp/external-movie-db.json');
+assertSameValue(
+    '/tmp/external-movie-db.json',
+    ConnectionFactory::activeConfigPath(),
+    'MOVIE_DB_CONFIG overrides the database config path'
+);
+putenv('MOVIE_DB_CONFIG');
+assertSameValue(
+    $root . '/src/config/database.local.json',
+    ConnectionFactory::activeConfigPath(),
+    'The default config path is used when MOVIE_DB_CONFIG is unset'
+);
+if ($previousConfigPath !== false) {
+    putenv("MOVIE_DB_CONFIG={$previousConfigPath}");
+}
 
 if ($failures > 0) {
     echo "\n{$failures} test(s) failed.\n";

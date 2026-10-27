@@ -215,6 +215,25 @@ movies[18] = createMovie(19, { FILEPATH: 'D:\\Movies\\Missing.Pieces.mkv' });
 movies[19] = createMovie(20, { FILEPATH: '/archive/100%_=.mkv' });
 movies[50] = createMovie(51, { FILEPATH: '/archive/movie-051-Get.Better.Copy.mkv' });
 
+// Hidden archive collection (the paripakva table), reachable only through
+// the `archive=1` flag toggled by the Ctrl+Shift+K keyboard shortcut. The
+// distinct NUM range and title prefix make source-switching assertions
+// unambiguous in the browser tests.
+const paripakvaMovies = Array.from(
+  { length: 13 },
+  (_, index) => createMovie(5001 + index, {
+    FORMATTEDTITLE: `Paripakva Title ${index + 1}`,
+    ORIGINALTITLE: `Paripakva Title ${index + 1}`,
+    CATEGORY: index % 2 === 0
+      ? 'Archive Drama'
+      : 'Archive Thriller'
+  })
+);
+
+function isArchiveRequest(url) {
+  return url.searchParams.get('archive') === '1';
+}
+
 const metadataFields = [
   ['description', 'Description', 3],
   ['cast', 'Cast', 2],
@@ -556,6 +575,16 @@ const statsPayload = {
   }
 };
 
+// Same full payload shape (the frontend validates every section), with the
+// headline counts retargeted at the hidden archive collection.
+const archiveStatsPayload = {
+  ...statsPayload,
+  total_movies: paripakvaMovies.length,
+  genres: 2,
+  oldest_year: 1981,
+  newest_year: 2025
+};
+
 function issueRow(movie) {
   return {
     NUM: movie.NUM,
@@ -777,8 +806,17 @@ function movieResponse(url, { allRows = false } = {}) {
       'dir',
       'mode',
       'fuzzy',
-      'titleMode'
+      'titleMode',
+      // Source-table selector, not a movie column filter.
+      'archive'
     ]);
+
+  const sourceRows = isArchiveRequest(url)
+    ? paripakvaMovies
+    : movies;
+  const sourceName = isArchiveRequest(url)
+    ? 'paripakva'
+    : 'movies';
 
   const rawFilters =
     [...url.searchParams.entries()]
@@ -894,7 +932,7 @@ function movieResponse(url, { allRows = false } = {}) {
       : 1;
 
   const filtered =
-    movies
+    sourceRows
       .filter(matchesFilter)
       .toSorted((left, right) => {
         if (exactTitle) {
@@ -959,7 +997,9 @@ function movieResponse(url, { allRows = false } = {}) {
           compareValues(left.NUM, right.NUM);
       });
 
-  if (allRows) return filtered;
+  if (allRows) {
+    return filtered.map(row => ({ ...row, source: sourceName }));
+  }
 
   const requestedLimit =
     Number(
@@ -1002,6 +1042,7 @@ function movieResponse(url, { allRows = false } = {}) {
       start,
       start + limit
     ),
+    source: sourceName,
     page,
     limit,
     pages,
@@ -1200,7 +1241,9 @@ async function handleApi(
     case '/api/stats.php':
       sendJson(
         response,
-        statsPayload
+        isArchiveRequest(url)
+          ? archiveStatsPayload
+          : statsPayload
       );
       return;
 
@@ -1259,7 +1302,7 @@ async function handleApi(
     case '/api/movie-page.php': {
       const num = url.searchParams.get('num');
       const query = new URL('/api/movies.php', url);
-      for (const key of ['sort', 'dir', 'mode', 'fuzzy', 'titleMode']) {
+      for (const key of ['sort', 'dir', 'mode', 'fuzzy', 'titleMode', 'archive']) {
         if (url.searchParams.has(key)) {
           query.searchParams.set(key, url.searchParams.get(key));
         }
@@ -1354,6 +1397,9 @@ const server =
       if (
         url.pathname.startsWith(
           '/movies/antexport/'
+        ) ||
+        url.pathname.startsWith(
+          '/movies_template/paripakva/'
         )
       ) {
         send(

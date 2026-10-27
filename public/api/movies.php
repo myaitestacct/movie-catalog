@@ -4,10 +4,16 @@ declare(strict_types=1);
 $root = dirname(__DIR__, 2);
 
 require_once $root . '/src/helpers/ApiResponse.php';
+require_once $root . '/src/helpers/MovieTable.php';
 
 ApiResponse::configure();
 
-$pdo = require $root . '/src/db/connection.php';
+require_once $root . '/src/db/ConnectionFactory.php';
+$pdo = ConnectionFactory::fromRequest($_GET);
+
+// Defaults to the `movies` table; `archive=1` switches the whitelisted
+// source to the hidden `paripakva` table (Ctrl+Shift+K in the UI).
+$table = MovieTable::fromRequest($_GET);
 
 $configPath =
     $root . '/src/config/config.json';
@@ -121,7 +127,8 @@ try {
 
     $repository =
         new MovieRepository(
-            $pdo
+            $pdo,
+            $table
         );
 
     $totalRows =
@@ -146,6 +153,11 @@ try {
     echo json_encode([
         'data' =>
             $movies,
+
+        // Echoes 'movies' or 'paripakva' so the UI can confirm which
+        // collection the rendered page came from.
+        'source' =>
+            $repository->getSourceName(),
 
         'page' =>
             $page,

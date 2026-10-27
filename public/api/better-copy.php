@@ -13,10 +13,15 @@ try {
     require_once $root . '/src/helpers/ApiResponse.php';
     ApiResponse::configure();
 
-    $pdo = require $root . '/src/db/connection.php';
+    require_once $root . '/src/db/ConnectionFactory.php';
+    $pdo = ConnectionFactory::fromRequest($_GET);
+    require_once $root . '/src/helpers/MovieTable.php';
     require_once $root . '/src/controllers/StatsController.php';
 
-    $controller = new StatsController($pdo);
+    $controller = new StatsController(
+        $pdo,
+        MovieTable::fromRequest($_GET)
+    );
     $rows = $controller->getBetterCopyRows();
     echo json_encode($rows, JSON_THROW_ON_ERROR);
 } catch (Throwable $e) {
