@@ -8,7 +8,8 @@ require_once $root . '/src/helpers/MovieTable.php';
 
 ApiResponse::configure();
 
-$pdo = require $root . '/src/db/connection.php';
+require_once $root . '/src/db/ConnectionFactory.php';
+$pdo = ConnectionFactory::fromRequest($_GET);
 
 // Defaults to the `movies` table; `archive=1` switches the whitelisted
 // source to the hidden `paripakva` table (Ctrl+Shift+K in the UI).

@@ -6,7 +6,8 @@ require_once $root . '/src/helpers/ApiResponse.php';
 ApiResponse::configure();
 
 try {
-    require_once $root . '/src/db/connection.php';
+    require_once $root . '/src/db/ConnectionFactory.php';
+    $pdo = ConnectionFactory::fromRequest($_GET);
     require_once $root . '/src/helpers/Pagination.php';
     require_once $root . '/src/helpers/MovieTable.php';
     require_once $root . '/src/repositories/MovieRepository.php';

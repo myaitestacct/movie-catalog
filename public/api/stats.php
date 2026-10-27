@@ -16,7 +16,8 @@ try {
     require_once $root . '/src/helpers/MovieTable.php';
     ApiResponse::configure();
 
-    $pdo = require $root . '/src/db/connection.php';
+    require_once $root . '/src/db/ConnectionFactory.php';
+    $pdo = ConnectionFactory::fromRequest($_GET);
     require_once $root . '/src/controllers/StatsController.php';
 
     // `archive=1` computes the analytics from the hidden paripakva table;

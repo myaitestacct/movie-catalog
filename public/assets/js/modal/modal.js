@@ -8,6 +8,7 @@ import {
 import { copyToClipboard } from '../utils/clipboard.js';
 import { configureExternalLink } from '../utils/url.js';
 import { createModalDOM } from './modal.dom.js';
+import { getPosterSource } from '../core/poster-sources.js';
 
 const FOCUSABLE_SELECTOR = [
     'a[href]',
@@ -506,11 +507,13 @@ export const Modal = (() => {
     }
 
     function renderMovieView(movie) {
+        const posterSource = getPosterSource();
+
         setPoster(
             poster,
             movie.PICTURENAME,
-            '/movies/antexport',
-            '/movies/antexport/movies_0000-coming_soon.jpg'
+            posterSource.base,
+            posterSource.fallback
         );
 
         const displayTitle = (

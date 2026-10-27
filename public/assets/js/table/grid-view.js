@@ -7,9 +7,7 @@
 import { Modal } from '../modal/modal.js';
 import { safeExternalUrl } from '../utils/url.js';
 import { state } from '../core/state.js';
-
-const POSTER_BASE_PATH = '/movies/antexport';
-const POSTER_FALLBACK = '/movies/antexport/movies_0000-coming_soon.jpg';
+import { posterUrl } from '../core/poster-sources.js';
 
 const VIEW_STORAGE_KEY = 'movieCatalogView';
 
@@ -54,9 +52,8 @@ function ratingTier(value) {
 }
 
 function posterSrc(pictureName) {
-  return pictureName
-    ? `${POSTER_BASE_PATH}/${encodeURIComponent(pictureName)}`
-    : POSTER_FALLBACK;
+  // Follows the active collection (movies vs paripakva archive).
+  return posterUrl(pictureName);
 }
 
 // The rating badge doubles as the movie's IMDb link, like the table view's

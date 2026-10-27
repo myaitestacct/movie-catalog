@@ -5,7 +5,8 @@ $root = dirname(__DIR__, 2);
 require_once $root . '/src/helpers/ApiResponse.php';
 ApiResponse::configure();
 
-$pdo = require_once $root . '/src/db/connection.php';
+require_once $root . '/src/db/ConnectionFactory.php';
+$pdo = ConnectionFactory::fromRequest($_GET);
 require_once $root . '/src/helpers/MovieTable.php';
 require_once $root . '/src/controllers/StatsController.php';
 

@@ -7,6 +7,7 @@ $root = dirname(__DIR__, 2);
 require_once $root . '/src/helpers/FileHelper.php';
 require_once $root . '/src/helpers/Pagination.php';
 require_once $root . '/src/helpers/MovieTable.php';
+require_once $root . '/src/db/ConnectionFactory.php';
 require_once $root . '/src/repositories/MovieRepository.php';
 require_once $root . '/src/controllers/StatsController.php';
 
@@ -714,6 +715,121 @@ assertSameValue(
     'FROM `paripakva` m JOIN (SELECT URL FROM `paripakva`) dup',
     MovieTable::rewriteSql('FROM movies m JOIN (SELECT URL FROM movies) dup', 'paripakva'),
     'Every occurrence of the table name in one statement is rewritten'
+);
+
+// ===== ConnectionFactory: per-database connection configuration =====
+assertSameValue(
+    [
+        'host' => 'localhost',
+        'port' => 3306,
+        'dbname' => 'paripakva',
+        'user' => 'root',
+        'password' => '',
+        'charset' => 'utf8mb4'
+    ],
+    ConnectionFactory::normalizeBlock([
+        'host' => 'localhost',
+        'dbname' => 'paripakva',
+        'user' => 'root',
+        'password' => '',
+        'charset' => 'utf8mb4'
+    ]),
+    'A complete archive block normalizes, including an empty local password'
+);
+
+assertSameValue(
+    [
+        'host' => 'localhost',
+        'port' => 3306,
+        'dbname' => 'movies',
+        'user' => 'movie_catalog',
+        'password' => 'secret',
+        'charset' => 'utf8mb4'
+    ],
+    ConnectionFactory::normalizeBlock([
+        'dbname' => 'movies',
+        'user' => 'movie_catalog',
+        'password' => 'secret'
+    ]),
+    'Omitted host, port, and charset fall back to the documented defaults'
+);
+
+assertSameValue(
+    6033,
+    ConnectionFactory::normalizeBlock([
+        'host' => 'db.internal',
+        'port' => '6033',
+        'dbname' => 'movies',
+        'user' => 'app',
+        'password' => 'pw',
+        'charset' => 'utf8mb4'
+    ])['port'],
+    'A numeric string port is normalized to an integer'
+);
+
+assertThrows(
+    InvalidArgumentException::class,
+    fn() => ConnectionFactory::normalizeBlock([
+        'host' => 'localhost',
+        'dbname' => '',
+        'user' => 'root',
+        'password' => ''
+    ]),
+    'A blank database name is rejected'
+);
+
+assertThrows(
+    InvalidArgumentException::class,
+    fn() => ConnectionFactory::normalizeBlock([
+        'host' => 'localhost',
+        'dbname' => 'movies',
+        'user' => '',
+        'password' => ''
+    ]),
+    'A blank user is rejected'
+);
+
+assertThrows(
+    InvalidArgumentException::class,
+    fn() => ConnectionFactory::normalizeBlock([
+        'host' => 'localhost',
+        'dbname' => 'movies',
+        'user' => 'root'
+    ]),
+    'A missing password key is rejected (empty string is still allowed)'
+);
+
+assertThrows(
+    InvalidArgumentException::class,
+    fn() => ConnectionFactory::normalizeBlock([
+        'dbname' => 'movies',
+        'user' => 'root',
+        'password' => '',
+        'port' => 70000
+    ]),
+    'Ports outside the 1-65535 range are rejected'
+);
+
+assertThrows(
+    InvalidArgumentException::class,
+    fn() => ConnectionFactory::normalizeBlock([
+        'dbname' => 'movies',
+        'user' => 'root',
+        'password' => '',
+        'port' => 'not-a-port'
+    ]),
+    'Non-numeric ports are rejected'
+);
+
+assertThrows(
+    InvalidArgumentException::class,
+    fn() => ConnectionFactory::normalizeBlock([
+        'dbname' => 'movies',
+        'user' => 'root',
+        'password' => '',
+        'charset' => 'utf8; DROP DATABASE movies'
+    ]),
+    'Charsets outside the safe identifier pattern are rejected'
 );
 
 if ($failures > 0) {

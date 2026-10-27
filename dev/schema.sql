@@ -38,6 +38,9 @@ CREATE TABLE movies (
 -- CREATE TABLE paripakva LIKE movies;
 -- -- then load the archived rows into paripakva.
 --
--- The application never migrates or copies data between the two tables, and
--- only the whitelisted names `movies` and `paripakva` can ever be queried
--- (see src/helpers/MovieTable.php).
+-- The table may live next to `movies` in this database, or in a separate
+-- database (also named `paripakva`) configured with the `archive_database`
+-- block in src/config/database.local.json. The application never migrates or
+-- copies data between the two sources, and only the whitelisted names
+-- `movies` and `paripakva` can ever be queried (see
+-- src/helpers/MovieTable.php and src/db/ConnectionFactory.php).

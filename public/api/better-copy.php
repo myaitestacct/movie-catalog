@@ -13,7 +13,8 @@ try {
     require_once $root . '/src/helpers/ApiResponse.php';
     ApiResponse::configure();
 
-    $pdo = require $root . '/src/db/connection.php';
+    require_once $root . '/src/db/ConnectionFactory.php';
+    $pdo = ConnectionFactory::fromRequest($_GET);
     require_once $root . '/src/helpers/MovieTable.php';
     require_once $root . '/src/controllers/StatsController.php';
 

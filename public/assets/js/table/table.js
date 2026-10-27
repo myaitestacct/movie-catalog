@@ -14,9 +14,7 @@ import {
 } from '../utils/highlighttext.js';
 import { Modal } from '../modal/modal.js';
 import { setPoster } from '../modal/modal.utils.js';
-
-const POSTER_BASE_PATH = '/movies/antexport';
-const POSTER_FALLBACK = '/movies/antexport/movies_0000-coming_soon.jpg';
+import { getPosterSource } from '../core/poster-sources.js';
 
 let posterHoverPreview = null;
 let posterHoverImage = null;
@@ -123,7 +121,13 @@ function createRowPoster(movie) {
     Modal.showPoster(poster, title, trigger);
   };
 
-  setPoster(poster, movie.PICTURENAME, POSTER_BASE_PATH, POSTER_FALLBACK);
+  const posterSource = getPosterSource();
+  setPoster(
+    poster,
+    movie.PICTURENAME,
+    posterSource.base,
+    posterSource.fallback
+  );
   trigger.appendChild(poster);
 
   return trigger;

@@ -1397,6 +1397,9 @@ const server =
       if (
         url.pathname.startsWith(
           '/movies/antexport/'
+        ) ||
+        url.pathname.startsWith(
+          '/movies_template/paripakva/'
         )
       ) {
         send(

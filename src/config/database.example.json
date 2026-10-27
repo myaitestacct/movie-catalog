@@ -6,5 +6,13 @@
     "user": "movie_catalog",
     "password": "change-me",
     "charset": "utf8mb4"
+  },
+  "archive_database": {
+    "host": "localhost",
+    "port": 3306,
+    "dbname": "paripakva",
+    "user": "movie_catalog",
+    "password": "change-me",
+    "charset": "utf8mb4"
   }
 }

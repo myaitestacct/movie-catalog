@@ -29,6 +29,38 @@ cp database.example.json database.local.json
 
 `database.local.json` is ignored by Git and must never be committed. The documented nested `{"database": {...}}` format is recommended; the loader also accepts the earlier flat format for compatibility.
 
+## Optional: separate archive database
+
+The hidden `paripakva` archive view (Ctrl+Shift+K) can connect to its own
+database. Add an `archive_database` block next to `database` in
+`database.local.json` using the same shape:
+
+```json
+{
+  "database": {
+    "host": "localhost",
+    "dbname": "movies",
+    "user": "root",
+    "password": "",
+    "charset": "utf8mb4"
+  },
+  "archive_database": {
+    "host": "localhost",
+    "dbname": "paripakva",
+    "user": "root",
+    "password": "",
+    "charset": "utf8mb4"
+  }
+}
+```
+
+The `archive_database` block is optional. Without it, archive requests reuse
+the main connection and read the `paripakva` table from the same database.
+Equivalent environment variables use the `MOVIE_ARCHIVE_DB_` prefix:
+`MOVIE_ARCHIVE_DB_HOST`, `MOVIE_ARCHIVE_DB_PORT`, `MOVIE_ARCHIVE_DB_NAME`,
+`MOVIE_ARCHIVE_DB_USER`, `MOVIE_ARCHIVE_DB_PASSWORD`, and
+`MOVIE_ARCHIVE_DB_CHARSET`. See `src/db/ConnectionFactory.php`.
+
 ## Option 3: External configuration file
 
 Set `MOVIE_DB_CONFIG` to an absolute path to a JSON file outside the web root. The file uses the same format as `database.example.json`.

@@ -48,6 +48,15 @@ test.describe('hidden archive table (paripakva)', () => {
     await expect(sourceBadges.first()).toContainText('Paripakva');
     await expect(sourceBadges.first()).toBeVisible();
 
+    // Archive posters load from the paripakva export tree, not antexport.
+    const archivePoster = page.locator(
+      '#movies tbody tr[data-num] img.row-poster'
+    ).first();
+    await expect(archivePoster).toHaveAttribute(
+      'src',
+      /\/movies_template\/paripakva\//
+    );
+
     // A transient toast names the collection now in view.
     await expect(
       page.locator('.archive-toast.is-visible')
@@ -80,6 +89,16 @@ test.describe('hidden archive table (paripakva)', () => {
     await expect(indicator).toBeHidden();
     await expect(firstTitle).toHaveText('Arrival');
     await expect(sourceBadges).toHaveCount(0);
+
+    // Back in the main library, posters use the antexport tree again.
+    await expect(
+      page.locator(
+        '#movies tbody tr[data-num] img.row-poster'
+      ).first()
+    ).toHaveAttribute(
+      'src',
+      /\/movies\/antexport\//
+    );
   });
 
   test('the archive shortcut also works while a filter input is focused', async ({ page }) => {
@@ -126,6 +145,14 @@ test.describe('hidden archive table (paripakva)', () => {
     );
     await expect(cardBadges.first()).toBeVisible();
     await expect(cardBadges.first()).toContainText('Paripakva');
+
+    // Grid posters follow the same per-collection path convention.
+    await expect(
+      page.locator('#grid-view .movie-card-poster img').first()
+    ).toHaveAttribute(
+      'src',
+      /\/movies_template\/paripakva\//
+    );
 
     // Toggle back while the grid stays open: the re-rendered default
     // collection carries no source markers.
