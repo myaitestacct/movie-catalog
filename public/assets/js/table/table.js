@@ -398,6 +398,17 @@ function renderMovieRow(
       };
 
       cell.appendChild(link);
+
+      // Mark rows that come from the hidden archive table.
+      if (state.archive) {
+        const sourceBadge = document.createElement('span');
+        sourceBadge.className = 'source-badge';
+        sourceBadge.textContent = 'Paripakva';
+        sourceBadge.title =
+          'Hidden archive collection (paripakva table)';
+        cell.appendChild(sourceBadge);
+      }
+
       td.appendChild(cell);
     } else if (col === 'RATING') {
       if (!value) {

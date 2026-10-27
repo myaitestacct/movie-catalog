@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../helpers/FileHelper.php';
+require_once __DIR__ . '/../helpers/MovieTable.php';
 
 class MovieRepository
 {
@@ -12,6 +13,11 @@ class MovieRepository
 
     private PDO $pdo;
     private ?bool $windowFunctionsSupported = null;
+
+    // Whitelisted source table (`movies` by default, `paripakva` for the
+    // hidden archive view) and its backtick-quoted SQL identifier.
+    private string $table;
+    private string $quotedTable;
 
     private array $sortableColumns = [
         'NUM',
@@ -67,9 +73,23 @@ class MovieRepository
         'FILESIZE'
     ];
 
-    public function __construct(PDO $pdo)
-    {
+    public function __construct(
+        PDO $pdo,
+        string $table = MovieTable::DEFAULT_TABLE
+    ) {
         $this->pdo = $pdo;
+        $this->table = MovieTable::validate($table);
+        $this->quotedTable = MovieTable::quote($this->table);
+    }
+
+    public function getTable(): string
+    {
+        return $this->table;
+    }
+
+    public function getSourceName(): string
+    {
+        return MovieTable::sourceName($this->table);
     }
 
     private function supportsWindowFunctions(): bool
@@ -694,7 +714,7 @@ class MovieRepository
         // Deferred-join optimization for deep pagination
         $innerSql = "
             SELECT NUM
-            FROM movies
+            FROM {$this->quotedTable}
             $whereSql
             ORDER BY $orderBy
             LIMIT :limit OFFSET :offset
@@ -766,7 +786,7 @@ class MovieRepository
                    RATING, DIRECTOR, ACTORS, COUNTRY, DESCRIPTION,
                    FILESIZE, LANGUAGES, CATEGORY, RESOLUTION,
                    AUDIOFORMAT, FILEPATH, SUBTITLES, URL, PICTURENAME
-            FROM movies
+            FROM {$this->quotedTable}
             WHERE NUM IN ($inClause)
         ";
 
@@ -836,7 +856,7 @@ class MovieRepository
             );
 
         $sql =
-            "SELECT COUNT(*) FROM movies $whereSql";
+            "SELECT COUNT(*) FROM {$this->quotedTable} $whereSql";
 
         $stmt =
             $this->pdo->prepare($sql);
@@ -863,7 +883,7 @@ class MovieRepository
         $stmt =
             $this->pdo->query("
                 SELECT NUM, FORMATTEDTITLE, FILEPATH
-                FROM movies
+                FROM {$this->quotedTable}
                 LIMIT 500
             ");
 
@@ -955,7 +975,7 @@ class MovieRepository
                             ROW_NUMBER() OVER (
                                 ORDER BY $orderBy
                             ) AS rn
-                        FROM movies
+                        FROM {$this->quotedTable}
                         $whereSql
                     ) AS ranked
                     WHERE ranked.NUM = :targetNum
@@ -1022,7 +1042,7 @@ class MovieRepository
     ): ?int {
         $sql = "
             SELECT NUM
-            FROM movies
+            FROM {$this->quotedTable}
             $whereSql
             ORDER BY $orderBy
         ";

@@ -1,3 +1,5 @@
+import { state, ARCHIVE_PARAM } from './state.js';
+
 export class ApiError extends Error {
 constructor(message, status = 0, payload = null) {
 super(message);
@@ -86,7 +88,15 @@ return payload;
 }
 
 function apiUrl(endpoint, params = null) {
-const query = params ? `?${params}` : '';
+let query = params ? `?${params}` : '';
+
+// The hidden archive view (Ctrl+Shift+K) applies to every endpoint, so
+// the flag is injected centrally instead of relying on each call site to
+// forward it. An explicit param on the query string wins.
+if (state.archive && params?.get?.(ARCHIVE_PARAM) == null) {
+query += `${query ? '&' : '?'}${ARCHIVE_PARAM}=1`;
+}
+
 return `${BASE_URL}/api/${endpoint}${query}`;
 }
 

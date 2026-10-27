@@ -6,10 +6,14 @@ require_once $root . '/src/helpers/ApiResponse.php';
 ApiResponse::configure();
 
 $pdo = require_once $root . '/src/db/connection.php';
+require_once $root . '/src/helpers/MovieTable.php';
 require_once $root . '/src/controllers/StatsController.php';
 
 try {
-    $controller = new StatsController($pdo);
+    $controller = new StatsController(
+        $pdo,
+        MovieTable::fromRequest($_GET)
+    );
     $rows = $controller->getDuplicateRows();
     echo json_encode($rows);
 } catch (Throwable $e) {

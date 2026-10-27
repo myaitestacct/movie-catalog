@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../helpers/MovieTable.php';
+
 class StatsController
 {
 private const LIBRARY_ISSUE_QUERIES = [
@@ -86,12 +88,35 @@ private array $sql;
 private array $config;
 private string $statsCachePath;
 
-public function __construct(PDO $pdo)
+// Whitelisted source table (`movies` by default, `paripakva` for the
+// hidden archive view) and its backtick-quoted SQL identifier.
+private string $table;
+private string $quotedTable;
+private string $source;
+
+public function __construct(
+PDO $pdo,
+string $table = MovieTable::DEFAULT_TABLE
+)
 {
 $this->pdo = $pdo;
-$this->sql = json_decode(
+$this->table = MovieTable::validate($table);
+$this->quotedTable = MovieTable::quote($this->table);
+$this->source = MovieTable::sourceName($this->table);
+
+$rawSql = json_decode(
 file_get_contents(__DIR__ . '/../config/sql.json'),
 true
+);
+
+// Every shipped query targets the default `movies` table; rewrite the
+// identifier once here so the rest of the class stays table-agnostic.
+$this->sql = array_map(
+fn(string $query): string => MovieTable::rewriteSql(
+    $query,
+    $this->table
+),
+$rawSql
 );
 
 $configPath = __DIR__ . '/../config/config.json';
@@ -104,8 +129,20 @@ $this->config = is_array($decodedConfig)
     ? $decodedConfig
     : [];
 
+// One cache file per source so the archived stats can never be served
+// as the main library's stats (or vice versa).
 $this->statsCachePath =
-    dirname(__DIR__, 2) . '/var/cache/stats.json';
+    dirname(__DIR__, 2) . "/var/cache/stats.{$this->source}.json";
+}
+
+public function getTable(): string
+{
+return $this->table;
+}
+
+public function getSourceName(): string
+{
+return $this->source;
 }
 
 public function getStats(bool $useCache = true): array
@@ -395,7 +432,7 @@ int $totalMovies
 $query =
     $this->sql['release_years'] ??
     'SELECT `YEAR` AS release_year, COUNT(*) AS movie_count ' .
-    'FROM movies WHERE `YEAR` IS NOT NULL AND `YEAR` > 0 ' .
+    'FROM ' . $this->quotedTable . ' WHERE `YEAR` IS NOT NULL AND `YEAR` > 0 ' .
     'GROUP BY `YEAR` ORDER BY `YEAR`;';
 
 try {
@@ -499,7 +536,7 @@ int $totalMovies
 ): array {
 $query =
     $this->sql['rating_runtime_values'] ??
-    'SELECT `RATING`, `LENGTH` FROM movies;';
+    'SELECT `RATING`, `LENGTH` FROM ' . $this->quotedTable . ';';
 
 try {
 $stmt = $this->pdo->query($query);
@@ -633,7 +670,7 @@ int $totalMovies
 $query =
     $this->sql['storage_values'] ??
     'SELECT `NUM`, `ORIGINALTITLE`, `FORMATTEDTITLE`, `FILESIZE` ' .
-    'FROM movies ORDER BY `NUM`;';
+    'FROM ' . $this->quotedTable . ' ORDER BY `NUM`;';
 
 try {
 $stmt = $this->pdo->query($query);
@@ -855,7 +892,7 @@ int $totalMovies
 ): array {
 $query =
     $this->sql['actors'] ??
-    "SELECT `ACTORS` FROM movies " .
+    "SELECT `ACTORS` FROM {$this->quotedTable} " .
     "WHERE `ACTORS` IS NOT NULL " .
     "AND TRIM(`ACTORS`) <> '';";
 
@@ -934,7 +971,7 @@ $query =
     $this->sql['metadata_values'] ??
     'SELECT ' .
     implode(', ', $columns) .
-    ' FROM movies;';
+    ' FROM ' . $this->quotedTable . ';';
 
 try {
 $stmt = $this->pdo->query($query);
@@ -1051,7 +1088,7 @@ string $column,
 int $totalMovies
 ): array {
 $query = $this->sql[$queryKey] ??
-    "SELECT `$column` FROM movies " .
+    "SELECT `$column` FROM {$this->quotedTable} " .
     "WHERE `$column` IS NOT NULL " .
     "AND TRIM(`$column`) <> '';";
 
@@ -1322,7 +1359,7 @@ $query =
     'SELECT `NUM`, `ORIGINALTITLE`, ' .
     '`FORMATTEDTITLE`, `YEAR`, `RATING`, ' .
     '`FILESIZE`, `URL` ' .
-    'FROM movies WHERE ' .
+    'FROM ' . $this->quotedTable . ' WHERE ' .
     $condition .
     ' ORDER BY ' .
     'COALESCE(NULLIF(TRIM(`ORIGINALTITLE`), \'\'), ' .

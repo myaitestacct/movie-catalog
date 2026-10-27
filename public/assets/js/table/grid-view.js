@@ -6,6 +6,7 @@
 //  - no re-render unless the movie array reference changed
 import { Modal } from '../modal/modal.js';
 import { safeExternalUrl } from '../utils/url.js';
+import { state } from '../core/state.js';
 
 const POSTER_BASE_PATH = '/movies/antexport';
 const POSTER_FALLBACK = '/movies/antexport/movies_0000-coming_soon.jpg';
@@ -93,6 +94,12 @@ function cardHtml(movie, index) {
       ? '<span class="movie-card-status better">Better copy</span>'
       : '';
 
+  // Cards rendered from the hidden archive table carry a source tag.
+  const sourceBadge = state.archive
+    ? '<span class="source-badge" title="Hidden archive collection '
+      + '(paripakva table)">Paripakva</span>'
+    : '';
+
   const rating = ratingHtml(movie);
 
   const year = movie.YEAR ? `<span>${escapeHtml(movie.YEAR)}</span>` : '';
@@ -115,6 +122,7 @@ function cardHtml(movie, index) {
           alt=""
           src="${escapeHtml(posterSrc(movie.PICTURENAME))}"
         >
+        ${sourceBadge}
         ${status}
       </div>
       <div class="movie-card-body">

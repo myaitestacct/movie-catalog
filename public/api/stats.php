@@ -13,12 +13,18 @@ ob_start();
 
 try {
     require_once $root . '/src/helpers/ApiResponse.php';
+    require_once $root . '/src/helpers/MovieTable.php';
     ApiResponse::configure();
 
     $pdo = require $root . '/src/db/connection.php';
     require_once $root . '/src/controllers/StatsController.php';
 
-    $controller = new StatsController($pdo);
+    // `archive=1` computes the analytics from the hidden paripakva table;
+    // each source keeps its own stats cache file.
+    $controller = new StatsController(
+        $pdo,
+        MovieTable::fromRequest($_GET)
+    );
 
     $refresh = filter_var($_GET['refresh'] ?? $_GET['nocache'] ?? false, FILTER_VALIDATE_BOOLEAN);
     $useCache = !$refresh;

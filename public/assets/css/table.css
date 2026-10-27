@@ -1009,3 +1009,71 @@ input:focus-visible {
 #movies th input.col-search {
     min-width: 0;
 }
+
+/* ==========================
+   Hidden archive view (paripakva table, Ctrl+Shift+K)
+   The indicator chip ships with the `hidden` attribute and only appears
+   while the catalog is switched to the archive collection.
+========================== */
+.archive-indicator {
+    font-weight: 600;
+    color: var(--warning);
+}
+
+.archive-indicator i {
+    color: var(--accent);
+}
+
+.source-badge {
+    flex: 0 0 auto;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--warning);
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    line-height: 1.5;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+/* On grid cards keep clear of the missing/better-copy chip (top-left). */
+.movie-card-poster .source-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+    backdrop-filter: blur(2px);
+}
+
+/* Transient confirmation shown when the source switches. Inverts the
+   theme text color so it reads on both light and dark themes. */
+.archive-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 28px;
+    z-index: 10000;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: calc(100vw - 32px);
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text-color) 92%, transparent);
+    color: var(--table-bg);
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    box-shadow: 0 8px 24px rgba(15, 17, 24, 0.25);
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0;
+    transform: translate(-50%, 12px);
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.archive-toast.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}

@@ -301,6 +301,19 @@
                     Better copy available
                 </span>
 
+                <!-- Hidden archive view indicator: only rendered while the
+                     catalog is switched to the paripakva table (Ctrl+Shift+K).
+                     The movies table is always the default on page load. -->
+                <span
+                    class="legend-chip archive-indicator"
+                    id="archive-indicator"
+                    hidden
+                    title="Hidden archive collection — press Ctrl+Shift+K to return to the main library"
+                >
+                    <i class="fa-solid fa-vault" aria-hidden="true"></i>
+                    Paripakva archive
+                </span>
+
                 <span class="legend-chip">
                     <kbd>/</kbd> search &middot;
                     <kbd>&uarr;</kbd><kbd>&darr;</kbd> browse &middot;

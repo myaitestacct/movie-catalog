@@ -191,6 +191,49 @@ icons-only mode the header stacks: expand button first, then the theme toggle
 as an icon. The theme choice is persisted in `localStorage` under `theme` and
 restored on the next load.
 
+## Hidden archive table (`paripakva`)
+
+The catalog can serve a second table in the same database, `paripakva`, as a
+hidden collection. The main `movies` table is always the default view: the
+archive is never visible until the **Ctrl+Shift+K** keyboard shortcut is
+pressed, and the choice is intentionally not persisted — a fresh page load
+always returns to `movies`.
+
+While the archive view is active:
+
+- the movie table, grid, and every filter/sort/pagination action read from
+  `paripakva` instead of `movies`;
+- a **Paripakva archive** chip appears in the top legend bar, each row/card
+  carries a `Paripakva` source badge, and a toast confirms the switch;
+- the Analytics panel and its drill-down movie lists follow the same source;
+- pressing Ctrl+Shift+K again restores the main library.
+
+The shortcut works even while a filter input is focused and is ignored while
+the movie detail modal is open.
+
+### API contract
+
+Every API endpoint accepts an `archive` boolean flag:
+
+| Request | Source table |
+| --- | --- |
+| `api/movies.php`, `api/stats.php`, … (no flag or `archive=0`) | `movies` |
+| same endpoints with `archive=1` | `paripakva` |
+
+The frontend injects `archive=1` centrally (see `core/api.js`) for every
+request while the archive view is active. The table name is never taken
+literally from request input: `src/helpers/MovieTable.php` whitelists the two
+allowed names (`movies`, `paripakva`) and backtick-quotes the resolved
+identifier before it reaches SQL. The movies response echoes the active
+source as `"source": "movies" | "paripakva"`. Stats keep a separate cache
+file per source (`var/cache/stats.movies.json`,
+`var/cache/stats.paripakva.json`) so the two collections can never exchange
+cached analytics.
+
+The `paripakva` table must expose the same columns as `movies` (the reference
+shape is documented in [`dev/schema.sql`](dev/schema.sql)); no migration or
+data copy is performed by the application.
+
 ## Search behavior: why did `missing` match unexpected files?
 
 Previously the File filter used the **entire stored path**, while its cell

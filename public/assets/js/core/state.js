@@ -16,9 +16,17 @@ export const state = {
   titleSearchMode: 'CONTAINS',
   fuzzy: false,
   debounce: null,
+  // Hidden archive view: false (default) serves the `movies` table,
+  // true serves the `paripakva` table. Toggled with Ctrl+Shift+K; always
+  // resets to false on a fresh page load, so movies stays the default.
+  // Query-affecting, so it is part of the state signature below.
+  archive: false,
   // UI-only (not part of the query signature)
   view: 'table'
 };
+
+// Query-string flag understood by every API endpoint (see MovieTable.php).
+export const ARCHIVE_PARAM = 'archive';
 
 export const ALWAYS_VISIBLE = [
   'NUM',
@@ -38,6 +46,7 @@ export function getMovieStateSignature() {
     mode: state.searchMode,
     fuzzy: state.fuzzy,
     titleMode: state.titleSearchMode,
+    archive: state.archive,
     search: Object.entries(state.search).sort(
       ([left], [right]) =>
         left.localeCompare(right)

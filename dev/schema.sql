@@ -29,3 +29,15 @@ CREATE TABLE movies (
     KEY movie_url (URL(191)),
     FULLTEXT KEY movie_search (FORMATTEDTITLE, ORIGINALTITLE, TRANSLATEDTITLE, DIRECTOR, ACTORS, CATEGORY, DESCRIPTION)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Hidden archive collection (optional). The `paripakva` table is reachable
+-- only through the `archive=1` API flag, toggled in the UI with Ctrl+Shift+K.
+-- It must expose the same columns as `movies`; create it with the same shape,
+-- for example:
+--
+-- CREATE TABLE paripakva LIKE movies;
+-- -- then load the archived rows into paripakva.
+--
+-- The application never migrates or copies data between the two tables, and
+-- only the whitelisted names `movies` and `paripakva` can ever be queried
+-- (see src/helpers/MovieTable.php).
