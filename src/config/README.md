@@ -27,7 +27,7 @@ Copy `database.example.json` to `database.local.json` and replace the example va
 cp database.example.json database.local.json
 ```
 
-`database.local.json` is ignored by Git and must never be committed. The documented nested `{"database": {...}}` format is recommended; the loader also accepts the earlier flat format for compatibility.
+`database.local.json` is ignored by Git and must never be committed. The documented nested `{"database": {...}}` format is recommended; the loader also accepts the earlier flat format for compatibility. Because the file is ignored, a fresh clone or deployment does not include it — it must be created on each environment. Run `php dev/db-check.php` to verify the file is found and that both connection blocks can actually connect.
 
 ## Optional: separate archive database
 

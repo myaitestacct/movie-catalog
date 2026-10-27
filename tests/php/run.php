@@ -832,6 +832,25 @@ assertThrows(
     'Charsets outside the safe identifier pattern are rejected'
 );
 
+// The diagnostic path honors MOVIE_DB_CONFIG and otherwise points at the
+// ignored local JSON file next to the example.
+$previousConfigPath = getenv('MOVIE_DB_CONFIG');
+putenv('MOVIE_DB_CONFIG=/tmp/external-movie-db.json');
+assertSameValue(
+    '/tmp/external-movie-db.json',
+    ConnectionFactory::activeConfigPath(),
+    'MOVIE_DB_CONFIG overrides the database config path'
+);
+putenv('MOVIE_DB_CONFIG');
+assertSameValue(
+    $root . '/src/config/database.local.json',
+    ConnectionFactory::activeConfigPath(),
+    'The default config path is used when MOVIE_DB_CONFIG is unset'
+);
+if ($previousConfigPath !== false) {
+    putenv("MOVIE_DB_CONFIG={$previousConfigPath}");
+}
+
 if ($failures > 0) {
     echo "\n{$failures} test(s) failed.\n";
     exit(1);

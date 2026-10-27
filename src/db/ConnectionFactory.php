@@ -36,7 +36,7 @@ final class ConnectionFactory
             self::mainEnvMap()
         );
 
-        return self::connect($config);
+        return self::connect($config, 'database');
     }
 
     public static function archive(): PDO
@@ -53,7 +53,53 @@ final class ConnectionFactory
             self::archiveEnvMap()
         );
 
-        return self::connect($config);
+        return self::connect($config, 'archive_database');
+    }
+
+    /**
+     * Absolute path of the JSON file actually consulted, honoring
+     * MOVIE_DB_CONFIG. Used by the command-line diagnostic.
+     */
+    public static function activeConfigPath(): string
+    {
+        $configPathFromEnv = getenv('MOVIE_DB_CONFIG');
+
+        return $configPathFromEnv !== false &&
+            trim($configPathFromEnv) !== ''
+                ? $configPathFromEnv
+                : self::DEFAULT_CONFIG_PATH;
+    }
+
+    /**
+     * Validated main connection block. Throws InvalidArgumentException when
+     * the merged file/environment configuration is incomplete.
+     */
+    public static function resolvedDefaultBlock(): array
+    {
+        return self::normalizeBlock(
+            self::resolveBlockConfig(
+                'database',
+                self::mainEnvMap()
+            )
+        );
+    }
+
+    /**
+     * Validated archive connection block, or null when no archive database
+     * is configured (archive requests then reuse the main connection).
+     */
+    public static function resolvedArchiveBlock(): ?array
+    {
+        if (!self::hasArchiveConfig()) {
+            return null;
+        }
+
+        return self::normalizeBlock(
+            self::resolveBlockConfig(
+                'archive_database',
+                self::archiveEnvMap()
+            )
+        );
     }
 
     /**
@@ -149,7 +195,7 @@ final class ConnectionFactory
         ];
     }
 
-    private static function connect(array $db): PDO
+    private static function connect(array $db, string $source = 'database'): PDO
     {
         header('Content-Type: application/json');
 
@@ -179,10 +225,19 @@ final class ConnectionFactory
                 ]
             );
         } catch (PDOException $error) {
-            error_log(
-                'Movie Catalog database connection failed: ' .
+            // Log the target (never the password) so the server error log
+            // shows exactly which connection was attempted. Run
+            // `php dev/db-check.php` for an interactive diagnosis.
+            error_log(sprintf(
+                'Movie Catalog database connection failed for %s ' .
+                '(host=%s port=%d dbname=%s config=%s): %s',
+                $source,
+                $db['host'],
+                $db['port'],
+                $db['dbname'],
+                self::activeConfigPath(),
                 $error->getMessage()
-            );
+            ));
             self::fail('Database connection failed');
         }
     }
@@ -210,12 +265,7 @@ final class ConnectionFactory
 
     private static function loadRawConfig(): array
     {
-        $configPathFromEnv = getenv('MOVIE_DB_CONFIG');
-        $configPath =
-            $configPathFromEnv !== false &&
-            trim($configPathFromEnv) !== ''
-                ? $configPathFromEnv
-                : self::DEFAULT_CONFIG_PATH;
+        $configPath = self::activeConfigPath();
 
         if (!is_file($configPath)) {
             return [];

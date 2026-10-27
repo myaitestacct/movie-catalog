@@ -438,6 +438,13 @@ by injection instead (`setMovieLoader()` in `stats/stats.js`), and
 - A database-configuration error usually means the ignored JSON file is absent,
   an environment variable overrides it, or the configured account cannot connect.
   Check PHP/server logs; detailed database errors are not returned to the browser.
+  For a definitive diagnosis run the command-line check
+  `php dev/db-check.php`: it prints the config path in use, whether that file
+  exists, the masked values for both connection blocks, and the exact PDO
+  SQLSTATE with a remediation hint (server unreachable, access denied, unknown
+  database, missing `pdo_mysql` driver, …). The API's 500 response stays generic
+  on purpose; the matching detail line is written to the PHP error log with the
+  target host/port/database (never the password).
 - `could not find driver` means `pdo_mysql` is missing from the PHP runtime used
   by the server. CLI and Apache/FPM can use different PHP installations.
 - Statistics are collection-wide, not filtered-table statistics. Their disk cache
