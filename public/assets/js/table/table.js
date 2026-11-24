@@ -303,7 +303,7 @@ function renderMovieRow(
   const tr = document.createElement('tr');
   tr.dataset.num = movie.NUM;
 
-  if (movie.FILE?.toUpperCase() === 'MISSING') {
+  if (movie.FILE?.toUpperCase() === 'MEDIA_MISSING') {
     tr.classList.add('missing-file');
   }
 
